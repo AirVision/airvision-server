@@ -12,11 +12,9 @@ package io.github.airvision
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveKind
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.PrimitiveDescriptor
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
 

@@ -43,5 +43,5 @@ suspend fun RestContext.handleAircraftTrajectoryRequest() {
 
   // TODO: Respond with something
 
-  call.respond(HttpStatusCode.NotFound, "Not found.")
+  call.respond(error.notFound())
 }

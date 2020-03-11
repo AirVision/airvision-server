@@ -28,5 +28,5 @@ suspend fun RestContext.handleAircraftsRequest() {
 
   // TODO: Respond with something
 
-  call.respond(HttpStatusCode.NotFound, "Not found.")
+  call.respond(error.notFound())
 }

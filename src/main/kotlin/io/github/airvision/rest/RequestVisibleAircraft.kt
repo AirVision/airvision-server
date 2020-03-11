@@ -54,5 +54,5 @@ suspend fun RestContext.handleVisibleAircraftRequest() {
 
   // TODO: Analyse things, and respond with something
 
-  call.respond(success(VisibleAircraftResponse(listOf())))
+  call.respond(VisibleAircraftResponse(listOf()))
 }

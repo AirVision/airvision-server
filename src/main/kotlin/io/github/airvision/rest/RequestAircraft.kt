@@ -29,6 +29,6 @@ suspend fun RestContext.handleAircraftRequest() {
   // TODO: Respond with something
 
   // call.respond(error.badRequest())
-  call.respond(success(AircraftInfo(0, Icao24(0x052f),
-      GeodeticPosition(0.0, 0.0, 0.0), 0.0, true)))
+  call.respond(AircraftInfo(0, Icao24(0x052f),
+      GeodeticPosition(0.0, 0.0, 0.0), 0.0, true))
 }
