@@ -9,9 +9,8 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.Icao24
+import io.github.airvision.AircraftIcao
 import io.ktor.application.call
-import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import kotlinx.serialization.Serializable
@@ -20,7 +19,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftsRequest(
-    val position: Icao24
+    val position: AircraftIcao
 )
 
 suspend fun RestContext.handleAircraftsRequest() {

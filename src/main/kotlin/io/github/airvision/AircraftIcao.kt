@@ -9,19 +9,21 @@
  */
 package io.github.airvision
 
-import io.github.airvision.serializer.Icao24Serializer
+import io.github.airvision.serializer.AircraftIcaoSerializer
 import kotlinx.serialization.Serializable
 
 /**
- * Represents a 24 bit address used by aircraft's.
+ * Represents an identifier of aircrafts. Also known as the
+ * ICAO 24 bit address used by aircraft's.
  *
  * @property address The 24 bit address
  */
-@Serializable(with = Icao24Serializer::class)
-class Icao24(val address: Int) {
+@Serializable(with = AircraftIcaoSerializer::class)
+class AircraftIcao(val address: Int) {
 
   init {
-    check(this.address <= 0xffffff) { "Given address ${this.address.toString(16)} is more than 24 bits." }
+    check(this.address <= 0xffffff) {
+      "Given address ${this.address.toString(16)} is more than 24 bits." }
   }
 
   /**
@@ -33,11 +35,11 @@ class Icao24(val address: Int) {
   companion object {
 
     /**
-     * Parses a hexadecimal string as a ICAO 24 address.
+     * Parses a hexadecimal string as an [AircraftIcao].
      */
-    fun parse(value: String): Icao24 {
+    fun parse(value: String): AircraftIcao {
       check(value.length <= 6)
-      return Icao24(value.toInt(16))
+      return AircraftIcao(value.toInt(16))
     }
   }
 }

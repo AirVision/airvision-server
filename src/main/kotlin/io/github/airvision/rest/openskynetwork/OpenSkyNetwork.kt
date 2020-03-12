@@ -14,7 +14,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.airvision.AirVision
 import io.github.airvision.GeodeticBounds
-import io.github.airvision.Icao24
+import io.github.airvision.AircraftIcao
 import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
@@ -67,8 +67,8 @@ class OpenSkyNetwork(
     return this.client.get(baseUrl + path)
   }
 
-  private val aircraftCache = buildCache<Icao24, OsnAircraft?> { requestAircraft(it) }
-  private val aircraftTrackCache = buildCache<Icao24, OsnTrackResponse?> { requestAircraftTrack(it) }
+  private val aircraftCache = buildCache<AircraftIcao, OsnAircraft?> { requestAircraft(it) }
+  private val aircraftTrackCache = buildCache<AircraftIcao, OsnTrackResponse?> { requestAircraftTrack(it) }
 
   private fun <K, V> buildCache(loader: suspend (key: K) -> V): AsyncLoadingCache<K, V> {
     return Caffeine.newBuilder()
@@ -81,18 +81,18 @@ class OpenSkyNetwork(
         }
   }
 
-  private suspend fun requestAircraft(icao24: Icao24): OsnAircraft? {
+  private suspend fun requestAircraft(icao: AircraftIcao): OsnAircraft? {
     val response = request<OsnStatesResponse>("/states/all", mapOf(
-        "icao24" to icao24
+        "icao24" to icao
     ))
     return response.states.firstOrNull()
   }
 
   /**
-   * Attempts to get the [OsnAircraft] object for the given [Icao24] identifier.
+   * Attempts to get the [OsnAircraft] object for the given [AircraftIcao] identifier.
    */
-  suspend fun getAircraft(icao24: Icao24): OsnAircraft? {
-    return aircraftCache.get(icao24).await()
+  suspend fun getAircraft(icao: AircraftIcao): OsnAircraft? {
+    return aircraftCache.get(icao).await()
   }
 
   /**
@@ -111,7 +111,7 @@ class OpenSkyNetwork(
 
     // Cache the aircrafts, so we need less individual calls
     for (aircraft in response.states)
-      aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
+      aircraftCache.put(aircraft.icao, CompletableFuture.completedFuture(aircraft))
 
     return response.states
   }
@@ -124,15 +124,15 @@ class OpenSkyNetwork(
 
     // Cache the aircrafts, so we need less individual calls
     for (aircraft in response.states)
-      aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
+      aircraftCache.put(aircraft.icao, CompletableFuture.completedFuture(aircraft))
 
     return response.states
   }
 
-  private suspend fun requestAircraftTrack(icao24: Icao24): OsnTrackResponse? {
+  private suspend fun requestAircraftTrack(icao: AircraftIcao): OsnTrackResponse? {
     return Either.catch {
       request<OsnTrackResponse>("/tracks", mapOf(
-          "icao24" to icao24,
+          "icao24" to icao,
           "time" to 0
       ))
     }.fold({
@@ -143,6 +143,6 @@ class OpenSkyNetwork(
     })
   }
 
-  suspend fun getAircraftTrack(icao24: Icao24): OsnTrackResponse? =
-      aircraftTrackCache.get(icao24).await()
+  suspend fun getAircraftTrack(icao: AircraftIcao): OsnTrackResponse? =
+      aircraftTrackCache.get(icao).await()
 }

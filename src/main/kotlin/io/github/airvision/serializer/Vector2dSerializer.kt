@@ -9,7 +9,6 @@
  */
 package io.github.airvision.serializer
 
-import io.github.airvision.rest.openskynetwork.serializer.OsnAircraftSerializer
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer

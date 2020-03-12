@@ -10,7 +10,7 @@
 package io.github.airvision.rest
 
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.Icao24
+import io.github.airvision.AircraftIcao
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -21,12 +21,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftTrajectoryRequest(
-    val icao24: Icao24
+    val icao: AircraftIcao
 )
 
 @Serializable
 data class AircraftTrajectoryResponse(
-    val icao24: Icao24,
+    val icao: AircraftIcao,
     val points: List<TrajectoryPoint>
 )
 

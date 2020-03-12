@@ -10,11 +10,9 @@
 package io.github.airvision.rest
 
 import io.github.airvision.AirVision
-import io.github.airvision.Icao24
-import io.ktor.http.ContentType
+import io.github.airvision.AircraftIcao
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.request.contentType
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import kotlinx.serialization.ImplicitReflectionSerializer
@@ -26,10 +24,10 @@ class RequestAircraftTest {
 
   @Test
   fun `get 0xa092fe`() = testApp {
-    val icao24 = Icao24.parse("a092fe")
+    val id = AircraftIcao.parse("a092fe")
     handleRequest(HttpMethod.Get, "/v1/aircraft") {
       addHeader(HttpHeaders.ContentType, "application/json")
-      setBody(AirVision.json.stringify(AircraftRequest(icao24)))
+      setBody(AirVision.json.stringify(AircraftRequest(id)))
     }.apply {
       println(response.content)
     }

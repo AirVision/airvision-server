@@ -9,13 +9,13 @@
  */
 package io.github.airvision.rest.openskynetwork
 
-import io.github.airvision.Icao24
+import io.github.airvision.AircraftIcao
 import io.github.airvision.rest.openskynetwork.serializer.OsnAircraftSerializer
 import kotlinx.serialization.Serializable
 
 @Serializable(with = OsnAircraftSerializer::class)
 data class OsnAircraft(
-    val icao24: Icao24,
+    val icao: AircraftIcao,
     val callsign: String?,
     val originCountry: String,
     val timePosition: Int?,

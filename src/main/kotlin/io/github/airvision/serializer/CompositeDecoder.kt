@@ -22,7 +22,7 @@ private val nullableFloatSerializer = Float.serializer().nullable
 private val nullableIntArraySerializer = IntArraySerializer.nullable
 
 fun CompositeDecoder.decodeIcao24(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, Icao24Serializer)
+    decodeSerializableElement(desc, index, AircraftIcaoSerializer)
 
 fun CompositeDecoder.decodeNullableString(desc: SerialDescriptor, index: Int) =
     decodeSerializableElement(desc, index, nullableStringSerializer)

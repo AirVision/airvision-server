@@ -44,6 +44,9 @@ dependencies {
   implementation(arrow("syntax"))
   kapt(arrow("meta"))
 
+  // CSV Parser
+  implementation(group = "com.github.doyaaaaaken", name = "kotlin-csv-jvm", version = "0.7.3")
+
   // General utilities
   implementation(group = "com.google.guava", name = "guava", version = "28.0-jre")
 

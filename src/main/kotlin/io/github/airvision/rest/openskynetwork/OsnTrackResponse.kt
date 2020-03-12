@@ -9,13 +9,14 @@
  */
 package io.github.airvision.rest.openskynetwork
 
-import io.github.airvision.Icao24
+import io.github.airvision.AircraftIcao
 import io.github.airvision.rest.openskynetwork.serializer.OsnTrackWaypointSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class OsnTrackResponse(
-    val icao24: Icao24,
+    @SerialName("icao24") val icao: AircraftIcao,
     val startTime: Int,
     val endTime: Int,
     val callsign: String?,
