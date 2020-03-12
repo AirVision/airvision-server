@@ -1,7 +1,7 @@
 /*
  * AirVision
  *
- * Copyright (c) LanternPowered <https://www.github.com/AirVision>
+ * Copyright (c) AirVision <https://www.github.com/AirVision>
  * Copyright (c) contributors
  *
  * This work is licensed under the terms of the MIT License (MIT). For
@@ -12,7 +12,6 @@ package io.github.airvision.rest
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.Icao24
 import io.ktor.application.call
-import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import kotlinx.serialization.SerialName

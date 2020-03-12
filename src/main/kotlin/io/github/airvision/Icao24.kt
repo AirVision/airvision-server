@@ -1,7 +1,7 @@
 /*
  * AirVision
  *
- * Copyright (c) LanternPowered <https://www.github.com/AirVision>
+ * Copyright (c) AirVision <https://www.github.com/AirVision>
  * Copyright (c) contributors
  *
  * This work is licensed under the terms of the MIT License (MIT). For
@@ -9,14 +9,8 @@
  */
 package io.github.airvision
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
+import io.github.airvision.serializer.Icao24Serializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
 
 /**
  * Represents a 24 bit address used by aircraft's.
@@ -46,21 +40,4 @@ class Icao24(val address: Int) {
       return Icao24(value.toInt(16))
     }
   }
-}
-
-/**
- * A serializer for [Icao24]s.
- */
-@Serializer(forClass = Icao24::class)
-object Icao24Serializer : KSerializer<Icao24> {
-
-  override val descriptor: SerialDescriptor =
-      StringDescriptor.withName("Icao24")
-      // PrimitiveDescriptor("Icao24", PrimitiveKind.STRING)
-
-  override fun deserialize(decoder: Decoder): Icao24 =
-      Icao24.parse(decoder.decodeString())
-
-  override fun serialize(encoder: Encoder, value: Icao24) =
-      encoder.encodeString(value.toString())
 }

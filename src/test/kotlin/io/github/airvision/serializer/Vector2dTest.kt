@@ -1,7 +1,7 @@
 /*
  * AirVision
  *
- * Copyright (c) LanternPowered <https://www.github.com/AirVision>
+ * Copyright (c) AirVision <https://www.github.com/AirVision>
  * Copyright (c) contributors
  *
  * This work is licensed under the terms of the MIT License (MIT). For
@@ -9,6 +9,7 @@
  */
 package io.github.airvision.serializer
 
+import io.github.airvision.AirVision
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
@@ -26,8 +27,8 @@ class Vector2dTest {
 
   @Test
   fun deserialization() {
-    val v = listOf(23.654782, 94256.22563).map { JsonPrimitive(it) }
     val p = Vector2d(23.654782, 94256.22563)
-    //assertEquals(p, Json.fromJson(Vector2dSerializer, JsonArray(v)))
+    val json = AirVision.json.parseJson("[23.654782, 94256.22563]")
+    assertEquals(p, AirVision.json.fromJson(Vector2dSerializer, json))
   }
 }

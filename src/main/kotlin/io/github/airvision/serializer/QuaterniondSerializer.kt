@@ -1,7 +1,7 @@
 /*
  * AirVision
  *
- * Copyright (c) LanternPowered <https://www.github.com/AirVision>
+ * Copyright (c) AirVision <https://www.github.com/AirVision>
  * Copyright (c) contributors
  *
  * This work is licensed under the terms of the MIT License (MIT). For
@@ -30,23 +30,25 @@ object QuaterniondSerializer : KSerializer<Quaterniond> {
       */
 
   override fun deserialize(decoder: Decoder): Quaterniond {
-    @Suppress("NAME_SHADOWING")
-    val decoder = decoder.beginStructure(descriptor)
-    val x = decoder.decodeDoubleElement(descriptor, 0)
-    val y = decoder.decodeDoubleElement(descriptor, 1)
-    val z = decoder.decodeDoubleElement(descriptor, 2)
-    val w = decoder.decodeDoubleElement(descriptor, 3)
-    decoder.endStructure(descriptor)
-    return Quaterniond(x, y, z, w)
+    return decoder.collection(descriptor) {
+      decodeElementIndex(descriptor)
+      val x = decodeDoubleElement(descriptor, 0)
+      decodeElementIndex(descriptor)
+      val y = decodeDoubleElement(descriptor, 1)
+      decodeElementIndex(descriptor)
+      val z = decodeDoubleElement(descriptor, 2)
+      decodeElementIndex(descriptor)
+      val w = decodeDoubleElement(descriptor, 3)
+      Quaterniond(x, y, z, w)
+    }
   }
 
   override fun serialize(encoder: Encoder, value: Quaterniond) {
-    @Suppress("NAME_SHADOWING")
-    val encoder = encoder.beginCollection(descriptor, 4)
-    encoder.encodeDoubleElement(descriptor, 0, value.x)
-    encoder.encodeDoubleElement(descriptor, 1, value.y)
-    encoder.encodeDoubleElement(descriptor, 2, value.z)
-    encoder.encodeDoubleElement(descriptor, 3, value.w)
-    encoder.endStructure(descriptor)
+    encoder.collection(descriptor, 4) {
+      encodeDoubleElement(descriptor, 0, value.x)
+      encodeDoubleElement(descriptor, 1, value.y)
+      encodeDoubleElement(descriptor, 2, value.z)
+      encodeDoubleElement(descriptor, 3, value.w)
+    }
   }
 }

@@ -1,7 +1,7 @@
 /*
  * AirVision
  *
- * Copyright (c) LanternPowered <https://www.github.com/AirVision>
+ * Copyright (c) AirVision <https://www.github.com/AirVision>
  * Copyright (c) contributors
  *
  * This work is licensed under the terms of the MIT License (MIT). For
@@ -9,18 +9,9 @@
  */
 package io.github.airvision
 
+import io.github.airvision.serializer.GeodeticPositionSerializer
 import io.github.airvision.util.toString
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ArrayListClassDesc
-import kotlinx.serialization.internal.DoubleDescriptor
-import kotlinx.serialization.list
-import kotlinx.serialization.serializer
-import kotlinx.serialization.withName
 import org.spongepowered.math.vector.Vector3d
 import kotlin.math.cos
 import kotlin.math.sin
@@ -37,7 +28,7 @@ import kotlin.math.sqrt
 data class GeodeticPosition(
     val latitude: Double,
     val longitude: Double,
-    val altitude: Double
+    val altitude: Double = 0.0
 ) {
 
   override fun toString() = toString {
@@ -71,44 +62,10 @@ fun GeodeticPosition.toEcefPosition(): Vector3d {
   val sinLon = sin(radLon)
   val cosLon = cos(radLon)
 
-  val n = A_POW2 / (sqrt(A_POW2 * cosLat * cosLat + B_POW2 * sinLat * sinLat))
+  val n = A_POW2 / sqrt(A_POW2 * cosLat * cosLat + B_POW2 * sinLat * sinLat)
   val x = (n + altitude) * cosLat * cosLon
   val y = (n + altitude) * cosLat * sinLon
   val z = (B_POW2_DIV_BY_A_POW2 * n + altitude) * sinLat
 
   return Vector3d(x, y, z)
-}
-
-/**
- * A serializer for [GeodeticPosition]s.
- */
-@Serializer(forClass = GeodeticPosition::class)
-object GeodeticPositionSerializer : KSerializer<GeodeticPosition> {
-
-  private val doubleListSerializer = Double.serializer().list
-
-  override val descriptor: SerialDescriptor =
-      ArrayListClassDesc(DoubleDescriptor.withName("GeodeticPosition"))
-      /*
-      SerialDescriptor("GeodeticPosition", kind = StructureKind.LIST) {
-        listDescriptor<Double>()
-      }
-      */
-
-  override fun deserialize(decoder: Decoder): GeodeticPosition {
-    val list = doubleListSerializer.deserialize(decoder)
-    check(list.size == 2 || list.size == 3)
-    return GeodeticPosition(list[0], list[1], if (list.size == 3) list[2] else 0.0)
-  }
-
-  override fun serialize(encoder: Encoder, value: GeodeticPosition) {
-    val size = if (value.altitude != 0.0) 3 else 2
-    @Suppress("NAME_SHADOWING")
-    val encoder = encoder.beginCollection(descriptor, size)
-    encoder.encodeDoubleElement(descriptor, 0, value.latitude)
-    encoder.encodeDoubleElement(descriptor, 1, value.longitude)
-    if (value.altitude != 0.0)
-      encoder.encodeDoubleElement(descriptor, 2, value.altitude)
-    encoder.endStructure(descriptor)
-  }
 }

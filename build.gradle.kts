@@ -3,6 +3,7 @@ plugins {
   eclipse
   idea
   kotlin("jvm") version "1.3.61" // 1.3.70
+  kotlin("kapt") version "1.3.61" // 1.3.70
   kotlin("plugin.serialization") version "1.3.61" // 1.3.70
   id("net.minecrell.licenser") version "0.4.1"
 }
@@ -19,6 +20,7 @@ repositories {
   maven("https://kotlin.bintray.com/kotlinx")
   maven("https://oss.sonatype.org/content/groups/public")
   maven("https://dl.bintray.com/kotlin/exposed/")
+  maven("https://dl.bintray.com/arrow-kt/arrow-kt/")
 }
 
 dependencies {
@@ -33,6 +35,14 @@ dependencies {
 
   // Serialization
   implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version = "0.14.0") // 0.20.0
+
+  // Arrow
+  val arrowVersion = "0.10.4"
+  fun arrow(module: String) = "io.arrow-kt:arrow-$module:$arrowVersion"
+
+  implementation(arrow("core"))
+  implementation(arrow("syntax"))
+  kapt(arrow("meta"))
 
   // General utilities
   implementation(group = "com.google.guava", name = "guava", version = "28.0-jre")
@@ -161,6 +171,6 @@ license {
   ext {
     set("name", project.name)
     set("url", "https://www.github.com/AirVision")
-    set("organization", "LanternPowered")
+    set("organization", "AirVision")
   }
 }
