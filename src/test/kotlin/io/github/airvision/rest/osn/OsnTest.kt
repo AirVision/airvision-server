@@ -9,6 +9,7 @@
  */
 package io.github.airvision.rest.osn
 
+import io.github.airvision.AircraftIcao
 import io.github.airvision.rest.openskynetwork.OpenSkyNetwork
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -17,8 +18,14 @@ class OsnTest {
 
   private val osn = OpenSkyNetwork()
 
-  @Test
+  // @Test
   fun `get all aircrafts`() = runBlocking {
     osn.getAircrafts().asSequence().take(10).forEach { println(it) }
+  }
+
+  @Test
+  fun `get aircraft`() = runBlocking {
+    val icao = AircraftIcao.parse("A808C4")
+    println(osn.getAircraft(icao))
   }
 }

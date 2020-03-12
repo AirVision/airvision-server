@@ -16,16 +16,12 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ArrayListClassDesc
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
+import kotlinx.serialization.StructureKind
 
-@Serializer(forClass = OsnTrackResponse.Waypoint::class)
 object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
 
   override val descriptor: SerialDescriptor =
-      ArrayListClassDesc(StringDescriptor.withName("OsnTrackWaypoint"))
+      SerialDescriptor("OsnTrackWaypoint", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): OsnTrackResponse.Waypoint {
     return decoder.structure(descriptor) {
@@ -45,7 +41,7 @@ object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
     }
   }
 
-  override fun serialize(encoder: Encoder, obj: OsnTrackResponse.Waypoint) =
+  override fun serialize(encoder: Encoder, value: OsnTrackResponse.Waypoint) =
       throw UnsupportedOperationException()
 
 }

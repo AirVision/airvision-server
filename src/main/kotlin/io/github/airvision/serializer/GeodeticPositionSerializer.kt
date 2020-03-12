@@ -14,28 +14,19 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ArrayListClassDesc
-import kotlinx.serialization.internal.DoubleDescriptor
-import kotlinx.serialization.list
-import kotlinx.serialization.serializer
-import kotlinx.serialization.withName
+import kotlinx.serialization.StructureKind
+import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.serializer
 
 /**
  * A serializer for [GeodeticPosition]s.
  */
-@Serializer(forClass = GeodeticPosition::class)
 object GeodeticPositionSerializer : KSerializer<GeodeticPosition> {
 
   private val doubleListSerializer = Double.serializer().list
 
   override val descriptor: SerialDescriptor =
-      ArrayListClassDesc(DoubleDescriptor.withName("GeodeticPosition"))
-  /*
-  SerialDescriptor("GeodeticPosition", kind = StructureKind.LIST) {
-    listDescriptor<Double>()
-  }
-  */
+      SerialDescriptor("GeodeticPosition", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): GeodeticPosition {
     val list = doubleListSerializer.deserialize(decoder)

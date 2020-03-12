@@ -12,14 +12,14 @@ package io.github.airvision.serializer
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.internal.IntArraySerializer
-import kotlinx.serialization.internal.nullable
-import kotlinx.serialization.serializer
+import kotlinx.serialization.builtins.IntArraySerializer
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.builtins.serializer
 
 private val nullableStringSerializer = String.serializer().nullable
 private val nullableIntSerializer = Int.serializer().nullable
 private val nullableFloatSerializer = Float.serializer().nullable
-private val nullableIntArraySerializer = IntArraySerializer.nullable
+private val nullableIntArraySerializer = IntArraySerializer().nullable
 
 fun CompositeDecoder.decodeIcao24(desc: SerialDescriptor, index: Int) =
     decodeSerializableElement(desc, index, AircraftIcaoSerializer)
@@ -34,7 +34,7 @@ fun CompositeDecoder.decodeNullableFloat(desc: SerialDescriptor, index: Int) =
     decodeSerializableElement(desc, index, nullableFloatSerializer)
 
 fun CompositeDecoder.decodeIntArray(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, IntArraySerializer)
+    decodeSerializableElement(desc, index, IntArraySerializer())
 
 fun CompositeDecoder.decodeNullableIntArray(desc: SerialDescriptor, index: Int) =
     decodeSerializableElement(desc, index, nullableIntArraySerializer)

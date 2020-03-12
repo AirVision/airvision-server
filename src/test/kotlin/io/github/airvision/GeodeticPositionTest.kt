@@ -37,14 +37,14 @@ class GeodeticPositionTest {
   fun `deserialization with 3 values`() {
     val v = listOf(23.654782, 94256.22563, 69.55).map { JsonPrimitive(it) }
     val p = GeodeticPosition(23.654782, 94256.22563, 69.55)
-    //assertEquals(p, Json.fromJson(JsonArray(v)))
+    assertEquals(p, Json.fromJson(JsonArray(v)))
   }
 
   @Test
   fun `deserialization with 2 values`() {
     val v = listOf(23.654782, 94256.22563).map { JsonPrimitive(it) }
     val p = GeodeticPosition(23.654782, 94256.22563, 0.0)
-    //assertEquals(p, Json.fromJson(JsonArray(v)))
+    assertEquals(p, Json.fromJson(JsonArray(v)))
   }
 
   @Test

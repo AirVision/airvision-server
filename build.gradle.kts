@@ -2,9 +2,9 @@ plugins {
   java
   eclipse
   idea
-  kotlin("jvm") version "1.3.61" // 1.3.70
-  kotlin("kapt") version "1.3.61" // 1.3.70
-  kotlin("plugin.serialization") version "1.3.61" // 1.3.70
+  kotlin("jvm") version "1.3.70"
+  kotlin("kapt") version "1.3.70"
+  kotlin("plugin.serialization") version "1.3.70"
   id("net.minecrell.licenser") version "0.4.1"
 }
 
@@ -16,8 +16,8 @@ version = "1.0-SNAPSHOT"
 repositories {
   mavenCentral()
   maven("https://repo.spongepowered.org/maven/")
-  maven("https://jitpack.io")
-  maven("https://kotlin.bintray.com/kotlinx")
+  maven("https://kotlin.bintray.com/kotlinx/")
+  maven("https://kotlin.bintray.com/ktor/")
   maven("https://oss.sonatype.org/content/groups/public")
   maven("https://dl.bintray.com/kotlin/exposed/")
   maven("https://dl.bintray.com/arrow-kt/arrow-kt/")
@@ -29,12 +29,12 @@ dependencies {
   implementation(kotlin("reflect"))
 
   // Coroutines
-  val coroutinesVersion = "1.3.0-RC2"
+  val coroutinesVersion = "1.3.4"
   implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
   implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-jdk8", version = coroutinesVersion)
 
   // Serialization
-  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version = "0.14.0") // 0.20.0
+  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version = "0.20.0")
 
   // Arrow
   val arrowVersion = "0.10.4"
@@ -53,7 +53,7 @@ dependencies {
   // Networking
   implementation(group = "io.netty", name = "netty-all", version = "4.1.46.Final")
 
-  val ktorVersion = "1.3.1"
+  val ktorVersion = "1.3.2"
   fun ktor(module: String) = "io.ktor:ktor-$module:$ktorVersion"
 
   implementation(ktor("serialization"))
@@ -80,7 +80,7 @@ dependencies {
 
   // Testing
   testCompile(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.2.0")
-  testCompile(kotlin(module = "test", version = "1.3.41"))
+  testCompile(kotlin(module = "test"))
   testCompile(ktor("server-test-host"))
 }
 
@@ -156,6 +156,7 @@ tasks {
       useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
       useExperimentalAnnotation("kotlin.experimental.ExperimentalTypeInference")
       useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+      useExperimentalAnnotation("kotlinx.serialization.ImplicitReflectionSerializer")
 
       freeCompilerArgs = args
     }

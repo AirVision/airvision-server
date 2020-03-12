@@ -14,21 +14,14 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ArrayListClassDesc
-import kotlinx.serialization.internal.DoubleDescriptor
-import kotlinx.serialization.withName
+import kotlinx.serialization.StructureKind
 import org.spongepowered.math.vector.Vector2d
 
 @Serializer(forClass = Vector2d::class)
 object Vector2dSerializer : KSerializer<Vector2d> {
 
   override val descriptor: SerialDescriptor =
-      ArrayListClassDesc(DoubleDescriptor.withName("Vector2d"))
-      /*
-      SerialDescriptor("Vector2d", kind = StructureKind.LIST) {
-        listDescriptor<Double>()
-      }
-      */
+      SerialDescriptor("Vector2d", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): Vector2d {
     return decoder.collection(descriptor) {

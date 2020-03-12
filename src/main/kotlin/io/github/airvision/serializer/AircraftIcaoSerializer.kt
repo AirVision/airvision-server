@@ -13,20 +13,18 @@ import io.github.airvision.AircraftIcao
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.PrimitiveDescriptor
+import kotlinx.serialization.PrimitiveKind
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
 
 /**
  * A serializer for [AircraftIcao]s.
  */
-@Serializer(forClass = AircraftIcao::class)
 object AircraftIcaoSerializer : KSerializer<AircraftIcao> {
 
   override val descriptor: SerialDescriptor =
-      StringDescriptor.withName("AircraftIdentifier")
-  // PrimitiveDescriptor("Icao24", PrimitiveKind.STRING)
+      PrimitiveDescriptor("AircraftIcao", PrimitiveKind.STRING)
 
   override fun deserialize(decoder: Decoder): AircraftIcao =
       AircraftIcao.parse(decoder.decodeString())

@@ -21,16 +21,12 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ArrayListClassDesc
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
+import kotlinx.serialization.StructureKind
 
-@Serializer(forClass = OsnAircraft::class)
 object OsnAircraftSerializer : KSerializer<OsnAircraft> {
 
   override val descriptor: SerialDescriptor =
-      ArrayListClassDesc(StringDescriptor.withName("OsnAircraft"))
+      SerialDescriptor("OsnAircraft", kind = StructureKind.LIST)
 
   private val positionSources = OsnPositionSource.values()
 
@@ -69,9 +65,11 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
       decodeElementIndex(descriptor)
       val spi = decodeBooleanElement(descriptor, 15)
       decodeElementIndex(descriptor)
-      val positionSource = positionSources[decodeIntElement(descriptor, 16)]
+      val posSourceIndex = decodeIntElement(descriptor, 16)
+      val posSource = if (posSourceIndex >= positionSources.size)
+        OsnPositionSource.ADS_B else positionSources[posSourceIndex]
       OsnAircraft(icao24, callsign, originCountry, timePosition, lastContact, longitude, latitude, baroAltitude,
-          onGround, velocity, trueTrack, verticalRate, sensors, geoAltitude, squawk, spi, positionSource)
+          onGround, velocity, trueTrack, verticalRate, sensors, geoAltitude, squawk, spi, posSource)
     }
   }
 

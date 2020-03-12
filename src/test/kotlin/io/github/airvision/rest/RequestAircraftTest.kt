@@ -24,10 +24,10 @@ class RequestAircraftTest {
 
   @Test
   fun `get 0xa092fe`() = testApp {
-    val id = AircraftIcao.parse("a092fe")
+    val icao = AircraftIcao.parse("a092fe")
     handleRequest(HttpMethod.Get, "/v1/aircraft") {
       addHeader(HttpHeaders.ContentType, "application/json")
-      setBody(AirVision.json.stringify(AircraftRequest(id)))
+      setBody(AirVision.json.stringify(AircraftRequest(icao)))
     }.apply {
       println(response.content)
     }

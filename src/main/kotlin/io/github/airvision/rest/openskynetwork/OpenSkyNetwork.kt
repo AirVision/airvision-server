@@ -13,8 +13,8 @@ import arrow.core.Either
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.airvision.AirVision
-import io.github.airvision.GeodeticBounds
 import io.github.airvision.AircraftIcao
+import io.github.airvision.GeodeticBounds
 import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer

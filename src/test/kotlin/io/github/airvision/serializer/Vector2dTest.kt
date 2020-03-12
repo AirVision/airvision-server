@@ -10,9 +10,7 @@
 package io.github.airvision.serializer
 
 import io.github.airvision.AirVision
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.stringify
 import org.junit.jupiter.api.Test
 import org.spongepowered.math.vector.Vector2d
 import kotlin.test.assertEquals
@@ -22,7 +20,7 @@ class Vector2dTest {
   @Test
   fun serialization() {
     val p = Vector2d(23.654782, 94256.22563)
-    //assertEquals("[${p.x},${p.y}]", Json.toJson(Vector2dSerializer, p).toString())
+    assertEquals("[${p.x},${p.y}]", AirVision.json.stringify(p))
   }
 
   @Test

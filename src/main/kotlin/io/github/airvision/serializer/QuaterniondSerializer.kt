@@ -14,20 +14,14 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ArrayListClassDesc
-import kotlinx.serialization.internal.DoubleDescriptor
-import kotlinx.serialization.withName
+import kotlinx.serialization.StructureKind
 import org.spongepowered.math.imaginary.Quaterniond
 
 @Serializer(forClass = Quaterniond::class)
 object QuaterniondSerializer : KSerializer<Quaterniond> {
 
-  override val descriptor: SerialDescriptor = ArrayListClassDesc(DoubleDescriptor.withName("Quaterniond"))
-      /*
-      SerialDescriptor("Quaterniond", kind = StructureKind.LIST) {
-        listDescriptor<Double>()
-      }
-      */
+  override val descriptor: SerialDescriptor =
+      SerialDescriptor("Quaterniond", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): Quaterniond {
     return decoder.collection(descriptor) {
