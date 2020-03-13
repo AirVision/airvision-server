@@ -18,6 +18,6 @@ class OfTest {
   @Test
   fun `get all airports`() = runBlocking {
     val of = OpenFlights()
-    of.getAirports().asSequence().take(10).forEach { println(it) }
+    of.getAll().asSequence().take(10).forEach { println(it) }
   }
 }

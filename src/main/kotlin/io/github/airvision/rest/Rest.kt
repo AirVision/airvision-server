@@ -13,6 +13,7 @@ import io.github.airvision.AirVision
 import io.github.airvision.rest.openflights.OpenFlights
 import io.github.airvision.rest.openskynetwork.OpenSkyNetwork
 import io.github.airvision.rest.openskynetwork.OsnCredentials
+import io.github.airvision.service.AirportService
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.install
@@ -84,7 +85,7 @@ class Rest(private val config: Config = loadRestConfig()) {
 
 class RestContext(
     val osn: OpenSkyNetwork,
-    val of: OpenFlights
+    val airports: AirportService
 )
 
 typealias PipelineContext = PipelineContext<Unit, ApplicationCall>

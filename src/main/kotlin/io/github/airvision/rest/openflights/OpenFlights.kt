@@ -14,45 +14,51 @@ import io.github.airvision.Airport
 import io.github.airvision.AirportIata
 import io.github.airvision.AirportIcao
 import io.github.airvision.GeodeticPosition
+import io.github.airvision.service.AirportService
 import io.github.airvision.util.mapIfNotNull
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.hours
 
-class OpenFlights {
+class OpenFlights : AirportService {
 
   companion object {
     private val AirportsReadInvalidation = 24.hours.toLongMilliseconds()
   }
 
   @Volatile private var airportCache: AirportCache? = null
+  private val mutex = Mutex()
 
-  /**
-   * Gets all the known [Airport]s.
-   */
-  suspend fun getAirports(): Collection<Airport> =
+  override suspend fun getAll(): Collection<Airport> =
       this.getAirportsCache().map.values
 
-  /**
-   * Gets the airport for the given [AirportIcao], if it exists.
-   */
-  suspend fun getAirport(icao: AirportIcao): Airport? =
+  override suspend fun get(icao: AirportIcao): Airport? =
       this.getAirportsCache().map[icao]
 
   /**
    * Gets all the known [Airport]s mapped by their id.
    */
   private suspend fun getAirportsCache(): AirportCache {
-    var cache = this.airportCache
+    var cache = airportCache
     if (cache == null || System.currentTimeMillis() - cache.readTime > AirportsReadInvalidation) {
-      val airports = requestAirports()
-      val map = airports
-          .associateBy { it.icao }
-      cache = AirportCache(map,
-          System.currentTimeMillis())
-      this.airportCache = cache
+      // Make sure only one request is made for the data
+      mutex.withLock {
+        cache = airportCache
+        if (cache == null) {
+          cache = loadCache()
+          airportCache = cache
+        }
+      }
     }
-    return cache
+    return cache!!
+  }
+
+  private suspend fun loadCache(): AirportCache {
+    val airports = requestAirports()
+    val map = airports.associateBy { it.icao }
+    return AirportCache(map, System.currentTimeMillis())
   }
 
   private class AirportCache(

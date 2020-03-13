@@ -25,12 +25,13 @@ internal class LocationPatternConverter private constructor(private val format: 
 
   // Packages that will be ignored
   private val ignoredPackages = arrayOf("java.", "kotlin.io.")
+  private val pathRegex = "%path".toRegex()
 
   override fun format(event: LogEvent, builder: StringBuilder) {
     val element = calculateLocation(event.loggerFqcn)
     if (element != null) {
       // quoteReplacement is required for elements leading to inner class (containing a $ character)
-      builder.append(this.format.replace("%path".toRegex(),
+      builder.append(format.replace(pathRegex,
           Matcher.quoteReplacement(element.toString())))
     }
   }
@@ -48,14 +49,7 @@ internal class LocationPatternConverter private constructor(private val format: 
       if (className == "java.lang.Throwable" && stackTrace[i].methodName == "printStackTrace")
         return null
       // Ignore Kotlin and Java packages
-      var isIgnored = false
-      for (ignored in ignoredPackages) {
-        if (className.startsWith(ignored)) {
-          isIgnored = true
-          break
-        }
-      }
-      if (!isIgnored)
+      if (!ignoredPackages.any { className.startsWith(it) })
         last = stackTrace[i]
     }
 
