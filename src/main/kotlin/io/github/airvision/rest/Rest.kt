@@ -10,6 +10,9 @@
 package io.github.airvision.rest
 
 import io.github.airvision.AirVision
+import io.github.airvision.rest.openflights.OpenFlights
+import io.github.airvision.rest.openskynetwork.OpenSkyNetwork
+import io.github.airvision.rest.openskynetwork.OsnCredentials
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.install
@@ -20,25 +23,68 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.SerializationConverter
 import io.ktor.util.pipeline.PipelineContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.stringify
+import java.nio.file.Files
+import java.nio.file.Paths
 
-/**
- * Setup of the server of the REST Web Service.
- */
-fun Application.setupRest() {
-  // Install Json Content Conversion
-  install(ContentNegotiation) {
-    register(ContentType.Application.Json, RestSerializationConverter(
-        SerializationConverter(AirVision.json)))
+fun loadRestConfig(): Rest.Config {
+  val json = Json {
+    prettyPrint = true
   }
+  val path = Paths.get("rest.json")
+  return if (Files.exists(path)) {
+    json.parse(Rest.Config.serializer(), Files.readAllLines(path).joinToString("\n"))
+  } else {
+    val config = Rest.Config()
+    Files.newBufferedWriter(path).use { writer ->
+      writer.write(json.stringify(config))
+    }
+    config
+  }
+}
 
-  routing {
-    route("/v1") {
-      get("/visible_aircraft") { handleVisibleAircraftRequest() }
-      get("/aircrafts") { handleAircraftsRequest() }
-      get("/aircraft") { handleAircraftRequest() }
-      get("/aircraft_trajectory") { handleAircraftTrajectoryRequest() }
+class Rest(private val config: Config = loadRestConfig()) {
+
+  @Serializable
+  class Config(
+      @SerialName("osn_credentials") val osnCredentials: OsnCredentials = OsnCredentials("", "")
+  )
+
+  /**
+   * Setup of the server of the REST Web Service.
+   */
+  fun setup(application: Application) {
+    val osn = OpenSkyNetwork(if (config.osnCredentials.username.isEmpty()) null else config.osnCredentials)
+    val of = OpenFlights()
+
+    val context = RestContext(osn, of)
+
+    // Build module
+    application.apply {
+      // Install Json Content Conversion
+      install(ContentNegotiation) {
+        register(ContentType.Application.Json, RestSerializationConverter(
+            SerializationConverter(AirVision.json)))
+      }
+
+      routing {
+        route("/v1") {
+          get("/visible_aircraft") { handleVisibleAircraftRequest(context) }
+          get("/aircrafts") { handleAircraftsRequest(context) }
+          get("/aircraft") { handleAircraftRequest(context) }
+          get("/aircraft_trajectory") { handleAircraftTrajectoryRequest(context) }
+        }
+      }
     }
   }
 }
 
-typealias RestContext = PipelineContext<Unit, ApplicationCall>
+class RestContext(
+    val osn: OpenSkyNetwork,
+    val of: OpenFlights
+)
+
+typealias PipelineContext = PipelineContext<Unit, ApplicationCall>

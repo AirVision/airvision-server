@@ -11,12 +11,14 @@ package io.github.airvision.rest
 
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.AircraftIcao24
+import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.time.Instant
 
 @Serializable
 data class AircraftInfo(
-    val time: Int,
+    @ContextualSerialization val time: Instant,
     val icao24: AircraftIcao24,
     val position: GeodeticPosition,
     val velocity: Double,

@@ -9,27 +9,29 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
-import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.stringify
 import org.junit.jupiter.api.Test
 
-@ImplicitReflectionSerializer
 class RequestAircraftTest {
 
   @Test
-  fun `get 0xa092fe`() = testApp {
-    val icao = AircraftIcao24.parse("a092fe")
+  fun `get A808C4`() = testApp {
+    val icao24 = AircraftIcao24.parse("A808C4")
     handleRequest(HttpMethod.Get, "/v1/aircraft") {
       addHeader(HttpHeaders.ContentType, "application/json")
-      setBody(AirVision.json.stringify(AircraftRequest(icao)))
+      setBody("""{
+        "icao24": "$icao24"
+      }""".trimIndent())
     }.apply {
-      println(response.content)
+      val info = response.parse<AircraftInfo>()
+      assert(info.isRight())
+      info.fold({}, {
+        assert(it.icao24 == icao24)
+      })
     }
   }
 }

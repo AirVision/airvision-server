@@ -9,6 +9,9 @@
  */
 package io.github.airvision.rest.openskynetwork
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 class OsnCredentials(
     val username: String,
     val password: String

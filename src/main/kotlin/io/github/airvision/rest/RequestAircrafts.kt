@@ -25,7 +25,7 @@ data class AircraftsRequest(
     @ContextualSerialization val size: Vector2d
 )
 
-suspend fun RestContext.handleAircraftsRequest() {
+suspend fun PipelineContext.handleAircraftsRequest(context: RestContext) {
   val request = call.receive<AircraftRequest>()
 
   // TODO: Respond with something

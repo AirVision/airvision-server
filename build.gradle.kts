@@ -58,6 +58,7 @@ dependencies {
 
   implementation(ktor("serialization"))
   implementation(ktor("server-netty"))
+  implementation(ktor("client-apache"))
   implementation(ktor("client-core"))
   implementation(ktor("client-serialization-jvm"))
 
@@ -70,7 +71,6 @@ dependencies {
   // Logging
   val log4jVersion = "2.12.1"
   implementation(group = "org.apache.logging.log4j", name = "log4j-core", version = log4jVersion)
-  implementation(group = "org.apache.logging.log4j", name = "log4j-jul", version = log4jVersion)
   implementation(group = "org.apache.logging.log4j", name = "log4j-api", version = log4jVersion)
   implementation(group = "org.apache.logging.log4j", name = "log4j-iostreams", version = log4jVersion)
   implementation(group = "com.lmax", name = "disruptor", version = "3.4.2")

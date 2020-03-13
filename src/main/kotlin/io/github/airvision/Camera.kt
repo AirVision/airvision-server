@@ -62,7 +62,7 @@ private const val Epsilon = 0.00001
 fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
   var pos = camera.viewMatrix.transform(this)
 
-  // Point is behind camera, so not visible
+  // Point is behind the camera, so not visible
   if (pos.z < 0)
     return null
 

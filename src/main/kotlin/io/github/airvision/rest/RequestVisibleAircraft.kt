@@ -45,7 +45,7 @@ data class VisibleAircraftResponse(
     val aircrafts: List<AircraftInfo>
 )
 
-suspend fun RestContext.handleVisibleAircraftRequest() {
+suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
   val request = call.receive<VisibleAircraftRequest>()
 
   // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix

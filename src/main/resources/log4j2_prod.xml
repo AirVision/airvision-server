@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
   <Appenders>
-    <TerminalConsole name="Console">
+    <Console name="Console">
       <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger{1}]: %msg%n"/>
-    </TerminalConsole>
-    <TerminalConsole name="DefaultConsole">
+    </Console>
+    <Console name="DefaultConsole">
       <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level]: %msg%n"/>
-    </TerminalConsole>
+    </Console>
     <RollingRandomAccessFile name="File" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz"
                              immediateFlush="false">
       <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] [%logger{1}]: %msg%n"/>

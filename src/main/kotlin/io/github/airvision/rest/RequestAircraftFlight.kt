@@ -43,7 +43,7 @@ data class Waypoint(
     @SerialName("on_ground") val onGround: Boolean
 )
 
-suspend fun RestContext.handleAircraftTrajectoryRequest() {
+suspend fun PipelineContext.handleAircraftTrajectoryRequest(context: RestContext) {
   val request = call.receive<AircraftTrajectoryRequest>()
 
   // TODO: Respond with something

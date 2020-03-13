@@ -23,12 +23,19 @@ data class AircraftRequest(
     val icao24: AircraftIcao24
 )
 
-suspend fun RestContext.handleAircraftRequest() {
+suspend fun PipelineContext.handleAircraftRequest(context: RestContext) {
   val request = call.receive<AircraftRequest>()
 
-  // TODO: Respond with something
-
-  // call.respond(error.badRequest())
-  call.respond(AircraftInfo(0, AircraftIcao24(0x052f),
-      GeodeticPosition(0.0, 0.0, 0.0), 0.0, true))
+  val osn = context.osn.getAircraft(request.icao24)
+  if (osn == null) {
+    call.respond(error.notFound("Aircraft with icao24 ${request.icao24} not found"))
+    return
+  }
+  if (osn.velocity == null || osn.latitude == null || osn.longitude == null) {
+    call.respond(error.notFound("Aircraft with icao24 ${request.icao24} has incomplete data"))
+    return
+  }
+  val info = AircraftInfo(time = osn.lastContact, icao24 = osn.icao24, onGround = osn.onGround,
+      velocity = osn.velocity.toDouble(), position = GeodeticPosition(osn.latitude.toDouble(), osn.longitude.toDouble()))
+  call.respond(info)
 }
