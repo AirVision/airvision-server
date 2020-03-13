@@ -9,17 +9,20 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.AircraftIcao
+import io.github.airvision.GeodeticPosition
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
+import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
+import org.spongepowered.math.vector.Vector2d
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-aircrafts
 
 @Serializable
 data class AircraftsRequest(
-    val position: AircraftIcao
+    val position: GeodeticPosition,
+    @ContextualSerialization val size: Vector2d
 )
 
 suspend fun RestContext.handleAircraftsRequest() {

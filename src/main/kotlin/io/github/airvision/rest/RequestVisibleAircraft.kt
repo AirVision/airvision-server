@@ -21,11 +21,13 @@ import kotlinx.serialization.Serializable
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector3d
+import java.time.Instant
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
 
 @Serializable
 data class VisibleAircraftRequest(
+    @ContextualSerialization val time: Instant,
     val position: GeodeticPosition,
     @ContextualSerialization val rotation: Vector3d,
     @ContextualSerialization val fov: Vector2d,
@@ -46,7 +48,9 @@ data class VisibleAircraftResponse(
 suspend fun RestContext.handleVisibleAircraftRequest() {
   val request = call.receive<VisibleAircraftRequest>()
 
-  val enuRotation = request.rotation.let { Quaterniond.fromAxesAnglesRad(it.x, it.y, it.z) } // TODO: Is the rotation good?
+  // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
+  // TODO: rotation must be modified based on Figure 3 orientation
+  val enuRotation = request.rotation.let { Quaterniond.fromAxesAnglesRad(it.x, it.y, it.z) }
   val enuTransform = EnuTransform(request.position, enuRotation)
 
   val transform = enuTransform.toEcefTransform()

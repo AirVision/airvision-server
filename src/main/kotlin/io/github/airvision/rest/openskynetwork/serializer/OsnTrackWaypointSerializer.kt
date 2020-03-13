@@ -10,6 +10,7 @@
 package io.github.airvision.rest.openskynetwork.serializer
 
 import io.github.airvision.rest.openskynetwork.OsnTrackResponse
+import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.decodeNullableFloat
 import io.github.airvision.serializer.structure
 import kotlinx.serialization.Decoder
@@ -26,7 +27,7 @@ object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
   override fun deserialize(decoder: Decoder): OsnTrackResponse.Waypoint {
     return decoder.structure(descriptor) {
       decodeElementIndex(descriptor)
-      val time = decodeIntElement(descriptor, 0)
+      val time = decodeSerializableElement(descriptor, 0, InstantSerializer)
       decodeElementIndex(descriptor)
       val latitude = decodeNullableFloat(descriptor, 1)
       decodeElementIndex(descriptor)

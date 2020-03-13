@@ -10,6 +10,7 @@
 package io.github.airvision
 
 import io.github.airvision.rest.setupRest
+import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.QuaterniondSerializer
 import io.github.airvision.serializer.Vector2dSerializer
 import io.github.airvision.serializer.Vector3dSerializer
@@ -37,6 +38,7 @@ object AirVision {
   @Suppress("EXPERIMENTAL_API_USAGE")
   val json = Json {
     val module = SerializersModule {
+      contextual(InstantSerializer)
       contextual(QuaterniondSerializer)
       contextual(Vector2dSerializer)
       contextual(Vector3dSerializer)

@@ -11,10 +11,10 @@ package io.github.airvision.rest.openskynetwork.serializer
 
 import io.github.airvision.rest.openskynetwork.OsnAircraft
 import io.github.airvision.rest.openskynetwork.OsnPositionSource
+import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.collection
 import io.github.airvision.serializer.decodeIcao24
 import io.github.airvision.serializer.decodeNullableFloat
-import io.github.airvision.serializer.decodeNullableInt
 import io.github.airvision.serializer.decodeNullableIntArray
 import io.github.airvision.serializer.decodeNullableString
 import io.github.airvision.util.toNullIfEmpty
@@ -23,6 +23,7 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
+import kotlinx.serialization.builtins.nullable
 
 object OsnAircraftSerializer : KSerializer<OsnAircraft> {
 
@@ -30,6 +31,7 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
       SerialDescriptor("OsnAircraft", kind = StructureKind.LIST)
 
   private val positionSources = OsnPositionSource.values()
+  private val nullableInstantSerializer = InstantSerializer.nullable
 
   override fun deserialize(decoder: Decoder): OsnAircraft {
     return decoder.collection(descriptor) {
@@ -40,9 +42,9 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
       decodeElementIndex(descriptor)
       val originCountry = decodeStringElement(descriptor, 2)
       decodeElementIndex(descriptor)
-      val timePosition = decodeNullableInt(descriptor, 3)
+      val timePosition = decodeNullableSerializableElement(descriptor, 3, nullableInstantSerializer)
       decodeElementIndex(descriptor)
-      val lastContact = decodeIntElement(descriptor, 4)
+      val lastContact = decodeSerializableElement(descriptor, 4, InstantSerializer)
       decodeElementIndex(descriptor)
       val longitude = decodeNullableFloat(descriptor, 5)
       decodeElementIndex(descriptor)

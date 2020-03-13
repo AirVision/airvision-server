@@ -10,7 +10,7 @@
 package io.github.airvision.rest
 
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.AircraftIcao
+import io.github.airvision.AircraftIcao24
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftRequest(
-    val icao: AircraftIcao
+    val icao24: AircraftIcao24
 )
 
 suspend fun RestContext.handleAircraftRequest() {
@@ -29,6 +29,6 @@ suspend fun RestContext.handleAircraftRequest() {
   // TODO: Respond with something
 
   // call.respond(error.badRequest())
-  call.respond(AircraftInfo(0, AircraftIcao(0x052f),
+  call.respond(AircraftInfo(0, AircraftIcao24(0x052f),
       GeodeticPosition(0.0, 0.0, 0.0), 0.0, true))
 }

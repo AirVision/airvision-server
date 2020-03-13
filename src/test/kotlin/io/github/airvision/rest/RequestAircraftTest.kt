@@ -10,7 +10,7 @@
 package io.github.airvision.rest
 
 import io.github.airvision.AirVision
-import io.github.airvision.AircraftIcao
+import io.github.airvision.AircraftIcao24
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.testing.handleRequest
@@ -24,7 +24,7 @@ class RequestAircraftTest {
 
   @Test
   fun `get 0xa092fe`() = testApp {
-    val icao = AircraftIcao.parse("a092fe")
+    val icao = AircraftIcao24.parse("a092fe")
     handleRequest(HttpMethod.Get, "/v1/aircraft") {
       addHeader(HttpHeaders.ContentType, "application/json")
       setBody(AirVision.json.stringify(AircraftRequest(icao)))

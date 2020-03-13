@@ -9,10 +9,12 @@
  */
 package io.github.airvision.rest.openskynetwork
 
+import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
+import java.time.Instant
 
 @Serializable
 data class OsnStatesResponse(
-    val time: Int,
+    @ContextualSerialization val time: Instant,
     val states: List<OsnAircraft>
 )

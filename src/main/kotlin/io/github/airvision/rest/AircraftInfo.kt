@@ -10,14 +10,14 @@
 package io.github.airvision.rest
 
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.AircraftIcao
+import io.github.airvision.AircraftIcao24
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftInfo(
     val time: Int,
-    val icao: AircraftIcao,
+    val icao24: AircraftIcao24,
     val position: GeodeticPosition,
     val velocity: Double,
     @SerialName("on_ground") val onGround: Boolean,

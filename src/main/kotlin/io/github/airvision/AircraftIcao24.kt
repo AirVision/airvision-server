@@ -9,7 +9,7 @@
  */
 package io.github.airvision
 
-import io.github.airvision.serializer.AircraftIcaoSerializer
+import io.github.airvision.serializer.AircraftIcao24Serializer
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,8 +18,8 @@ import kotlinx.serialization.Serializable
  *
  * @property address The 24 bit address
  */
-@Serializable(with = AircraftIcaoSerializer::class)
-class AircraftIcao(val address: Int) {
+@Serializable(with = AircraftIcao24Serializer::class)
+class AircraftIcao24(val address: Int) {
 
   init {
     check(this.address <= 0xffffff) {
@@ -35,11 +35,11 @@ class AircraftIcao(val address: Int) {
   companion object {
 
     /**
-     * Parses a hexadecimal string as an [AircraftIcao].
+     * Parses a hexadecimal string as an [AircraftIcao24].
      */
-    fun parse(value: String): AircraftIcao {
+    fun parse(value: String): AircraftIcao24 {
       check(value.length <= 6)
-      return AircraftIcao(value.toInt(16))
+      return AircraftIcao24(value.toInt(16))
     }
   }
 }
