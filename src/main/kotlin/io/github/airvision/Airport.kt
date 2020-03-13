@@ -9,13 +9,15 @@
  */
 package io.github.airvision
 
+import kotlinx.serialization.Serializable
+
 /**
  * Represents an airport.
  */
+@Serializable
 data class Airport(
-    val id: Int,
-    val icao: AirportIcao?,
-    val iata: String?,
+    val icao: AirportIcao,
+    val iata: AirportIata,
     val name: String,
     val city: String,
     val country: String,

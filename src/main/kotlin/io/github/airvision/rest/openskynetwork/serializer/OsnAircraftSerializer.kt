@@ -17,6 +17,7 @@ import io.github.airvision.serializer.decodeNullableFloat
 import io.github.airvision.serializer.decodeNullableInt
 import io.github.airvision.serializer.decodeNullableIntArray
 import io.github.airvision.serializer.decodeNullableString
+import io.github.airvision.util.toNullIfEmpty
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
@@ -35,7 +36,7 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
       decodeElementIndex(descriptor)
       val icao24 = decodeIcao24(descriptor, 0)
       decodeElementIndex(descriptor)
-      val callsign = decodeNullableString(descriptor, 1)?.trim()
+      val callsign = decodeNullableString(descriptor, 1)?.trim()?.toNullIfEmpty()
       decodeElementIndex(descriptor)
       val originCountry = decodeStringElement(descriptor, 2)
       decodeElementIndex(descriptor)

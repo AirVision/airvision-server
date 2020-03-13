@@ -11,3 +11,6 @@ package io.github.airvision.util
 
 inline fun <T : Any, R> T?.mapIfNotNull(fn: (T) -> R): R? =
     if (this == null) null else fn(this)
+
+inline fun String.toNullIfEmpty(): String? =
+    if (this.isEmpty()) null else this

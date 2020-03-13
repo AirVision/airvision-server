@@ -40,7 +40,7 @@ fun EnuTransform.toEcefTransform(): Transform {
 }
 
 /**
- * Gets a rotation matrix that can be used to convert from a ENU coordinate system
+ * Gets a rotation matrix that can be used to convert from an ENU coordinate system
  * at the target position to the ECEF coordinate system.
  */
 private fun GeodeticPosition.getEnuToEcefRotationMatrix(): Matrix3d {

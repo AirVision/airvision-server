@@ -67,8 +67,8 @@ class OpenSkyNetwork(
     return this.client.get(baseUrl + path)
   }
 
-  private val aircraftCache = buildCache<AircraftIcao, OsnAircraft?> { requestAircraft(it) }
-  private val aircraftTrackCache = buildCache<AircraftIcao, OsnTrackResponse?> { requestAircraftTrack(it) }
+  private val aircraftCache = buildCache(::requestAircraft)
+  private val aircraftTrackCache = buildCache(::requestAircraftTrack)
 
   private fun <K, V> buildCache(loader: suspend (key: K) -> V): AsyncLoadingCache<K, V> {
     return Caffeine.newBuilder()
