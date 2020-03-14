@@ -13,6 +13,7 @@ import io.github.airvision.serializer.GeodeticPositionSerializer
 import io.github.airvision.util.toString
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.vector.Vector3d
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -68,4 +69,20 @@ fun GeodeticPosition.toEcefPosition(): Vector3d {
   val z = (B_POW2_DIV_BY_A_POW2 * n + altitude) * sinLat
 
   return Vector3d(x, y, z)
+}
+
+private const val AVG_RADIUS = (A + B) / 2.0
+
+/**
+ * Gets the distance between two [GeodeticPosition]s along the surface. This ignores altitude.
+ */
+fun GeodeticPosition.surfaceDistance(other: GeodeticPosition): Double {
+  // https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
+  val dLat = Math.toRadians(other.latitude - latitude)
+  val dLon = Math.toRadians(other.longitude - longitude)
+  val a = sin(dLat / 2) * sin(dLat / 2) +
+      cos(Math.toRadians(latitude)) * cos(Math.toRadians(other.latitude)) *
+      sin(dLon / 2) * sin(dLon / 2)
+  val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+  return AVG_RADIUS * c
 }

@@ -49,7 +49,7 @@ suspend fun PipelineContext.handleAircraftTrajectoryRequest(context: RestContext
   val request = call.receive<AircraftTrajectoryRequest>()
   val icao24 = request.icao24
 
-  val result = coroutineScope {
+  val response = coroutineScope {
     val trackTask = async { context.osn.getTrack(icao24) }
     val flightTask = async { context.osn.getFlight(icao24) }
 
@@ -97,5 +97,5 @@ suspend fun PipelineContext.handleAircraftTrajectoryRequest(context: RestContext
         estimatedArrivalTime = estimatedArrivalTime, track = waypoints)
   }
 
-  call.respond(result)
+  call.respond(response)
 }

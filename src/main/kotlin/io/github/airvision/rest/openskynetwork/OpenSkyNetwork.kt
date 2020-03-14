@@ -19,6 +19,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
+import io.ktor.client.request.url
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -42,13 +43,12 @@ class OpenSkyNetwork(
 
   private val rateLimit = if (credentials != null) RateLimit else RateLimitAnonymous
 
-  private val baseUrl = run {
-    val base = "opensky-network.org/api"
-    val https = "https://"
+  private val host = run {
+    val base = "opensky-network.org"
     if (credentials == null) {
-      "$https$base"
+      base
     } else {
-      "$https${credentials.username}:${credentials.password}@$base"
+      "${credentials.username}:${credentials.password}@$base"
     }
   }
 
@@ -62,11 +62,15 @@ class OpenSkyNetwork(
    * Makes a http request to the OpenSky Network API.
    */
   private suspend inline fun <reified T> request(path: String, parameters: Map<String, Any> = mapOf()): T {
-    val params = parameters.entries.joinToString(separator = "&")
-    var url = baseUrl + path
-    if (params.isNotEmpty())
-      url += "?$params"
-    return this.client.get(baseUrl + path)
+    return this.client.get {
+      url(scheme = "https", host = host, path = "/api$path") {
+        this.parameters.apply {
+          parameters.forEach { (key, value) ->
+            append(key, value.toString())
+          }
+        }
+      }
+    }
   }
 
   private val aircraftCache = buildCache<AircraftIcao24, OsnAircraft?> { requestAircraft(it) }
@@ -90,7 +94,7 @@ class OpenSkyNetwork(
       if (time != null)
         put("time", time)
     })
-    return response.states.firstOrNull()
+    return response.states?.firstOrNull()
   }
 
   /**
@@ -123,12 +127,12 @@ class OpenSkyNetwork(
 
     // Cache the aircrafts, so we need less individual calls, only do this
     // for ones that don't use a time
-    if (time == null) {
+    if (time == null && response.states != null) {
       for (aircraft in response.states)
         aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
     }
 
-    return response.states
+    return response.states ?: listOf()
   }
 
   /**
@@ -138,10 +142,12 @@ class OpenSkyNetwork(
     val response = request<OsnStatesResponse>("/states/all")
 
     // Cache the aircrafts, so we need less individual calls
-    for (aircraft in response.states)
-      aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
+    if (response.states != null) {
+      for (aircraft in response.states)
+        aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
+    }
 
-    return response.states
+    return response.states ?: listOf()
   }
 
   private suspend fun requestAircraftTrack(icao24: AircraftIcao24): OsnTrackResponse? {

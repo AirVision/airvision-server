@@ -20,15 +20,24 @@ import kotlin.reflect.KClass
 /**
  * Creates a new string.
  */
-fun Any.toString(
+inline fun Any.toString(
     brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
     omitNullValues: Boolean = false,
-    fn: ToStringHelper.() -> Unit): String {
+    fn: ToStringHelper.() -> Unit
+): String {
   contract {
     callsInPlace(fn, InvocationKind.EXACTLY_ONCE)
   }
-  return ToStringHelper(this::class.getDefaultName(), brackets, omitNullValues).also(fn).toString()
+  return toStringHelper(brackets, omitNullValues).also(fn).toString()
 }
+
+/**
+ * Creates a new [ToStringHelper] for the target object.
+ */
+fun Any.toStringHelper(
+    brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
+    omitNullValues: Boolean = false
+) = ToStringHelper(this::class.getDefaultName(), brackets, omitNullValues)
 
 /**
  * Creates a new string.

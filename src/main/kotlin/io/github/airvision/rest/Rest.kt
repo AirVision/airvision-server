@@ -51,8 +51,18 @@ class Rest(private val config: Config = loadRestConfig()) {
 
   @Serializable
   class Config(
-      @SerialName("osn_credentials") val osnCredentials: OsnCredentials = OsnCredentials("", "")
-  )
+      @SerialName("osn_credentials") val osnCredentials: OsnCredentials = OsnCredentials("", ""),
+      @SerialName("visible_aircraft") val visibleAircraft: VisibleAircraft = VisibleAircraft()
+  ) {
+
+    /**
+     * @property range The range in which aircraft's are valid to be selected, in degrees
+     */
+    @Serializable
+    class VisibleAircraft(
+        val range: Double = 4.0 // TODO: Find a good value
+    )
+  }
 
   /**
    * Setup of the server of the REST Web Service.
@@ -61,7 +71,7 @@ class Rest(private val config: Config = loadRestConfig()) {
     val osn = OpenSkyNetwork(if (config.osnCredentials.username.isEmpty()) null else config.osnCredentials)
     val of = OpenFlights()
 
-    val context = RestContext(osn, of)
+    val context = RestContext(config, osn, of)
 
     // Build module
     application.apply {
@@ -84,6 +94,7 @@ class Rest(private val config: Config = loadRestConfig()) {
 }
 
 class RestContext(
+    val config: Rest.Config,
     val osn: OpenSkyNetwork,
     val airports: AirportService
 )

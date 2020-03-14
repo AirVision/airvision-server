@@ -70,9 +70,11 @@ dependencies {
 
   // Logging
   val log4jVersion = "2.12.1"
-  implementation(group = "org.apache.logging.log4j", name = "log4j-core", version = log4jVersion)
-  implementation(group = "org.apache.logging.log4j", name = "log4j-api", version = log4jVersion)
-  implementation(group = "org.apache.logging.log4j", name = "log4j-iostreams", version = log4jVersion)
+  fun log4j(module: String) = "org.apache.logging.log4j:log4j-$module:$log4jVersion"
+
+  implementation(log4j("core"))
+  implementation(log4j("api"))
+  implementation(log4j("iostreams"))
   implementation(group = "com.lmax", name = "disruptor", version = "3.4.2")
 
   // Math: Vectors, Quaterions, etc.
