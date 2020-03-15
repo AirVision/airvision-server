@@ -18,6 +18,12 @@ data class GeodeticBounds(
 
   companion object {
 
+    private const val latitudeMax = 85
+    private const val latitudeRange = latitudeMax * 2
+
+    private const val longitudeMax = 180
+    private const val longitudeRange = longitudeMax * 2
+
     fun ofCenterAndSize(position: GeodeticPosition, size: Vector2d): GeodeticBounds {
       var minLatitude = position.latitude - size.x / 2
       var maxLatitude = position.latitude + size.x / 2
@@ -25,15 +31,15 @@ data class GeodeticBounds(
       var minLongitude = position.longitude - size.y / 2
       var maxLongitude = position.longitude + size.y / 2
 
-      if (minLatitude < -85)
-        minLatitude += 85
-      if (maxLatitude > 85)
-        maxLatitude -= 85
+      if (minLatitude < -latitudeMax)
+        minLatitude += latitudeRange
+      if (maxLatitude > latitudeMax)
+        maxLatitude -= latitudeRange
 
-      if (minLongitude < -180)
-        minLongitude += 180
-      if (maxLongitude > 180)
-        maxLongitude -= 180
+      if (minLongitude < -longitudeMax)
+        minLongitude += longitudeRange
+      if (maxLongitude > longitudeMax)
+        maxLongitude -= longitudeRange
 
       return GeodeticBounds(
           GeodeticPosition(minLatitude, minLongitude),
