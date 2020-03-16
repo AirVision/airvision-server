@@ -34,15 +34,6 @@ class CameraTest {
     assertSamePoint(Vector2d(0.5, 0.5), Vector3d(-1.0, 0.0, 1.0).toViewPosition(camera))
     // Right
     assertSamePoint(Vector2d(1.0, 0.5), Vector3d(0.0, 0.0, 1.0).toViewPosition(camera))
-
-    // assertSamePoint(Vector2d(0.0, 0.0), Vector3d(-1.0, 1.0, 0.0).toViewPosition(camera))
-    // assertSamePoint(Vector2d(0.0, 1.0), Vector3d(-1.0, -1.0, 0.0).toViewPosition(camera))
-
-    // assertSamePoint(Vector2d(0.5, 1.0), Vector3d(-1.0, 1.0, 1.0).toViewPosition(camera))
-    // assertSamePoint(Vector2d(0.5, 0.0), Vector3d(-1.0, -1.0, 1.0).toViewPosition(camera))
-
-    // assertSamePoint(Vector2d(1.0, 1.0), Vector3d(0.0, 1.0, 1.0).toViewPosition(camera))
-    // assertSamePoint(Vector2d(1.0, 0.0), Vector3d(0.0, -1.0, 1.0).toViewPosition(camera))
   }
 
   @Test

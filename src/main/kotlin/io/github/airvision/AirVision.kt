@@ -29,8 +29,8 @@ import org.apache.logging.log4j.io.IoBuilder
  */
 fun main() {
   // Setup Log4j
-  System.setOut(IoBuilder.forLogger(AirVision.logger).setLevel(Level.INFO).buildPrintStream());
-  System.setErr(IoBuilder.forLogger(AirVision.logger).setLevel(Level.ERROR).buildPrintStream());
+  System.setOut(IoBuilder.forLogger(AirVision.logger).setLevel(Level.INFO).buildPrintStream())
+  System.setErr(IoBuilder.forLogger(AirVision.logger).setLevel(Level.ERROR).buildPrintStream())
 
   // TODO: Make port configurable
 

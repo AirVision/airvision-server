@@ -9,6 +9,7 @@
  */
 package io.github.airvision
 
+import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.matrix.Matrix4d
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector3d
@@ -53,6 +54,10 @@ data class Camera(
 
 private const val Epsilon = 0.00001
 
+// Rotation to make swap +z and -z, originally +z was in the direction outside
+// of the camera lens view, but this needs to be -z
+private val invertZAxis = Matrix4d.createRotation(Quaterniond.fromAngleDegAxis(180.0, Vector3d.UNIT_Y))
+
 /**
  * Converts the 3d point to a 2d point within the camera view. Returns
  * null if the point isn't within the camera view.
@@ -67,7 +72,13 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
     return null
 
   pos = camera.projectionMatrix.transform(pos)
-  val x = (-pos.x + 1.0) / 2.0
+  pos = invertZAxis.transform(pos)
+
+  // -1.0..1.0 -> 0.0..1.0
+  // 0.0 is left, 1.0 is right
+  val x = (pos.x + 1.0) / 2.0
+  // -1.0..1.0 -> 1.0..0.0
+  // 0.0 is top, 1.0 is bottom
   val y = 1.0 - (pos.y + 1.0) / 2.0
 
   // Check whether the values are valid, using a epsilon

@@ -9,12 +9,13 @@
  */
 package io.github.airvision
 
+import io.github.airvision.serializer.AirportIcaoSerializer
 import kotlinx.serialization.Serializable
 
 /**
  * Represents the ICAO code which identifies airports.
  */
-@Serializable
+@Serializable(with = AirportIcaoSerializer::class)
 data class AirportIcao(val icao: String) {
 
   override fun toString() = this.icao
