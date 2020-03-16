@@ -7,7 +7,7 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.rest.openflights
+package io.github.airvision.service.openflights
 
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import io.github.airvision.Airport
@@ -74,8 +74,7 @@ class OpenFlights : AirportService {
         .readAll(content)
         .asSequence()
         .map { row -> decodeAirport(row) }
-        .filter { airport -> airport != null }
-        .map { airport -> airport!! }
+        .filterNotNull()
         .toList()
   }
 

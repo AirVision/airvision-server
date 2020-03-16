@@ -10,10 +10,12 @@
 package io.github.airvision.rest
 
 import io.github.airvision.AirVision
-import io.github.airvision.rest.openflights.OpenFlights
-import io.github.airvision.rest.openskynetwork.OpenSkyNetwork
-import io.github.airvision.rest.openskynetwork.OsnCredentials
+import io.github.airvision.service.AircraftService
+import io.github.airvision.service.openflights.OpenFlights
+import io.github.airvision.service.openskynetwork.OpenSkyNetwork
+import io.github.airvision.service.openskynetwork.OsnCredentials
 import io.github.airvision.service.AirportService
+import io.github.airvision.service.openskynetwork.OsnAircraftService
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.install
@@ -69,9 +71,10 @@ class Rest(private val config: Config = loadRestConfig()) {
    */
   fun setup(application: Application) {
     val osn = OpenSkyNetwork(if (config.osnCredentials.username.isEmpty()) null else config.osnCredentials)
-    val of = OpenFlights()
+    val airportService = OpenFlights()
+    val aircraftService = OsnAircraftService(osn)
 
-    val context = RestContext(config, osn, of)
+    val context = RestContext(config, osn, aircraftService, airportService)
 
     // Build module
     application.apply {
@@ -96,6 +99,7 @@ class Rest(private val config: Config = loadRestConfig()) {
 class RestContext(
     val config: Rest.Config,
     val osn: OpenSkyNetwork,
+    val aircrafts: AircraftService,
     val airports: AirportService
 )
 

@@ -9,7 +9,7 @@
  */
 package io.github.airvision.rest.of
 
-import io.github.airvision.rest.openflights.OpenFlights
+import io.github.airvision.service.openflights.OpenFlights
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 

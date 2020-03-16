@@ -12,7 +12,7 @@ package io.github.airvision.rest.osn
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.rest.openskynetwork.OpenSkyNetwork
+import io.github.airvision.service.openskynetwork.OpenSkyNetwork
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 

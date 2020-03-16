@@ -7,10 +7,10 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.rest.openskynetwork.serializer
+package io.github.airvision.service.openskynetwork.serializer
 
-import io.github.airvision.rest.openskynetwork.OsnAircraft
-import io.github.airvision.rest.openskynetwork.OsnPositionSource
+import io.github.airvision.service.openskynetwork.OsnAircraft
+import io.github.airvision.service.openskynetwork.OsnPositionSource
 import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.collection
 import io.github.airvision.serializer.decodeIcao24

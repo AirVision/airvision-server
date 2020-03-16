@@ -7,7 +7,7 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.rest.openskynetwork
+package io.github.airvision.service.openskynetwork
 
 import arrow.core.Either
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
@@ -124,30 +124,32 @@ class OpenSkyNetwork(
       if (time != null)
         put("time", time)
     })
+    val states = response.states ?: listOf()
 
     // Cache the aircrafts, so we need less individual calls, only do this
     // for ones that don't use a time
-    if (time == null && response.states != null) {
-      for (aircraft in response.states)
+    if (time == null) {
+      for (aircraft in states)
         aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
     }
 
-    return response.states ?: listOf()
+    return states
   }
 
   /**
    * Attempts to get all the [OsnAircraft] objects.
    */
-  suspend fun getAircrafts(): List<OsnAircraft> {
+  suspend fun getAircrafts(time: Int? = null): List<OsnAircraft> {
     val response = request<OsnStatesResponse>("/states/all")
+    val states = response.states ?: listOf()
 
     // Cache the aircrafts, so we need less individual calls
-    if (response.states != null) {
-      for (aircraft in response.states)
+    if (time == null) {
+      for (aircraft in states)
         aircraftCache.put(aircraft.icao24, CompletableFuture.completedFuture(aircraft))
     }
 
-    return response.states ?: listOf()
+    return states
   }
 
   private suspend fun requestAircraftTrack(icao24: AircraftIcao24): OsnTrackResponse? {

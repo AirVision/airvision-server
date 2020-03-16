@@ -7,10 +7,10 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.rest.openskynetwork
+package io.github.airvision.service.openskynetwork
 
 import io.github.airvision.AircraftIcao24
-import io.github.airvision.rest.openskynetwork.serializer.OsnAircraftSerializer
+import io.github.airvision.service.openskynetwork.serializer.OsnAircraftSerializer
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
 import java.time.Instant

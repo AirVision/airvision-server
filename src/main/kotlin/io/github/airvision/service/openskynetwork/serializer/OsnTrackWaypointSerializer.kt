@@ -7,9 +7,9 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.rest.openskynetwork.serializer
+package io.github.airvision.service.openskynetwork.serializer
 
-import io.github.airvision.rest.openskynetwork.OsnTrackResponse
+import io.github.airvision.service.openskynetwork.OsnTrackResponse
 import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.decodeNullableFloat
 import io.github.airvision.serializer.structure

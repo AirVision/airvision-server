@@ -9,6 +9,7 @@
  */
 package io.github.airvision.rest
 
+import io.github.airvision.Aircraft
 import io.github.airvision.AircraftIcao24
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -27,7 +28,7 @@ class RequestAircraftTest {
         "icao24": "$icao24"
       }""".trimIndent())
     }.apply {
-      val info = response.parse<AircraftInfo>()
+      val info = response.parse<Aircraft>()
       assert(info.isRight())
       info.fold({}, {
         assert(it.icao24 == icao24)
