@@ -18,12 +18,12 @@ import kotlinx.serialization.Serializable
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-aircraft-flight
 
 @Serializable
-data class AircraftTrajectoryRequest(
+data class AircraftFlightRequest(
     val icao24: AircraftIcao24
 )
 
-suspend fun PipelineContext.handleAircraftTrajectoryRequest(context: RestContext) {
-  val request = call.receive<AircraftTrajectoryRequest>()
+suspend fun PipelineContext.handleAircraftFlightRequest(context: RestContext) {
+  val request = call.receive<AircraftFlightRequest>()
   val icao24 = request.icao24
 
   val response = context.aircraftFlightService.getFlight(icao24)

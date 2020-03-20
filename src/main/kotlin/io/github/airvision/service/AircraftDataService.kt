@@ -11,6 +11,7 @@ package io.github.airvision.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
+import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
@@ -37,12 +38,12 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import java.time.Duration
 import java.time.Instant
-import kotlin.math.abs
+import kotlin.time.Duration
 import kotlin.time.hours
 import kotlin.time.minutes
 import kotlin.time.seconds
+import kotlin.time.toJavaDuration
 
 /**
  * @property database The database
@@ -69,12 +70,12 @@ class AircraftDataService(
           }
         }
       }
-      .expireAfterWrite(Duration.ofSeconds(60))
+      .expireAfterWrite(60.seconds.toJavaDuration())
       .build<AircraftIcao24, AircraftData>()
 
   private val channel = Channel<AircraftData>()
   private val mergeTime = 3.seconds
-  private val validTime = 15.seconds
+  private val validTime = 25.seconds
 
   private var job: Job? = null
 
@@ -114,17 +115,22 @@ class AircraftDataService(
   suspend fun getAircrafts(bounds: GeodeticBounds? = null, time: Instant? = null): Collection<AircraftData> {
     val mapped = mutableMapOf<Int, AircraftData>()
     @Suppress("NAME_SHADOWING")
-    val seconds = (time ?: Instant.now()).epochSecond
-    if (Instant.now().epochSecond - seconds < mergeTime.inSeconds) {
-      for ((_, value) in lastAircraftData.asMap()) {
-        if (abs(value.time.epochSecond - seconds) < mergeTime.inSeconds)
-          mapped[value.icao24.address] = value
+    val time = time ?: Instant.now()
+    val now = Instant.now()
+    fun addCachedValues(maxDiff: Duration) {
+      if (now.minus(time) < maxDiff) {
+        for ((_, value) in lastAircraftData.asMap()) {
+          if (time.minus(value.time).absoluteValue < maxDiff && value.icao24.address !in mapped)
+            mapped[value.icao24.address] = value
+        }
       }
     }
+    addCachedValues(mergeTime)
     newSuspendedTransaction(getDispatcher, db = database) {
+      val seconds = time.epochSecond
       AircraftDataTable
-          .distinctBy(AircraftDataTable.icao24)
           .selectAll()
+          .distinctBy(AircraftDataTable.icao24)
           .orderBy { abs(AircraftDataTable.time - seconds) }
           .andWhere {
             AircraftDataTable.time.between(
@@ -145,6 +151,7 @@ class AircraftDataService(
               mapped[address] = AircraftDataTable.fromRow(it)
           }
     }
+    addCachedValues(validTime)
     return mapped.values
   }
 
@@ -221,7 +228,12 @@ class AircraftDataService(
         val merged = lastData.merge(data)
         lastAircraftData.put(merged.icao24, merged)
       } else {
-        AircraftDataTable.insert(lastData)
+        try {
+          AircraftDataTable.insert(lastData)
+        } catch (ex: Exception) {
+          AirVision.logger.error("An error occurred while trying to insert an entry", ex)
+          println("Difference: $difference")
+        }
         lastAircraftData.put(data.icao24, data)
       }
     } else {

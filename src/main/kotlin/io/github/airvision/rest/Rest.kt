@@ -15,9 +15,13 @@ import io.github.airvision.service.AircraftService
 import io.github.airvision.service.AirportService
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
+import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
+import io.ktor.request.ContentTransformationException
+import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.route
 import io.ktor.routing.routing
@@ -44,12 +48,24 @@ class Rest(
             SerializationConverter(AirVision.json)))
       }
 
+      // Install error handling
+      install(StatusPages) {
+        exception<ContentTransformationException> { cause ->
+          AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
+          call.respond(error.badRequest("Invalid request${if (cause.message != null) ": $cause.message" else ""}"))
+        }
+        exception<Throwable> { cause ->
+          AirVision.logger.error("Error while handling ${call.request.local.uri}", cause)
+          call.respond(error.internalError())
+        }
+      }
+
       routing {
         route("/v1") {
           get("/visible_aircraft") { handleVisibleAircraftRequest(context) }
           get("/aircrafts") { handleAircraftsRequest(context) }
           get("/aircraft") { handleAircraftRequest(context) }
-          get("/aircraft_trajectory") { handleAircraftTrajectoryRequest(context) }
+          get("/aircraft_flight") { handleAircraftFlightRequest(context) }
         }
       }
     }

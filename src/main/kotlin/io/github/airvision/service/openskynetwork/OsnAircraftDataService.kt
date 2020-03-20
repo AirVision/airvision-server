@@ -12,12 +12,16 @@ package io.github.airvision.service.openskynetwork
 import io.github.airvision.AirVision
 import io.github.airvision.service.AircraftData
 import io.github.airvision.util.delay
+import io.ktor.client.features.ServerResponseException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.net.SocketTimeoutException
+import kotlin.time.seconds
 
 @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
 class OsnAircraftDataService(
@@ -41,17 +45,26 @@ class OsnAircraftDataService(
   private suspend fun read() {
     AirVision.logger.info("OSN: Started reading with rate limit ${restService.rateLimit}")
     while (true) {
+      suspend fun handleTimeout() {
+        AirVision.logger.debug("OSN: Timeout while trying to receive data for aircraft's.")
+        delay(1.seconds)
+      }
       try {
-        val (_, aircrafts) = restService.getAircrafts()
+        val (_, aircrafts) = withTimeout(20000) { restService.getAircrafts() }
         AirVision.logger.debug("OSN: Received data for ${aircrafts?.size ?: 0} aircraft's.")
         if (aircrafts != null) {
           for (aircraft in aircrafts)
             dataSendChannel.send(aircraft)
         }
+        delay(restService.rateLimit) // TODO: Possibly read faster?
+      } catch (ex: TimeoutCancellationException) {
+        handleTimeout()
       } catch (ex: SocketTimeoutException) {
-        AirVision.logger.debug("OSN: Timeout while trying to receive data for aircraft's.")
+        handleTimeout()
+      } catch (ex: ServerResponseException) {
+        AirVision.logger.debug("OSN: ${ex.message ?: "Server error"}")
+        delay(1.seconds)
       }
-      delay(restService.rateLimit) // TODO: Possibly read faster?
     }
   }
 }

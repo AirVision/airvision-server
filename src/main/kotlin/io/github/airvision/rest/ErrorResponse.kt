@@ -25,6 +25,9 @@ object error {
 
   fun notFound(message: String? = HttpStatusCode.NotFound.description)
       = error(HttpStatusCode.NotFound, message)
+
+  fun internalError(message: String? = HttpStatusCode.InternalServerError.description)
+      = error(HttpStatusCode.InternalServerError, message)
 }
 
 /**

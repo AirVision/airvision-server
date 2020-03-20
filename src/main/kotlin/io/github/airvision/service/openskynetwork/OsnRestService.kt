@@ -14,10 +14,12 @@ import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.ktor.client.HttpClient
+import io.ktor.client.features.ClientRequestException
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
 import io.ktor.client.request.url
+import io.ktor.http.HttpStatusCode
 import java.time.Instant
 import kotlin.time.seconds
 
@@ -137,11 +139,14 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
           "begin" to beginTime.epochSecond,
           "end" to endTime.epochSecond
       ))
-    }.fold({
-      it.printStackTrace()
-      emptyList()
-    }, {
-      it
+    }.fold({ cause ->
+      if (cause is ClientRequestException && cause.response.status == HttpStatusCode.NotFound) {
+        emptyList()
+      } else {
+        throw cause
+      }
+    }, { flights ->
+      flights
     })
   }
 }

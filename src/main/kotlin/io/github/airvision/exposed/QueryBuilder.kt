@@ -14,7 +14,7 @@ import org.jetbrains.exposed.sql.QueryBuilder
 
 fun QueryBuilder.appendJoined(expressions: Iterable<Expression<*>>, separator: String = ", ") {
   val it = expressions.iterator()
-  if (it.hasNext())
+  if (!it.hasNext())
     return
   append(it.next())
   while (it.hasNext()) {

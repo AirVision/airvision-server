@@ -10,11 +10,9 @@
 package io.github.airvision.util
 
 import java.time.Instant
-import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.milliseconds
-import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
 fun Instant.toDouble(unit: DurationUnit): Double =
@@ -26,5 +24,3 @@ fun Instant.minus(other: Instant): Duration =
 
 fun Instant.minus(duration: Duration): Instant =
     minus(duration.toJavaDuration())
-
-fun Duration.abs(): Duration = abs(inSeconds).seconds

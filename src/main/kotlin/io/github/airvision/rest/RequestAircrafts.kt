@@ -9,6 +9,7 @@
  */
 package io.github.airvision.rest
 
+import io.github.airvision.AirVision
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
 import io.ktor.application.call
@@ -34,5 +35,6 @@ suspend fun PipelineContext.handleAircraftsRequest(context: RestContext) {
 
   val bounds = GeodeticBounds.ofCenterAndSize(position, size)
   val aircrafts = context.aircraftService.getAllWithin(bounds)
+
   call.respond(aircrafts)
 }
