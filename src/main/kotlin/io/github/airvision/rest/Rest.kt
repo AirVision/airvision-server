@@ -20,6 +20,7 @@ import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.request.ContentTransformationException
 import io.ktor.response.respond
 import io.ktor.routing.get
@@ -52,11 +53,15 @@ class Rest(
       install(StatusPages) {
         exception<ContentTransformationException> { cause ->
           AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
-          call.respond(error.badRequest("Invalid request${if (cause.message != null) ": $cause.message" else ""}"))
+          call.respond(HttpStatusCode.BadRequest, error.badRequest(
+              "Invalid request${if (cause.message != null) ": $cause.message" else ""}"))
         }
         exception<Throwable> { cause ->
           AirVision.logger.error("Error while handling ${call.request.local.uri}", cause)
-          call.respond(error.internalError())
+          call.respond(HttpStatusCode.InternalServerError, error.internalError())
+        }
+        status(HttpStatusCode.NotFound) {
+          call.respond(HttpStatusCode.NotFound, error.notFound("Path not found: ${call.request.local.uri}"))
         }
       }
 

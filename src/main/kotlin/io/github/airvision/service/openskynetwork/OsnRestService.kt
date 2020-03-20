@@ -114,11 +114,14 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
           "icao24" to icao24,
           "time" to 0
       ))
-    }.fold({
-      it.printStackTrace()
-      null
-    }, {
-      it
+    }.fold({ cause ->
+      if (cause is ClientRequestException && cause.response.status == HttpStatusCode.NotFound) {
+        null
+      } else {
+        throw cause
+      }
+    }, { track ->
+      track
     })
   }
 
