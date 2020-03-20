@@ -9,6 +9,7 @@
  */
 package io.github.airvision
 
+import io.github.airvision.util.degToRad
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.matrix.Matrix3d
 import kotlin.math.cos
@@ -44,8 +45,8 @@ fun EnuTransform.toEcefTransform(): Transform {
  * at the target position to the ECEF coordinate system.
  */
 private fun GeodeticPosition.getEnuToEcefRotationMatrix(): Matrix3d {
-  val radLat = Math.toRadians(latitude)
-  val radLon = Math.toRadians(longitude)
+  val radLat = degToRad(latitude)
+  val radLon = degToRad(longitude)
 
   val sinLat = sin(radLat)
   val cosLat = cos(radLat)

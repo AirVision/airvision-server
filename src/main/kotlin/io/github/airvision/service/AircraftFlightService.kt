@@ -7,12 +7,11 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.service.openskynetwork
+package io.github.airvision.service
 
-import kotlinx.serialization.Serializable
+import io.github.airvision.AircraftIcao24
 
-@Serializable
-class OsnCredentials(
-    val username: String,
-    val password: String
-)
+interface AircraftFlightService {
+
+  suspend fun getFlight(icao24: AircraftIcao24): AircraftFlight?
+}

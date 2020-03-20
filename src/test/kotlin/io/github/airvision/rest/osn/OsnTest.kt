@@ -12,17 +12,20 @@ package io.github.airvision.rest.osn
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.service.openskynetwork.OpenSkyNetwork
+import io.github.airvision.service.openskynetwork.OsnRestService
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class OsnTest {
 
-  private val osn = OpenSkyNetwork()
+  private val osn = OsnRestService()
 
-  // @Test
+  @Test
   fun `get all aircrafts`() = runBlocking {
-    osn.getAircrafts().asSequence().take(10).forEach { println(it) }
+    (osn.getAircrafts().data ?: listOf())
+        .asSequence()
+        .take(10)
+        .forEach { println(it) }
   }
 
   @Test
@@ -39,6 +42,6 @@ class OsnTest {
     )
     // https://opensky-network.org/api/states/all?lamin=-26.0&lamax=-18.0&lomin=-47.0&lomax=-38.0
     val aircrafts = osn.getAircrafts(bounds)
-    aircrafts.forEach { println(it) }
+    aircrafts.data?.forEach { println(it) }
   }
 }

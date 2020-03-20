@@ -20,8 +20,10 @@ import java.time.Instant
  * @property time The time at which the data was collected
  * @property icao24 The ICAO24 identifier
  * @property position The position, if known
- * @property velocity The velocity, if known
+ * @property velocity The velocity in meters per second, if known
  * @property onGround Whether the aircraft is on the ground
+ * @property verticalRate The vertical rate in meters per second, if known
+ * @property model The aircraft model, if known
  * @property index Only used for rest responses
  */
 @Serializable
@@ -31,6 +33,9 @@ data class Aircraft(
     val position: GeodeticPosition?,
     val velocity: Double?,
     @SerialName("on_ground") val onGround: Boolean,
+    @SerialName("vertical_rate") val verticalRate: Double?,
+    val heading: Double?,
+    val model: AircraftModel?,
     val index: Int? = null
 ) {
 

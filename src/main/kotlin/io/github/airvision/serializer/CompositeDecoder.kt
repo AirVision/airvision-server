@@ -19,6 +19,7 @@ import kotlinx.serialization.builtins.serializer
 private val nullableStringSerializer = String.serializer().nullable
 private val nullableIntSerializer = Int.serializer().nullable
 private val nullableFloatSerializer = Float.serializer().nullable
+private val nullableDoubleSerializer = Double.serializer().nullable
 private val nullableIntArraySerializer = IntArraySerializer().nullable
 
 fun CompositeDecoder.decodeIcao24(desc: SerialDescriptor, index: Int) =
@@ -32,6 +33,9 @@ fun CompositeDecoder.decodeNullableInt(desc: SerialDescriptor, index: Int) =
 
 fun CompositeDecoder.decodeNullableFloat(desc: SerialDescriptor, index: Int) =
     decodeSerializableElement(desc, index, nullableFloatSerializer)
+
+fun CompositeDecoder.decodeNullableDouble(desc: SerialDescriptor, index: Int) =
+    decodeSerializableElement(desc, index, nullableDoubleSerializer)
 
 fun CompositeDecoder.decodeIntArray(desc: SerialDescriptor, index: Int) =
     decodeSerializableElement(desc, index, IntArraySerializer())

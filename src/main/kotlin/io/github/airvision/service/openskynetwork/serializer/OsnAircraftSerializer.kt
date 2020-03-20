@@ -9,11 +9,12 @@
  */
 package io.github.airvision.service.openskynetwork.serializer
 
-import io.github.airvision.service.openskynetwork.OsnAircraft
+import io.github.airvision.service.openskynetwork.OsnAircraftData
 import io.github.airvision.service.openskynetwork.OsnPositionSource
 import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.collection
 import io.github.airvision.serializer.decodeIcao24
+import io.github.airvision.serializer.decodeNullableDouble
 import io.github.airvision.serializer.decodeNullableFloat
 import io.github.airvision.serializer.decodeNullableIntArray
 import io.github.airvision.serializer.decodeNullableString
@@ -25,7 +26,7 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.StructureKind
 import kotlinx.serialization.builtins.nullable
 
-object OsnAircraftSerializer : KSerializer<OsnAircraft> {
+object OsnAircraftSerializer : KSerializer<OsnAircraftData> {
 
   override val descriptor: SerialDescriptor =
       SerialDescriptor("OsnAircraft", kind = StructureKind.LIST)
@@ -33,7 +34,7 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
   private val positionSources = OsnPositionSource.values()
   private val nullableInstantSerializer = InstantSerializer.nullable
 
-  override fun deserialize(decoder: Decoder): OsnAircraft {
+  override fun deserialize(decoder: Decoder): OsnAircraftData {
     return decoder.collection(descriptor) {
       decodeElementIndex(descriptor)
       val icao24 = decodeIcao24(descriptor, 0)
@@ -54,11 +55,11 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
       decodeElementIndex(descriptor)
       val onGround = decodeBooleanElement(descriptor, 8)
       decodeElementIndex(descriptor)
-      val velocity = decodeNullableFloat(descriptor, 9)
+      val velocity = decodeNullableDouble(descriptor, 9)
       decodeElementIndex(descriptor)
-      val trueTrack = decodeNullableFloat(descriptor, 10)
+      val trueTrack = decodeNullableDouble(descriptor, 10)
       decodeElementIndex(descriptor)
-      val verticalRate = decodeNullableFloat(descriptor, 11)
+      val verticalRate = decodeNullableDouble(descriptor, 11)
       decodeElementIndex(descriptor)
       val sensors = decodeNullableIntArray(descriptor, 12)
       decodeElementIndex(descriptor)
@@ -71,11 +72,11 @@ object OsnAircraftSerializer : KSerializer<OsnAircraft> {
       val posSourceIndex = decodeIntElement(descriptor, 16)
       val posSource = if (posSourceIndex >= positionSources.size)
         OsnPositionSource.ADS_B else positionSources[posSourceIndex]
-      OsnAircraft(icao24, callsign, originCountry, timePosition, lastContact, longitude, latitude, baroAltitude,
+      OsnAircraftData(icao24, callsign, originCountry, timePosition, lastContact, longitude, latitude, baroAltitude,
           onGround, velocity, trueTrack, verticalRate, sensors, geoAltitude, squawk, spi, posSource)
     }
   }
 
-  override fun serialize(encoder: Encoder, value: OsnAircraft) =
+  override fun serialize(encoder: Encoder, value: OsnAircraftData) =
       throw UnsupportedOperationException()
 }

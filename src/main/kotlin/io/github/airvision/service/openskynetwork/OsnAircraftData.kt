@@ -10,28 +10,37 @@
 package io.github.airvision.service.openskynetwork
 
 import io.github.airvision.AircraftIcao24
+import io.github.airvision.GeodeticPosition
+import io.github.airvision.service.AircraftData
 import io.github.airvision.service.openskynetwork.serializer.OsnAircraftSerializer
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
 import java.time.Instant
 
 @Serializable(with = OsnAircraftSerializer::class)
-data class OsnAircraft(
-    val icao24: AircraftIcao24,
-    val callsign: String?,
+data class OsnAircraftData(
+    override val icao24: AircraftIcao24,
+    override val callsign: String?,
     val originCountry: String,
     @ContextualSerialization val timePosition: Instant?,
-    @ContextualSerialization val lastContact: Instant,
+    @ContextualSerialization override val time: Instant,
     val longitude: Float?,
     val latitude: Float?,
     val baroAltitude: Float?,
-    val onGround: Boolean,
-    val velocity: Float?,
-    val trueTrack: Float?,
-    val verticalRate: Float?,
+    override val onGround: Boolean,
+    override val velocity: Double?,
+    override val heading: Double?,
+    override val verticalRate: Double?,
     val sensors: IntArray?,
     val geoAltitude: Float?,
     val squawk: String?,
     val spi: Boolean,
     val positionSource: OsnPositionSource
-)
+) : AircraftData {
+
+  override val position: GeodeticPosition?
+    get() = if (latitude != null && longitude != null) {
+      val altitude = (baroAltitude ?: geoAltitude ?: 0.0).toDouble()
+      GeodeticPosition(latitude.toDouble(), longitude.toDouble(), altitude)
+    } else null
+}

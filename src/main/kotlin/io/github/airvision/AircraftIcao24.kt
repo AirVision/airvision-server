@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
  * @property address The 24 bit address
  */
 @Serializable(with = AircraftIcao24Serializer::class)
-class AircraftIcao24(val address: Int) {
+data class AircraftIcao24(val address: Int) {
 
   init {
     check(this.address <= 0xffffff) {
@@ -29,8 +29,7 @@ class AircraftIcao24(val address: Int) {
   /**
    * Converts this back to a string representation.
    */
-  override fun toString() =
-      this.address.toString(16).toUpperCase()
+  override fun toString() = address.toString(16).toUpperCase()
 
   companion object {
 

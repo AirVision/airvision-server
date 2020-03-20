@@ -64,6 +64,9 @@ dependencies {
 
   // Database
   implementation(group = "org.jetbrains.exposed", name = "exposed", version = "0.17.7")
+  implementation(group = "com.zaxxer", name = "HikariCP", version = "3.4.2")
+  // PostgreSQL JDBC Driver
+  implementation(group = "org.postgresql", name = "postgresql", version = "42.2.11")
 
   // Cache
   implementation(group = "com.github.ben-manes.caffeine", name = "caffeine", version = "2.8.1")
@@ -79,6 +82,12 @@ dependencies {
 
   // Math: Vectors, Quaterions, etc.
   implementation(group = "org.spongepowered", name = "math", version = "2.0.0-SNAPSHOT")
+
+  // ADS-B
+  implementation(group = "org.opensky-network", name = "libadsb", version = "3.2.0")
+
+  // Serial Communication
+  implementation(group = "com.fazecast", name = "jSerialComm", version = "2.6.0")
 
   // Testing
   testCompile(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.2.0")

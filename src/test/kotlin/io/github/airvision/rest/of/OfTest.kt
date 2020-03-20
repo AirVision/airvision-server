@@ -9,7 +9,7 @@
  */
 package io.github.airvision.rest.of
 
-import io.github.airvision.service.openflights.OpenFlights
+import io.github.airvision.service.openflights.OpenFlightsAirportService
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
@@ -17,7 +17,7 @@ class OfTest {
 
   @Test
   fun `get all airports`() = runBlocking {
-    val of = OpenFlights()
+    val of = OpenFlightsAirportService()
     of.getAll().asSequence().take(10).forEach { println(it) }
   }
 }

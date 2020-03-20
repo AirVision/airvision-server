@@ -33,6 +33,6 @@ suspend fun PipelineContext.handleAircraftsRequest(context: RestContext) {
   val size = request.size
 
   val bounds = GeodeticBounds.ofCenterAndSize(position, size)
-  val aircrafts = context.aircrafts.getAllWithin(bounds)
+  val aircrafts = context.aircraftService.getAllWithin(bounds)
   call.respond(aircrafts)
 }

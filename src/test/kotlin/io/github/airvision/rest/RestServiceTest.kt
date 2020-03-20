@@ -21,10 +21,13 @@ import kotlinx.serialization.stringify
 import kotlin.reflect.KClass
 
 fun testApp(callback: TestApplicationEngine.() -> Unit) {
-  val rest = Rest(Rest.Config())
+  /*
+  val rest = Rest(AirVision.Config())
   withTestApplication(rest::setup) {
     callback()
   }
+  */
+  // TODO
 }
 
 inline fun <reified T : Any> TestApplicationResponse.parse(): Either<ErrorResponse, T> = parse(T::class)

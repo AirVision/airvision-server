@@ -15,14 +15,18 @@ import io.github.airvision.AirportIata
 import io.github.airvision.AirportIcao
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AirportService
-import io.github.airvision.util.mapIfNotNull
+import io.github.airvision.util.feetToMeters
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.hours
+import kotlin.time.minutes
 
-class OpenFlights : AirportService {
+class OpenFlightsAirportService : AirportService {
 
   companion object {
     private val AirportsReadInvalidation = 24.hours.toLongMilliseconds()
@@ -32,22 +36,30 @@ class OpenFlights : AirportService {
   private val mutex = Mutex()
 
   override suspend fun getAll(): Collection<Airport> =
-      this.getAirportsCache().map.values
+      getAirportsCache().map.values
 
   override suspend fun get(icao: AirportIcao): Airport? =
-      this.getAirportsCache().map[icao]
+      getAirportsCache().map[icao]
+
+  // TODO: Update periodically to reduce delay when updating
 
   /**
    * Gets all the known [Airport]s mapped by their id.
    */
   private suspend fun getAirportsCache(): AirportCache {
     var cache = airportCache
-    if (cache == null || System.currentTimeMillis() - cache.readTime > AirportsReadInvalidation) {
+    if (cache == null || cache.needsUpdate()) {
       // Make sure only one request is made for the data
       mutex.withLock {
         cache = airportCache
-        if (cache == null) {
-          cache = loadCache()
+        if (cache == null || cache!!.needsUpdate()) {
+          cache = try {
+            loadCache()
+          } catch (ex: Exception) {
+            if (cache == null)
+              throw ex
+            AirportCache(cache!!.map, System.currentTimeMillis() + 1.minutes.toLongMilliseconds())
+          }
           airportCache = cache
         }
       }
@@ -58,13 +70,15 @@ class OpenFlights : AirportService {
   private suspend fun loadCache(): AirportCache {
     val airports = requestAirports()
     val map = airports.associateBy { it.icao }
-    return AirportCache(map, System.currentTimeMillis())
+    return AirportCache(map, System.currentTimeMillis() + AirportsReadInvalidation)
   }
 
   private class AirportCache(
       val map: Map<AirportIcao, Airport>,
-      val readTime: Long
+      val invalidationTime: Long
   )
+
+  private fun AirportCache.needsUpdate() = System.currentTimeMillis() > invalidationTime
 
   private suspend fun requestAirports(): List<Airport> {
     val client = HttpClient()
@@ -79,16 +93,15 @@ class OpenFlights : AirportService {
   }
 
   private fun decodeAirport(list: List<String>): Airport? {
-    val icao = list[5].nullable().mapIfNotNull { AirportIcao(it) } ?: return null
+    val icao = list[5].nullable()?.let { AirportIcao(it) } ?: return null
     // val id = list[0].toInt()
     val name = list[1]
     val city = list[2]
     val country = list[3]
-    val iata = list[4].nullable().mapIfNotNull { AirportIata(it) }!!
+    val iata = list[4].nullable()?.let { AirportIata(it) }!!
     val latitude = list[6].toDouble()
     val longitude = list[7].toDouble()
-    // convert from foot to meters
-    val altitude = list[8].nullable().mapIfNotNull { it.toDouble() * 0.3048 } ?: 0.0
+    val altitude = list[8].nullable()?.let { feetToMeters(it.toDouble()) } ?: 0.0
     val position = GeodeticPosition(latitude, longitude, altitude)
     // val timezone = list[9].toDoubleOrNull()
     // val dst = list[10]

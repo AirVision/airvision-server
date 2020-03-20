@@ -9,5 +9,10 @@
  */
 package io.github.airvision.util
 
-inline fun String.toNullIfEmpty(): String? =
-    if (this.isEmpty()) null else this
+import kotlin.time.Duration
+
+suspend fun delay(millis: Long) =
+    kotlinx.coroutines.delay(millis)
+
+suspend fun delay(duration: Duration) =
+    kotlinx.coroutines.delay(duration.toLongMilliseconds())

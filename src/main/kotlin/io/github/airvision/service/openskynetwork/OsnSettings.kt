@@ -7,7 +7,12 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.util
+package io.github.airvision.service.openskynetwork
 
-inline fun String.toNullIfEmpty(): String? =
-    if (this.isEmpty()) null else this
+import kotlinx.serialization.Serializable
+
+@Serializable
+class OsnSettings(
+    val username: String,
+    val password: String
+)
