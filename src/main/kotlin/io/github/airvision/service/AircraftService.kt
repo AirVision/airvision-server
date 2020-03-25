@@ -15,6 +15,7 @@ import io.github.airvision.GeodeticBounds
 import io.github.airvision.service.adsb.AdsBService
 import io.github.airvision.service.openskynetwork.OsnAircraftDataService
 import io.github.airvision.service.openskynetwork.OsnRestService
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import java.time.Instant
@@ -22,14 +23,14 @@ import java.util.concurrent.Executors
 
 class AircraftService(
     private val database: Database,
-    private val osnRestService: OsnRestService
+    private val databaseUpdateDispatcher: CoroutineDispatcher,
+    private val osnRestService: OsnRestService,
+    private val aircraftModelService: AircraftModelService
 ) {
 
   private lateinit var dataService: AircraftDataService
   private lateinit var adsBService: AdsBService
   private lateinit var osnAircraftDataService: OsnAircraftDataService
-
-  private val databaseUpdateDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
   fun init() {
     val dataService = AircraftDataService(database, databaseUpdateDispatcher).also { dataService = it }
@@ -58,5 +59,11 @@ class AircraftService(
 
   suspend fun get(icao24: AircraftIcao24, time: Instant? = null): Aircraft? {
     return dataService.getAircraft(icao24, time)?.toAircraft()
+  }
+
+  private suspend fun AircraftData.toAircraft(): Aircraft {
+    val model = aircraftModelService.get(icao24)
+    return Aircraft(time = time, icao24 = icao24, onGround = onGround, velocity = velocity,
+        position = position, heading = heading, verticalRate = verticalRate, model = model)
   }
 }

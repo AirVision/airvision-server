@@ -7,16 +7,8 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision
+package io.github.airvision.service.db
 
-import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.dao.EntityID
 
-/**
- * Represents an aircraft manufacturer.
- */
-@Serializable
-data class AircraftManufacturer(
-    val code: String?,
-    val name: String,
-    val country: String?
-)
+data class Entity<K : Comparable<K>, V>(val id: EntityID<K>, val value: V)

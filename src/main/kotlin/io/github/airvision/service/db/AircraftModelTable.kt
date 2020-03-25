@@ -9,17 +9,19 @@
  */
 package io.github.airvision.service.db
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.dao.IntIdTable
 
-object AircraftModelTable : Table("aircraft_model") {
-  val id = integer("id").autoIncrement().primaryKey()
+object AircraftModelTable : IntIdTable("aircraft_model") {
   val icao24 = integer("icao24")
+  val name = varchar("name", 500)
   // L1P, L2P, ... includes engine type, engine count, aircraft type
-  val description = varchar("desc", 10)
+  val type = varchar("type", 10)
   // The name of the engine
-  val engine = varchar("engine", 100).nullable()
+  val engines = varchar("engine", 1000).nullable()
   // The manufacturer, if known
-  val manufacturer = (integer("manf_id") references AircraftManufacturerTable.id).nullable()
+  val manufacturer = reference("manufacturer", AircraftManufacturerTable).nullable()
+  // The owner
+  val owner = varchar("owner", 1000).nullable()
 
   init {
     uniqueIndex(icao24)

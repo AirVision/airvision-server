@@ -20,7 +20,7 @@ import io.github.airvision.exposed.distinctBy
 import io.github.airvision.exposed.orderBy
 import io.github.airvision.service.db.AircraftDataTable
 import io.github.airvision.util.delay
-import io.github.airvision.util.minus
+import io.github.airvision.util.time.minus
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope

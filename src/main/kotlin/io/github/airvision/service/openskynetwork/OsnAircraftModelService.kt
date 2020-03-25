@@ -9,79 +9,298 @@
  */
 package io.github.airvision.service.openskynetwork
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import com.github.doyaaaaaken.kotlincsv.util.CSVParseFormatException
+import io.github.airvision.AirVision
+import io.github.airvision.AircraftIcao24
+import io.github.airvision.AircraftManufacturer
+import io.github.airvision.AircraftModel
+import io.github.airvision.exposed.upsert
+import io.github.airvision.service.AircraftModelService
+import io.github.airvision.service.db.AircraftManufacturerTable
+import io.github.airvision.service.db.AircraftModelTable
+import io.github.airvision.service.db.Entity
+import io.github.airvision.util.csv.suspendedOpen
+import io.github.airvision.util.delay
+import io.github.airvision.util.file.*
+import io.github.airvision.util.ktor.downloadUpdateToFile
+import io.github.airvision.util.toNullIfEmpty
+import io.ktor.client.HttpClient
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
+import java.util.concurrent.CompletableFuture
+import kotlin.time.days
+import kotlin.time.minutes
+import kotlin.time.seconds
+import kotlin.time.toJavaDuration
 
-class OsnAircraftModelService {
+class OsnAircraftModelService(
+    private val database: Database,
+    private val updateDispatcher: CoroutineDispatcher,
+    private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : AircraftModelService {
 
-  /**
-   * Loads the CSV files and updates the database.
-   */
-  private fun processCsv(inputStream: InputStream, types: List<CsvAircraftType>, manufacturers: List<CsvManufacturer>) {
-    csvReader().open(inputStream) {
-      readAllAsSequence()
-          .forEach {
+  private val client = HttpClient()
+  private var job: Job? = null
 
+  fun init() {
+    val directory = Paths.get("model-service")
+    if (!Files.exists(directory))
+      Files.createDirectories(directory)
+
+    val aircraftDbPath = directory.resolve("aircraft_database.csv")
+    val manufacturerDbPath = directory.resolve("manufacturer_database.csv")
+
+    val baseUrl = "https://opensky-network.org/datasets/metadata/"
+    val aircraftDbUrl = "${baseUrl}aircraftDatabase.csv"
+    val manufacturerDbUrl = "${baseUrl}doc8643Manufacturers.csv"
+
+    job = GlobalScope.launch(getDispatcher) {
+      while (true) {
+        var success = try {
+          AirVision.logger.info("Checking for manufacturer database updates...")
+          var update = client.downloadUpdateToFile(manufacturerDbUrl, manufacturerDbPath)
+          if (update)
+            AirVision.logger.info("Successfully downloaded the manufacturer database.")
+          if (!update) {
+            update = newSuspendedTransaction {
+              AircraftManufacturerTable.selectAll().count() == 0
+            }
           }
+          if (update) {
+            AirVision.logger.info("Start updating the manufacturer database.")
+            updateManufacturers(manufacturerDbPath.openStream())
+            AirVision.logger.info("Finished updating the manufacturer database.")
+          }
+          true
+        } catch (e: Exception) {
+          AirVision.logger.error("An error occurred while updating the manufacturer database.", e)
+          false
+        }
+        success = if (success) {
+          try {
+            AirVision.logger.info("Checking for aircraft database updates...")
+            var update = client.downloadUpdateToFile(aircraftDbUrl, aircraftDbPath)
+            if (update)
+              AirVision.logger.info("Successfully downloaded the aircraft database.")
+            if (!update) {
+              update = newSuspendedTransaction {
+                AircraftModelTable.selectAll().count() == 0
+              }
+            }
+            if (update) {
+              AirVision.logger.info("Start updating the aircraft database.")
+              updateAircrafts(aircraftDbPath.openStream())
+              AirVision.logger.info("Finished updating the aircraft database.")
+            }
+            true
+          } catch (e: Exception) {
+            AirVision.logger.error("An error occurred while updating the aircraft database.", e)
+            false
+          }
+        } else false
+        // Every day, check for aircraft updates, or in case of a
+        // failure, try again in half an hour
+        delay(if (success) 1.days else 30.minutes)
+      }
     }
   }
 
+  fun shutdown() {
+    job?.cancel()
+    job = null
+  }
+
+  override suspend fun get(icao24: AircraftIcao24): AircraftModel? {
+    return null
+  }
+
   /**
-   * Loads the types dataset file.
+   * Attempts to get a manufacturer with the given [id].
    */
-  // https://opensky-network.org/datasets/metadata/doc8643AircraftTypes.csv
-  private fun loadTypes(inputStream: InputStream): List<CsvAircraftType> {
-    return csvReader().open(inputStream) {
-      readAllAsSequence()
-          .drop(1)
-          .map {
-            val description = it[1]
-            val designator = it[2]
-            val manufacturer = it[5]
-            val name = it[6]
-            val wtc = it[7]
-            CsvAircraftType(description, designator, manufacturer, name, wtc)
+  private suspend fun getManufacturerById(id: EntityID<Int>): AircraftManufacturer? {
+    return newSuspendedTransaction(getDispatcher, db = database) {
+      AircraftManufacturerTable
+          .select { AircraftManufacturerTable.id eq id }
+          .map { AircraftManufacturerTable.rowToManufacturer(it) }
+          .firstOrNull()
+    }
+  }
+
+  private fun AircraftManufacturerTable.rowToManufacturer(row: ResultRow): AircraftManufacturer {
+    val code = row[code]
+    val country = row[country]
+    val name = row[name]
+    return AircraftManufacturer(code, name, country)
+  }
+
+  private inner class ManufacturerHelper {
+
+    private val byName = buildCache<String, Entity<Int, AircraftManufacturer>?> { loadByName(it) }
+    private val byCode = buildCache<String, Entity<Int, AircraftManufacturer>?> { loadByCode(it) }
+
+    suspend fun getByCode(code: String): Entity<Int, AircraftManufacturer>? = byCode[code].await()
+    suspend fun getByName(name: String): Entity<Int, AircraftManufacturer>? = byName[name].await()
+
+    private suspend fun loadByCode(code: String): Entity<Int, AircraftManufacturer>? {
+      return newSuspendedTransaction(getDispatcher, db = database) {
+        AircraftManufacturerTable
+            .select { AircraftManufacturerTable.code eq code }
+            .map { Entity(it[AircraftManufacturerTable.id], AircraftManufacturerTable.rowToManufacturer(it)) }
+            .firstOrNull()
+      }
+    }
+
+    private suspend fun loadByName(name: String): Entity<Int, AircraftManufacturer>? {
+      return newSuspendedTransaction(getDispatcher, db = database) {
+        AircraftManufacturerTable
+            .select { AircraftManufacturerTable.name eq name }
+            .map { Entity(it[AircraftManufacturerTable.id], AircraftManufacturerTable.rowToManufacturer(it)) }
+            .firstOrNull()
+      }
+    }
+
+    suspend fun getOrInsert(data: CsvManufacturer): Entity<Int, AircraftManufacturer> {
+      var entity = getByCode(data.code ?: data.name.toUpperCase())
+      if (entity != null)
+        return entity
+      if (data.code == null) {
+        // If there's no code, lookup by name
+        entity = getByName(data.name)
+        if (entity != null)
+          return entity
+      }
+      // Create a new manufacturer
+      entity = newSuspendedTransaction(updateDispatcher, db = database) {
+        val uniqueCode = data.code ?: run {
+          val v = data.name.toUpperCase()
+          if (v.length <= 20) v else {
+            UUID.nameUUIDFromBytes(v.toByteArray()).toString().substring(0, 20)
           }
-          .toList()
+        }
+        val id = AircraftManufacturerTable
+            .insertAndGetId {
+              it[code] = uniqueCode
+              it[name] = data.name
+              it[country] = data.country
+            }
+        Entity(id, AircraftManufacturer(data.code, data.name, data.country))
+      }
+      val completed = CompletableFuture.completedFuture(entity)
+      val (_, manufacturer) = entity
+      byName.put(manufacturer.name, completed)
+      val code = manufacturer.code
+      if (code != null)
+        byCode.put(code, completed)
+      return entity
+    }
+
+    private fun <K, V> buildCache(fn: suspend (key: K) -> V): AsyncLoadingCache<K, V> = Caffeine.newBuilder()
+        .executor(getDispatcher.asExecutor())
+        .expireAfterAccess(10.seconds.toJavaDuration())
+        .buildAsync<K, V> { key, executor ->
+          GlobalScope.future(executor.asCoroutineDispatcher()) {
+            fn(key)
+          }
+        }
+  }
+
+  private suspend fun updateAircrafts(inputStream: InputStream) {
+    val manufacturers = ManufacturerHelper()
+    csvReader().suspendedOpen(inputStream) {
+      val header = readAllAsSequence().first()
+          .map { it.toLowerCase() }
+      val index = object {
+        val icao24 = header.indexOf("icao24")
+        val manufacturerCode = header.indexOf("manufacturericao")
+        val manufacturerName = header.indexOf("manufacturername")
+        val model = header.indexOf("model")
+        val type = header.indexOf("icaoaircrafttype")
+        val owner = header.indexOf("owner")
+        val engines = header.indexOf("engines")
+      }
+      for (it in readAllAsSequence().filter { it.first().isNotEmpty() }) {
+        val icao24 = AircraftIcao24.parse(it[index.icao24])
+        val manufacturerCode = it[index.manufacturerCode]
+        val manufacturerName = it[index.manufacturerName].trim()
+        val name = it[index.model]
+        val type = it[index.type]
+        val owner = it[index.owner]
+
+        val manufacturer = manufacturers.getOrInsert(
+            CsvManufacturer(manufacturerCode.toNullIfEmpty(), manufacturerName, null))
+
+        val engines = it[index.engines]
+            .split("<br>")
+            .filter { it.isNotBlank() }
+            .joinToString(", ") {
+              val pos = it.indexOf("&nbsp;")
+              if (pos != -1) it.substring(0, pos) else it
+            }
+
+        newSuspendedTransaction(updateDispatcher, db = database) {
+          AircraftModelTable.upsert(AircraftModelTable.icao24) {
+            it[AircraftModelTable.icao24] = icao24.address
+            it[AircraftModelTable.name] = name
+            it[AircraftModelTable.type] = type
+            it[AircraftModelTable.engines] = engines
+            it[AircraftModelTable.manufacturer] = manufacturer.id
+            it[AircraftModelTable.owner] = owner
+          }
+        }
+      }
     }
   }
 
   /**
    * Loads the manufacturer dataset file.
    */
-  // https://opensky-network.org/datasets/metadata/doc8643Manufacturers.csv
-  private fun loadManufacturers(inputStream: InputStream): List<CsvManufacturer> {
+  private suspend fun updateManufacturers(inputStream: InputStream) {
     val nameAndCountryRegex = "\\((.+)\\)\$".toRegex()
-    return csvReader().open(inputStream) {
-      readAllAsSequence()
-          .drop(2)
-          .map {
-            val code = it[0]
-            val nameAndCountry = it[1].replace("\"", "")
+    csvReader().suspendedOpen(inputStream) {
+      try {
+        for (it in readAllAsSequence().drop(2).filter { it.isNotEmpty() }) {
+          val code = it[0]
+          val nameAndCountry = it[1].replace("\"", "")
 
-            val match = nameAndCountryRegex.find(nameAndCountry)
-            val (name, country) = if (match != null) {
-              nameAndCountryRegex.replace(nameAndCountry, "") to match.groupValues[1]
-            } else {
-              nameAndCountry to null
-            }
-
-            CsvManufacturer(code, name, country)
+          val match = nameAndCountryRegex.find(nameAndCountry)
+          val (name, country) = if (match != null) {
+            nameAndCountryRegex.replace(nameAndCountry, "").trim() to match.groupValues[1].trim()
+          } else {
+            nameAndCountry.trim() to null
           }
-          .toList()
+
+          newSuspendedTransaction(updateDispatcher, db = database) {
+            AircraftManufacturerTable.upsert(AircraftManufacturerTable.code) {
+              it[AircraftManufacturerTable.code] = code
+              it[AircraftManufacturerTable.name] = name
+              it[AircraftManufacturerTable.country] = country
+            }
+          }
+        }
+      } catch (e: CSVParseFormatException) {
+        // The following error is thrown for the last empty line, currently a bug in the library
+        // See: https://github.com/doyaaaaaken/kotlin-csv/issues/18
+        // TODO
+        if (e.message?.contains("must appear delimiter or line terminator after quote end") != true) {
+          throw e
+        }
+      }
     }
   }
 
-  private data class CsvAircraftType(
-      val description: String,
-      val designator: String,
-      val manufacturer: String,
-      val name: String,
-      val wtc: String
-  )
-
   private data class CsvManufacturer(
-      val code: String,
+      val code: String?,
       val name: String,
       val country: String?
   )

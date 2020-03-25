@@ -35,7 +35,7 @@ data class Aircraft(
     @SerialName("on_ground") val onGround: Boolean,
     @SerialName("vertical_rate") val verticalRate: Double?,
     val heading: Double?,
-    val model: AircraftModel?,
+    val model: AircraftModel? = null,
     val index: Int? = null
 ) {
 

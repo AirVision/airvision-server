@@ -7,16 +7,12 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision
+package io.github.airvision.service
 
-import kotlinx.serialization.Serializable
+import io.github.airvision.AircraftIcao24
+import io.github.airvision.AircraftModel
 
-/**
- * Represents an aircraft manufacturer.
- */
-@Serializable
-data class AircraftManufacturer(
-    val code: String?,
-    val name: String,
-    val country: String?
-)
+interface AircraftModelService {
+
+  suspend fun get(icao24: AircraftIcao24): AircraftModel?
+}

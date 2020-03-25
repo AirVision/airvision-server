@@ -22,10 +22,12 @@ import io.github.airvision.service.db.AircraftModelTable
 import io.github.airvision.service.db.DatabaseSettings
 import io.github.airvision.service.openflights.OpenFlightsAirportService
 import io.github.airvision.service.openskynetwork.OsnAircraftFlightService
+import io.github.airvision.service.openskynetwork.OsnAircraftModelService
 import io.github.airvision.service.openskynetwork.OsnRestService
 import io.github.airvision.service.openskynetwork.OsnSettings
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -41,6 +43,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.concurrent.Executors
 
 /**
  * The entry point of the application.
@@ -82,12 +85,17 @@ fun main() {
         AircraftModelTable)
   }
   AirVision.logger.info("Successfully connected to the database.")
+  val databaseUpdateDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
-  // Initialize the OpenSkyNetwork rest service
+  // Initialize the OpenSky Network rest service
   val osn = OsnRestService(config.osn)
 
+  // Initialize the OpenSky Network aircraft model database service
+  val aircraftModelService = OsnAircraftModelService(database, databaseUpdateDispatcher)
+  aircraftModelService.init()
+
   // Initialize the aircraft service
-  val aircraftService = AircraftService(database, osn)
+  val aircraftService = AircraftService(database, databaseUpdateDispatcher, osn, aircraftModelService)
   aircraftService.init()
 
   // Initialize the airports service

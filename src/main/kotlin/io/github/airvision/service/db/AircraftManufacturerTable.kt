@@ -9,11 +9,14 @@
  */
 package io.github.airvision.service.db
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.dao.IntIdTable
 
-object AircraftManufacturerTable : Table("aircraft_manufacturer") {
-  val id = integer("id").autoIncrement().primaryKey()
-  val code = varchar("code", 30).nullable()
-  val name = varchar("name", 100)
+object AircraftManufacturerTable : IntIdTable("aircraft_manufacturer") {
+  val code = varchar("code", 100)
+  val name = varchar("name", 500)
   val country = varchar("country", 100).nullable()
+
+  init {
+    uniqueIndex(code)
+  }
 }

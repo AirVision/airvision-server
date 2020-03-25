@@ -66,7 +66,7 @@ class Rest(
       }
 
       routing {
-        route("/v1") {
+        route("/api/v1") {
           get("/visible_aircraft") { handleVisibleAircraftRequest(context) }
           get("/aircrafts") { handleAircraftsRequest(context) }
           get("/aircraft") { handleAircraftRequest(context) }

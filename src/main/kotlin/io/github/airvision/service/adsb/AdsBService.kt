@@ -21,7 +21,7 @@ import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AircraftData
 import io.github.airvision.service.SimpleAircraftData
 import io.github.airvision.util.delay
-import io.github.airvision.util.toDouble
+import io.github.airvision.util.time.toDouble
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job

@@ -38,9 +38,3 @@ data class SimpleAircraftData(
     override val verticalRate: Double? = null,
     override val heading: Double? = null
 ) : AircraftData
-
-fun AircraftData.toAircraft(): Aircraft {
-  // TODO: Get aircraft model, etc. based on callsign, icao24, ..
-  return Aircraft(time = time, icao24 = icao24, onGround = onGround, velocity = velocity,
-      position = position, heading = heading, verticalRate = verticalRate, model = null)
-}
