@@ -7,12 +7,10 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.service
+package io.github.airvision
 
-import io.github.airvision.AircraftIcao24
-import io.github.airvision.AircraftModel
-
-interface AircraftModelService {
-
-  suspend fun get(icao24: AircraftIcao24): AircraftModel?
+enum class AircraftEngineType {
+  Piston,
+  Turboprop,
+  Jet
 }

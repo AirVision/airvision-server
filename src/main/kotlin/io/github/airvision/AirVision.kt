@@ -15,14 +15,14 @@ import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.QuaterniondSerializer
 import io.github.airvision.serializer.Vector2dSerializer
 import io.github.airvision.serializer.Vector3dSerializer
-import io.github.airvision.service.AircraftService
+import io.github.airvision.service.AircraftStateService
 import io.github.airvision.service.db.AircraftDataTable
 import io.github.airvision.service.db.AircraftManufacturerTable
 import io.github.airvision.service.db.AircraftModelTable
 import io.github.airvision.service.db.DatabaseSettings
 import io.github.airvision.service.openflights.OpenFlightsAirportService
 import io.github.airvision.service.openskynetwork.OsnAircraftFlightService
-import io.github.airvision.service.openskynetwork.OsnAircraftModelService
+import io.github.airvision.service.openskynetwork.OsnAircraftInfoService
 import io.github.airvision.service.openskynetwork.OsnRestService
 import io.github.airvision.service.openskynetwork.OsnSettings
 import io.ktor.server.engine.embeddedServer
@@ -91,12 +91,12 @@ fun main() {
   val osn = OsnRestService(config.osn)
 
   // Initialize the OpenSky Network aircraft model database service
-  val aircraftModelService = OsnAircraftModelService(database, databaseUpdateDispatcher)
+  val aircraftModelService = OsnAircraftInfoService(database, databaseUpdateDispatcher)
   aircraftModelService.init()
 
   // Initialize the aircraft service
-  val aircraftService = AircraftService(database, databaseUpdateDispatcher, osn, aircraftModelService)
-  aircraftService.init()
+  val aircraftStateService = AircraftStateService(database, databaseUpdateDispatcher, osn)
+  aircraftStateService.init()
 
   // Initialize the airports service
   val airportService = OpenFlightsAirportService()
@@ -106,7 +106,7 @@ fun main() {
   aircraftFlightService.init()
 
   // Initialize the rest service
-  val rest = Rest(aircraftService, aircraftFlightService, airportService)
+  val rest = Rest(aircraftStateService, aircraftModelService, aircraftFlightService, airportService)
   embeddedServer(Netty, module = rest::setup).start()
 }
 
@@ -122,6 +122,7 @@ object AirVision {
       contextual(Vector2dSerializer)
       contextual(Vector3dSerializer)
     }
+    ignoreUnknownKeys = true
     serialModule = module
     encodeDefaults = false
   }

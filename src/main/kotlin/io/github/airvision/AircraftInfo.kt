@@ -11,18 +11,25 @@ package io.github.airvision
 
 import kotlinx.serialization.Serializable
 
-/**
- * @property name The name of the engine(s), if known
- */
 @Serializable
-data class AircraftEngine(
-    val name: String?,
-    val type: Type
+data class AircraftInfo(
+    val icao24: AircraftIcao24,
+    val name: String,
+    val description: String?,
+    val owner: String?,
+    val manufacturer: AircraftManufacturer?,
+    val engines: AircraftEngines?,
+    val type: Type?
 ) {
 
   enum class Type {
-    Piston,
-    Turboprop,
-    TurboJet
+    LandPlane,
+    SeaPlane,
+    Amphibian,
+    Helicopter,
+    /**
+     * Dirigible, also known as Airship.
+     */
+    Dirigible
   }
 }

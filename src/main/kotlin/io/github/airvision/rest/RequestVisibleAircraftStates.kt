@@ -9,7 +9,7 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.Aircraft
+import io.github.airvision.AircraftState
 import io.github.airvision.Camera
 import io.github.airvision.EnuTransform
 import io.github.airvision.GeodeticPosition
@@ -43,7 +43,7 @@ data class ImageAircraft(
 
 @Serializable
 data class VisibleAircraftResponse(
-    val aircrafts: List<Aircraft>
+    val states: List<AircraftState>
 )
 
 suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {

@@ -13,12 +13,9 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import com.github.doyaaaaaken.kotlincsv.util.CSVParseFormatException
-import io.github.airvision.AirVision
-import io.github.airvision.AircraftIcao24
-import io.github.airvision.AircraftManufacturer
-import io.github.airvision.AircraftModel
+import io.github.airvision.*
 import io.github.airvision.exposed.upsert
-import io.github.airvision.service.AircraftModelService
+import io.github.airvision.service.AircraftInfoService
 import io.github.airvision.service.db.AircraftManufacturerTable
 import io.github.airvision.service.db.AircraftModelTable
 import io.github.airvision.service.db.Entity
@@ -31,6 +28,10 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.list
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -44,11 +45,11 @@ import kotlin.time.minutes
 import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
-class OsnAircraftModelService(
+class OsnAircraftInfoService(
     private val database: Database,
     private val updateDispatcher: CoroutineDispatcher,
     private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AircraftModelService {
+) : AircraftInfoService {
 
   private val client = HttpClient()
   private var job: Job? = null
@@ -121,8 +122,55 @@ class OsnAircraftModelService(
     job = null
   }
 
-  override suspend fun get(icao24: AircraftIcao24): AircraftModel? {
-    return null
+  private val codeToType = mapOf(
+      'L' to AircraftInfo.Type.LandPlane,
+      'S' to AircraftInfo.Type.SeaPlane,
+      'A' to AircraftInfo.Type.Amphibian,
+      'H' to AircraftInfo.Type.Helicopter,
+      'D' to AircraftInfo.Type.Dirigible
+  )
+
+  private val codeToEngineType = mapOf(
+      'P' to AircraftEngineType.Piston,
+      'T' to AircraftEngineType.Turboprop,
+      'J' to AircraftEngineType.Jet
+  )
+
+  private val engineEntriesListSerializer = EngineEntry.serializer().list
+
+  override suspend fun get(icao24: AircraftIcao24): AircraftInfo? {
+    return newSuspendedTransaction(getDispatcher, db = database) {
+      AircraftModelTable
+          .select { AircraftModelTable.icao24 eq icao24.address }
+          .map {
+            val manufacturerId = it[AircraftModelTable.manufacturer]
+            val manufacturer = if (manufacturerId != null) getManufacturerById(manufacturerId) else null
+            val name = it[AircraftModelTable.name]
+            val owner = it[AircraftModelTable.owner]
+            val enginesJson = it[AircraftModelTable.engines]
+
+            val description = it[AircraftModelTable.description]
+            val type = if (description != null) codeToType[description[0]] else null
+
+            var engineEntries = if (enginesJson != null) Json.parse(engineEntriesListSerializer, enginesJson) else null
+            if (engineEntries == null)
+              engineEntries = null
+
+            val engineCount = if (description != null) {
+              description[1].toString().toInt()
+            } else if (engineEntries != null && engineEntries.all { entry -> entry.count != null }) {
+              engineEntries.map { entry -> entry.count!! }.sum()
+            } else null
+            val engineType = if (description != null) codeToEngineType[description[2]] else null
+            val engines = if (engineEntries == null && description == null) null else {
+              AircraftEngines(engineType, engineCount,
+                  engineEntries?.map { entry -> AircraftEnginesEntry(entry.name, entry.count) })
+            }
+
+            AircraftInfo(icao24, name, description, owner, manufacturer, engines, type)
+          }
+          .firstOrNull()
+    }
   }
 
   /**
@@ -225,42 +273,71 @@ class OsnAircraftModelService(
         val manufacturerCode = header.indexOf("manufacturericao")
         val manufacturerName = header.indexOf("manufacturername")
         val model = header.indexOf("model")
-        val type = header.indexOf("icaoaircrafttype")
+        val description = header.indexOf("icaoaircrafttype")
         val owner = header.indexOf("owner")
         val engines = header.indexOf("engines")
       }
+      val enginesRegex = "(?:([0-9]+)\\s+x\\s+)?(.+)".toRegex()
+      val descriptionRegex = "[LSAHDG][1-9][PTJ](\\/.+)?".toRegex()
       for (it in readAllAsSequence().filter { it.first().isNotEmpty() }) {
-        val icao24 = AircraftIcao24.parse(it[index.icao24])
-        val manufacturerCode = it[index.manufacturerCode]
-        val manufacturerName = it[index.manufacturerName].trim()
         val name = it[index.model]
-        val type = it[index.type]
-        val owner = it[index.owner]
+        if (name.isBlank())
+          continue
 
-        val manufacturer = manufacturers.getOrInsert(
-            CsvManufacturer(manufacturerCode.toNullIfEmpty(), manufacturerName, null))
+        val icao24 = AircraftIcao24.parse(it[index.icao24])
+        val manufacturerCode = it[index.manufacturerCode].toNullIfEmpty()
+        val manufacturerName = it[index.manufacturerName].trim()
+        val owner = it[index.owner].toNullIfEmpty()
 
-        val engines = it[index.engines]
+        var description = it[index.description].toNullIfEmpty()
+        if (description != null && !descriptionRegex.matches(description))
+          description = null
+
+        val manufacturer = if (manufacturerName.isBlank()) null else
+          manufacturers.getOrInsert(CsvManufacturer(manufacturerCode, manufacturerName, null))
+
+        var engines = it[index.engines]
             .split("<br>")
+            .asSequence()
             .filter { it.isNotBlank() }
-            .joinToString(", ") {
-              val pos = it.indexOf("&nbsp;")
-              if (pos != -1) it.substring(0, pos) else it
+            .map { it
+                .replace("&amp;", "&")
+                .replace("&nbsp;", " ")
+                .replace("\\s+".toRegex(), " ") // Replace duplicate spaces
             }
+            .map {
+              val result = enginesRegex.matchEntire(it) ?: error("Should never happen")
+              val count = result.groups[1]?.value?.toInt() ?: 1
+              EngineEntry(result.groups[2]!!.value, count)
+            }
+            .toList()
+        if (engines.size == 1 && description != null) {
+          val count = description[1].toString().toInt()
+          if (count != 1 && engines.first().count == 1)
+            engines = engines.map { it.copy(count = count) }
+        }
+
+        val enginesJson = Json.stringify(engineEntriesListSerializer, engines)
 
         newSuspendedTransaction(updateDispatcher, db = database) {
           AircraftModelTable.upsert(AircraftModelTable.icao24) {
             it[AircraftModelTable.icao24] = icao24.address
             it[AircraftModelTable.name] = name
-            it[AircraftModelTable.type] = type
-            it[AircraftModelTable.engines] = engines
-            it[AircraftModelTable.manufacturer] = manufacturer.id
+            it[AircraftModelTable.description] = description
+            it[AircraftModelTable.engines] = enginesJson
+            it[AircraftModelTable.manufacturer] = manufacturer?.id
             it[AircraftModelTable.owner] = owner
           }
         }
       }
     }
   }
+
+  @Serializable
+  private data class EngineEntry(
+      @SerialName("n") val name: String,
+      @SerialName("c") val count: Int? = null
+  )
 
   /**
    * Loads the manufacturer dataset file.

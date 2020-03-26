@@ -9,7 +9,7 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.Aircraft
+import io.github.airvision.AircraftState
 import io.github.airvision.AircraftIcao24
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -17,7 +17,7 @@ import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import org.junit.jupiter.api.Test
 
-class RequestAircraftTest {
+class RequestAircraftStateTest {
 
   @Test
   fun `get A808C4`() = testApp {
@@ -28,7 +28,7 @@ class RequestAircraftTest {
         "icao24": "$icao24"
       }""".trimIndent())
     }.apply {
-      val info = response.parse<Aircraft>()
+      val info = response.parse<AircraftState>()
       assert(info.isRight())
       info.fold({}, {
         assert(it.icao24 == icao24)

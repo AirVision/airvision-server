@@ -15,7 +15,7 @@ object AircraftModelTable : IntIdTable("aircraft_model") {
   val icao24 = integer("icao24")
   val name = varchar("name", 500)
   // L1P, L2P, ... includes engine type, engine count, aircraft type
-  val type = varchar("type", 10)
+  val description = varchar("type", 10).nullable()
   // The name of the engine
   val engines = varchar("engine", 1000).nullable()
   // The manufacturer, if known

@@ -9,7 +9,6 @@
  */
 package io.github.airvision.service
 
-import io.github.airvision.Aircraft
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import java.time.Instant

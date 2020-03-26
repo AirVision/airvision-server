@@ -23,11 +23,10 @@ import java.time.Instant
  * @property velocity The velocity in meters per second, if known
  * @property onGround Whether the aircraft is on the ground
  * @property verticalRate The vertical rate in meters per second, if known
- * @property model The aircraft model, if known
  * @property index Only used for rest responses
  */
 @Serializable
-data class Aircraft(
+data class AircraftState(
     @ContextualSerialization val time: Instant,
     val icao24: AircraftIcao24,
     val position: GeodeticPosition?,
@@ -35,7 +34,6 @@ data class Aircraft(
     @SerialName("on_ground") val onGround: Boolean,
     @SerialName("vertical_rate") val verticalRate: Double?,
     val heading: Double?,
-    val model: AircraftModel? = null,
     val index: Int? = null
 ) {
 

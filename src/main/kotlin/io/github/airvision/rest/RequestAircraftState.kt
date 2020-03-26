@@ -22,9 +22,9 @@ data class AircraftRequest(
     val icao24: AircraftIcao24
 )
 
-suspend fun PipelineContext.handleAircraftRequest(context: RestContext) {
+suspend fun PipelineContext.handleRtAircraftRequest(context: RestContext) {
   val request = call.receive<AircraftRequest>()
-  val aircraft = context.aircraftService.get(request.icao24)
+  val aircraft = context.aircraftStateService.get(request.icao24)
 
   if (aircraft == null) {
     call.respond(error.notFound("Aircraft with icao24 ${request.icao24} isn't found"))

@@ -11,7 +11,8 @@ package io.github.airvision.rest
 
 import io.github.airvision.AirVision
 import io.github.airvision.service.AircraftFlightService
-import io.github.airvision.service.AircraftService
+import io.github.airvision.service.AircraftInfoService
+import io.github.airvision.service.AircraftStateService
 import io.github.airvision.service.AirportService
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -28,9 +29,11 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.SerializationConverter
 import io.ktor.util.pipeline.PipelineContext
+import kotlinx.serialization.json.JsonDecodingException
 
 class Rest(
-    private val aircraftService: AircraftService,
+    private val aircraftStateService: AircraftStateService,
+    private val aircraftInfoService: AircraftInfoService,
     private val aircraftFlightService: AircraftFlightService,
     private val airportService: AirportService
 ) {
@@ -39,7 +42,7 @@ class Rest(
    * Setup of the server of the REST Web Service.
    */
   fun setup(application: Application) {
-    val context = RestContext(aircraftService, aircraftFlightService, airportService)
+    val context = RestContext(aircraftStateService, aircraftInfoService, aircraftFlightService, airportService)
 
     // Build module
     application.apply {
@@ -51,10 +54,16 @@ class Rest(
 
       // Install error handling
       install(StatusPages) {
-        exception<ContentTransformationException> { cause ->
+        suspend fun PipelineContext<Unit, ApplicationCall>.handleBadRequest(cause: Exception) {
           AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
           call.respond(HttpStatusCode.BadRequest, error.badRequest(
               "Invalid request${if (cause.message != null) ": $cause.message" else ""}"))
+        }
+        exception<ContentTransformationException> { cause ->
+          handleBadRequest(cause)
+        }
+        exception<JsonDecodingException> { cause ->
+          handleBadRequest(cause)
         }
         exception<Throwable> { cause ->
           AirVision.logger.error("Error while handling ${call.request.local.uri}", cause)
@@ -67,10 +76,16 @@ class Rest(
 
       routing {
         route("/api/v1") {
-          get("/visible_aircraft") { handleVisibleAircraftRequest(context) }
-          get("/aircrafts") { handleAircraftsRequest(context) }
-          get("/aircraft") { handleAircraftRequest(context) }
-          get("/aircraft_flight") { handleAircraftFlightRequest(context) }
+          route("/aircraft") {
+            route("/state") {
+              get("/visible") { handleVisibleAircraftRequest(context) }
+              get("/all") { handleAircraftStatesRequest(context) }
+              get("/all-around") { handleAircraftStatesAroundRequest(context) }
+              get("/get") { handleRtAircraftRequest(context) }
+            }
+            get("/flight") { handleAircraftFlightRequest(context) }
+            get("/info") { handleAircraftModelRequest(context) }
+          }
         }
       }
     }
@@ -78,7 +93,8 @@ class Rest(
 }
 
 class RestContext(
-    val aircraftService: AircraftService,
+    val aircraftStateService: AircraftStateService,
+    val aircraftInfoService: AircraftInfoService,
     val aircraftFlightService: AircraftFlightService,
     val airportService: AirportService
 )

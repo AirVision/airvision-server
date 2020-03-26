@@ -9,23 +9,20 @@
  */
 package io.github.airvision.service
 
-import io.github.airvision.Aircraft
+import io.github.airvision.AircraftState
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.service.adsb.AdsBService
 import io.github.airvision.service.openskynetwork.OsnAircraftDataService
 import io.github.airvision.service.openskynetwork.OsnRestService
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import java.time.Instant
-import java.util.concurrent.Executors
 
-class AircraftService(
+class AircraftStateService(
     private val database: Database,
     private val databaseUpdateDispatcher: CoroutineDispatcher,
-    private val osnRestService: OsnRestService,
-    private val aircraftModelService: AircraftModelService
+    private val osnRestService: OsnRestService
 ) {
 
   private lateinit var dataService: AircraftDataService
@@ -49,21 +46,20 @@ class AircraftService(
     osnAircraftDataService.shutdown()
   }
 
-  suspend fun getAll(time: Instant? = null): Collection<Aircraft> {
+  suspend fun getAll(time: Instant? = null): Collection<AircraftState> {
     return dataService.getAircrafts(time = time).map { it.toAircraft() }
   }
 
-  suspend fun getAllWithin(bounds: GeodeticBounds, time: Instant? = null): Collection<Aircraft> {
+  suspend fun getAllWithin(bounds: GeodeticBounds, time: Instant? = null): Collection<AircraftState> {
     return dataService.getAircrafts(bounds = bounds, time = time).map { it.toAircraft() }
   }
 
-  suspend fun get(icao24: AircraftIcao24, time: Instant? = null): Aircraft? {
+  suspend fun get(icao24: AircraftIcao24, time: Instant? = null): AircraftState? {
     return dataService.getAircraft(icao24, time)?.toAircraft()
   }
 
-  private suspend fun AircraftData.toAircraft(): Aircraft {
-    val model = aircraftModelService.get(icao24)
-    return Aircraft(time = time, icao24 = icao24, onGround = onGround, velocity = velocity,
-        position = position, heading = heading, verticalRate = verticalRate, model = model)
+  private fun AircraftData.toAircraft(): AircraftState {
+    return AircraftState(time = time, icao24 = icao24, onGround = onGround, velocity = velocity,
+        position = position, heading = heading, verticalRate = verticalRate)
   }
 }

@@ -9,7 +9,6 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.AirVision
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
 import io.ktor.application.call
@@ -22,19 +21,19 @@ import org.spongepowered.math.vector.Vector2d
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-aircrafts
 
 @Serializable
-data class AircraftsRequest(
+data class AircraftStatesAroundRequest(
     val position: GeodeticPosition,
     @ContextualSerialization val size: Vector2d
 )
 
-suspend fun PipelineContext.handleAircraftsRequest(context: RestContext) {
-  val request = call.receive<AircraftsRequest>()
+suspend fun PipelineContext.handleAircraftStatesAroundRequest(context: RestContext) {
+  val request = call.receive<AircraftStatesAroundRequest>()
 
   val position = request.position
   val size = request.size
 
   val bounds = GeodeticBounds.ofCenterAndSize(position, size)
-  val aircrafts = context.aircraftService.getAllWithin(bounds)
+  val states = context.aircraftStateService.getAllWithin(bounds)
 
-  call.respond(aircrafts)
+  call.respond(states)
 }
