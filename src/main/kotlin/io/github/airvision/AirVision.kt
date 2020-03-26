@@ -106,8 +106,12 @@ fun main() {
   aircraftFlightService.init()
 
   // Initialize the rest service
-  val rest = Rest(aircraftStateService, aircraftModelService, aircraftFlightService, airportService)
-  embeddedServer(Netty, module = rest::setup).start()
+  val rest = Rest(aircraftStateService, aircraftModelService,
+      aircraftFlightService, airportService, config)
+  val restConfig = config.rest
+
+  AirVision.logger.info("Starting the REST Server, bound to ${restConfig.host}:${restConfig.port}")
+  embeddedServer(Netty, port = restConfig.port, host = restConfig.host, module = rest::setup).start()
 }
 
 object AirVision {
@@ -129,13 +133,20 @@ object AirVision {
 
   @Serializable
   class Config(
-      @SerialName("open_sky_network") val osn: OsnSettings =
+      @SerialName("rest-server") val rest: Rest = Rest(),
+      @SerialName("open-sky-network") val osn: OsnSettings =
           OsnSettings("", ""),
       @SerialName("database") val database: DatabaseSettings =
           DatabaseSettings("jdbc:postgresql://localhost/airvision", "airvision", "password"),
-      @SerialName("visible_aircraft") val visibleAircraft: VisibleAircraft =
+      @SerialName("visible-aircraft") val visibleAircraft: VisibleAircraft =
           VisibleAircraft()
   ) {
+
+    @Serializable
+    class Rest(
+        val host: String = "0.0.0.0",
+        val port: Int = 80
+    )
 
     /**
      * @property range The range in which aircraft's are valid to be selected, in degrees

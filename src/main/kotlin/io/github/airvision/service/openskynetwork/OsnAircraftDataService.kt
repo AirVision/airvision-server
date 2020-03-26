@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import kotlin.time.seconds
 
 @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
@@ -60,6 +61,8 @@ class OsnAircraftDataService(
       } catch (ex: TimeoutCancellationException) {
         handleTimeout()
       } catch (ex: SocketTimeoutException) {
+        handleTimeout()
+      } catch (ex: UnknownHostException) {
         handleTimeout()
       } catch (ex: ServerResponseException) {
         AirVision.logger.debug("OSN: ${ex.message ?: "Server error"}")

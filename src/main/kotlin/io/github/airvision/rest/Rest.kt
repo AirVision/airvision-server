@@ -35,14 +35,16 @@ class Rest(
     private val aircraftStateService: AircraftStateService,
     private val aircraftInfoService: AircraftInfoService,
     private val aircraftFlightService: AircraftFlightService,
-    private val airportService: AirportService
+    private val airportService: AirportService,
+    private val config: AirVision.Config
 ) {
 
   /**
    * Setup of the server of the REST Web Service.
    */
   fun setup(application: Application) {
-    val context = RestContext(aircraftStateService, aircraftInfoService, aircraftFlightService, airportService)
+    val context = RestContext(aircraftStateService, aircraftInfoService,
+        aircraftFlightService, airportService, config)
 
     // Build module
     application.apply {
@@ -96,7 +98,8 @@ class RestContext(
     val aircraftStateService: AircraftStateService,
     val aircraftInfoService: AircraftInfoService,
     val aircraftFlightService: AircraftFlightService,
-    val airportService: AirportService
+    val airportService: AirportService,
+    val config: AirVision.Config
 )
 
 typealias PipelineContext = PipelineContext<Unit, ApplicationCall>

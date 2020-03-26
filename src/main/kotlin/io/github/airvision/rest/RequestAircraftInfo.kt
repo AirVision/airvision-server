@@ -27,7 +27,7 @@ suspend fun PipelineContext.handleAircraftModelRequest(context: RestContext) {
   val model = context.aircraftInfoService.get(request.icao24)
 
   if (model == null) {
-    call.respond(error.notFound("No aircraft model for icao24 ${request.icao24}"))
+    call.respond(error.notFound("Couldn't find information for ${request.icao24}"))
     return
   }
   call.respond(model)
