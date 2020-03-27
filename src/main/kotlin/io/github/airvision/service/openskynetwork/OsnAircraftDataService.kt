@@ -12,6 +12,7 @@ package io.github.airvision.service.openskynetwork
 import io.github.airvision.AirVision
 import io.github.airvision.service.AircraftData
 import io.github.airvision.util.delay
+import io.ktor.client.features.ServerResponseException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -46,12 +47,12 @@ class OsnAircraftDataService(
     AirVision.logger.info("OSN: Started reading with rate limit ${restService.rateLimit}")
     while (true) {
       suspend fun handleTimeout() {
-        AirVision.logger.debug("OSN: Timeout while trying to receive data for aircraft's.")
+        AirVision.logger.debug("OSN: Timeout while trying to receive aircraft states.")
         delay(1.seconds)
       }
       try {
         val (_, states) = withTimeout(20000) { restService.getAircrafts() }
-        AirVision.logger.debug("OSN: Received data for ${states?.size ?: 0} aircraft's.")
+        AirVision.logger.debug("OSN: Received ${states?.size ?: 0} aircraft states.")
         if (states != null) {
           for (aircraft in states)
             dataSendChannel.send(aircraft)
@@ -63,8 +64,11 @@ class OsnAircraftDataService(
         handleTimeout()
       } catch (ex: UnknownHostException) {
         handleTimeout()
-      } catch (ex: Exception) {
+      } catch (ex: ServerResponseException) {
         AirVision.logger.debug("OSN: ${ex.message ?: "Server error"}")
+        delay(1.seconds)
+      } catch (ex: Exception) {
+        AirVision.logger.debug("Internal server error", ex)
         delay(1.seconds)
       }
     }

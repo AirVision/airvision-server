@@ -27,7 +27,6 @@ import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector3d
 import java.time.Instant
-import kotlin.math.abs
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
 

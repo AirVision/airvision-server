@@ -18,9 +18,6 @@ import io.github.airvision.service.AirportService
 import io.github.airvision.util.feetToMeters
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.hours

@@ -169,6 +169,7 @@ tasks {
       useExperimentalAnnotation("kotlin.time.ExperimentalTime")
       useExperimentalAnnotation("kotlinx.serialization.ImplicitReflectionSerializer")
       useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
+      useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
 
       freeCompilerArgs = args
     }

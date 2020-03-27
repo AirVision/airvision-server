@@ -21,15 +21,26 @@ import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.request.ApplicationReceivePipeline
+import io.ktor.request.ApplicationReceiveRequest
 import io.ktor.request.ContentTransformationException
+import io.ktor.request.header
 import io.ktor.response.respond
+import io.ktor.routing.Route
 import io.ktor.routing.get
+import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
-import io.ktor.serialization.SerializationConverter
 import io.ktor.util.pipeline.PipelineContext
+import io.ktor.util.pipeline.PipelineInterceptor
+import io.ktor.utils.io.ByteReadChannel
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecodingException
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 class Rest(
     private val aircraftStateService: AircraftStateService,
@@ -48,10 +59,37 @@ class Rest(
 
     // Build module
     application.apply {
+      val converter = RestSerializationConverter(AirVision.json)
+
+      // Install query parameter based Content Conversion
+      receivePipeline.intercept(ApplicationReceivePipeline.Transform) {
+        val contentType = call.request.header(HttpHeaders.ContentType)?.let { ContentType.parse(it) }
+        if (contentType != null || subject.type == ByteReadChannel::class) {
+          // Just proceed
+          proceed()
+          return@intercept
+        }
+
+        val parameters = call.request.queryParameters
+        val map = parameters.entries()
+            .associate { (key, value) ->
+              val element = if (value.size == 1) {
+                JsonPrimitive(value[0])
+              } else {
+                JsonArray(value.map { entry -> JsonPrimitive(entry) })
+              }
+              key to element
+            }
+        val json = JsonObject(map)
+        val content = Json.stringify(JsonObject.serializer(), json)
+
+        val converted = converter.convertForReceive(this, content)
+        proceedWith(ApplicationReceiveRequest(subject.typeInfo, converted, reusableValue = true))
+      }
+
       // Install Json Content Conversion
       install(ContentNegotiation) {
-        register(ContentType.Application.Json, RestSerializationConverter(
-            SerializationConverter(AirVision.json)))
+        register(ContentType.Application.Json, converter)
       }
 
       // Install error handling
@@ -80,17 +118,24 @@ class Rest(
         route("/api/v1") {
           route("/aircraft") {
             route("/state") {
-              get("/visible") { handleVisibleAircraftRequest(context) }
-              get("/all") { handleAircraftStatesRequest(context) }
-              get("/all-around") { handleAircraftStatesAroundRequest(context) }
-              get("/get") { handleRtAircraftRequest(context) }
+              postOrGet("/visible") { handleVisibleAircraftRequest(context) }
+              postOrGet("/all") { handleAircraftStatesRequest(context) }
+              postOrGet("/all-around") { handleAircraftStatesAroundRequest(context) }
+              postOrGet("/get") { handleRtAircraftRequest(context) }
             }
-            get("/flight") { handleAircraftFlightRequest(context) }
-            get("/info") { handleAircraftModelRequest(context) }
+            postOrGet("/flight") { handleAircraftFlightRequest(context) }
+            postOrGet("/info") { handleAircraftModelRequest(context) }
           }
         }
       }
     }
+  }
+}
+
+private fun Route.postOrGet(path: String, body: PipelineInterceptor<Unit, ApplicationCall>) {
+  route(path) {
+    post(body)
+    get(body)
   }
 }
 
