@@ -9,8 +9,10 @@
  */
 package io.github.airvision
 
+import kotlinx.serialization.Serializable
 import org.spongepowered.math.vector.Vector2d
 
+@Serializable
 data class GeodeticBounds(
     val min: GeodeticPosition,
     val max: GeodeticPosition

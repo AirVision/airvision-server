@@ -9,6 +9,7 @@
  */
 package io.github.airvision.rest
 
+import io.github.airvision.GeodeticBounds
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -20,11 +21,16 @@ import java.time.Instant
 
 @Serializable
 class AircraftStatesRequest(
-    @ContextualSerialization val time: Instant? = null
+    @ContextualSerialization val time: Instant? = null,
+    val bounds: GeodeticBounds? = null
 )
 
 suspend fun PipelineContext.handleAircraftStatesRequest(context: RestContext) {
   val request = call.receive<AircraftStatesRequest>()
-  val states = context.aircraftStateService.getAll(request.time)
+  val states = if (request.bounds != null) {
+    context.aircraftStateService.getAllWithin(request.bounds, request.time)
+  } else {
+    context.aircraftStateService.getAll(request.time)
+  }
   call.respond(states)
 }

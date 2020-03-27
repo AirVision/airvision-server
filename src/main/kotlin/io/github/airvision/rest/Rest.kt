@@ -120,7 +120,6 @@ class Rest(
             route("/state") {
               postOrGet("/visible") { handleVisibleAircraftRequest(context) }
               postOrGet("/all") { handleAircraftStatesRequest(context) }
-              postOrGet("/all-around") { handleAircraftStatesAroundRequest(context) }
               postOrGet("/get") { handleRtAircraftRequest(context) }
             }
             postOrGet("/flight") { handleAircraftFlightRequest(context) }
