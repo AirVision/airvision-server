@@ -17,23 +17,22 @@ import io.ktor.response.respond
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.vector.Vector2d
+import java.time.Instant
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-aircrafts
 
 @Serializable
 data class AircraftStatesAroundRequest(
     val position: GeodeticPosition,
-    @ContextualSerialization val size: Vector2d
+    @ContextualSerialization val size: Vector2d,
+    @ContextualSerialization val time: Instant? = null
 )
 
 suspend fun PipelineContext.handleAircraftStatesAroundRequest(context: RestContext) {
   val request = call.receive<AircraftStatesAroundRequest>()
 
-  val position = request.position
-  val size = request.size
-
-  val bounds = GeodeticBounds.ofCenterAndSize(position, size)
-  val states = context.aircraftStateService.getAllWithin(bounds)
+  val bounds = GeodeticBounds.ofCenterAndSize(request.position, request.size)
+  val states = context.aircraftStateService.getAllWithin(bounds, request.time)
 
   call.respond(states)
 }

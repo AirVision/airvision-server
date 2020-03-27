@@ -82,6 +82,8 @@ class OsnAircraftInfoService(
             AirVision.logger.info("Start updating the manufacturer database.")
             updateManufacturers(manufacturerDbPath.openStream())
             AirVision.logger.info("Finished updating the manufacturer database.")
+          } else {
+            AirVision.logger.info("The manufacturer database is already up-to-date.")
           }
           true
         } catch (e: Exception) {
@@ -103,6 +105,8 @@ class OsnAircraftInfoService(
               AirVision.logger.info("Start updating the aircraft database.")
               updateAircrafts(aircraftDbPath.openStream())
               AirVision.logger.info("Finished updating the aircraft database.")
+            } else {
+              AirVision.logger.info("The aircraft database is already up-to-date.")
             }
             true
           } catch (e: Exception) {

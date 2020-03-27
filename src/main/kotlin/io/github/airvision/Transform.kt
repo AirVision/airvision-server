@@ -25,7 +25,11 @@ data class Transform(
 
   fun withPosition(position: Vector3d) = copy(position = position)
 
+  fun translate(translation: Vector3d) = withPosition(this.position.add(translation))
+
   fun withRotation(rotation: Quaterniond) = copy(rotation = rotation)
+
+  fun rotate(rotation: Quaterniond) = withRotation(this.rotation.add(rotation))
 
   companion object {
 

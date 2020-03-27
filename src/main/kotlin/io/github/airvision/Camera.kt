@@ -26,8 +26,12 @@ data class Camera(
     val transform: Transform = Transform.ORIGIN
 ) {
 
+  private val inverseRotationMatrix: Matrix4d by lazy {
+    Matrix4d.createRotation(transform.rotation.invert())
+  }
+
   val viewMatrix: Matrix4d by lazy {
-    val rotationMatrix = Matrix4d.createRotation(transform.rotation.invert())
+    val rotationMatrix = inverseRotationMatrix
     val positionMatrix = Matrix4d.createTranslation(transform.position.negate())
     rotationMatrix.mul(positionMatrix)
   }
@@ -36,6 +40,35 @@ data class Camera(
    * Gets a new [Camera] state with the given [Transform].
    */
   fun withTransform(transform: Transform) = copy(transform = transform)
+
+  /**
+   * Rotates this camera with the given [rotation] [Quaterniond].
+   */
+  fun rotate(rotation: Quaterniond) = withTransform(transform.rotate(rotation))
+
+  /**
+   * Rotates this camera with the given [translation] [Vector3d].
+   */
+  fun translate(translation: Vector3d) = withTransform(transform.translate(translation))
+
+  /**
+   * Gets the y axis, relative to this camera.
+   */
+  val yAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_Y) }
+
+  /**
+   * Gets the y axis, relative to this camera.
+   */
+  val xAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_X) }
+
+  /**
+   * Gets the z axis, relative to this camera.
+   */
+  val zAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_Z) }
+
+  private fun toCamera(vector: Vector3d): Vector3d {
+    return inverseRotationMatrix.transform(vector.toVector4(1.0)).toVector3()
+  }
 
   companion object {
 
