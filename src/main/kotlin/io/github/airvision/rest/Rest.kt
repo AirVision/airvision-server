@@ -62,30 +62,7 @@ class Rest(
       val converter = RestSerializationConverter(AirVision.json)
 
       // Install query parameter based Content Conversion
-      receivePipeline.intercept(ApplicationReceivePipeline.Transform) {
-        val contentType = call.request.header(HttpHeaders.ContentType)?.let { ContentType.parse(it) }
-        if (contentType != null || subject.type == ByteReadChannel::class) {
-          // Just proceed
-          proceed()
-          return@intercept
-        }
-
-        val parameters = call.request.queryParameters
-        val map = parameters.entries()
-            .associate { (key, value) ->
-              val element = if (value.size == 1) {
-                JsonPrimitive(value[0])
-              } else {
-                JsonArray(value.map { entry -> JsonPrimitive(entry) })
-              }
-              key to element
-            }
-        val json = JsonObject(map)
-        val content = Json.stringify(JsonObject.serializer(), json)
-
-        val converted = converter.convertForReceive(this, content)
-        proceedWith(ApplicationReceiveRequest(subject.typeInfo, converted, reusableValue = true))
-      }
+      installQueryParameterContentConversion(converter)
 
       // Install Json Content Conversion
       install(ContentNegotiation) {
