@@ -11,11 +11,11 @@ package io.github.airvision.service.db
 
 import org.jetbrains.exposed.dao.IntIdTable
 
-object AircraftModelTable : IntIdTable("aircraft_model") {
+object AircraftInfoTable : IntIdTable("aircraft_info") {
   val icao24 = integer("icao24")
-  val name = varchar("name", 500)
+  val model = varchar("model", 500)
   // L1P, L2P, ... includes engine type, engine count, aircraft type
-  val description = varchar("type", 10).nullable()
+  val description = varchar("description", 10).nullable()
   // The name of the engine
   val engines = varchar("engine", 1000).nullable()
   // The manufacturer, if known

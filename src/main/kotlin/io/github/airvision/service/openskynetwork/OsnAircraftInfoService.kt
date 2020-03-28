@@ -17,7 +17,7 @@ import io.github.airvision.*
 import io.github.airvision.exposed.upsert
 import io.github.airvision.service.AircraftInfoService
 import io.github.airvision.service.db.AircraftManufacturerTable
-import io.github.airvision.service.db.AircraftModelTable
+import io.github.airvision.service.db.AircraftInfoTable
 import io.github.airvision.service.db.Entity
 import io.github.airvision.util.csv.suspendedOpen
 import io.github.airvision.util.delay
@@ -98,7 +98,7 @@ class OsnAircraftInfoService(
               AirVision.logger.info("Successfully downloaded the aircraft database.")
             if (!update) {
               update = newSuspendedTransaction {
-                AircraftModelTable.selectAll().count() == 0
+                AircraftInfoTable.selectAll().count() == 0
               }
             }
             if (update) {
@@ -144,16 +144,16 @@ class OsnAircraftInfoService(
 
   override suspend fun get(icao24: AircraftIcao24): AircraftInfo? {
     return newSuspendedTransaction(getDispatcher, db = database) {
-      AircraftModelTable
-          .select { AircraftModelTable.icao24 eq icao24.address }
+      AircraftInfoTable
+          .select { AircraftInfoTable.icao24 eq icao24.address }
           .map {
-            val manufacturerId = it[AircraftModelTable.manufacturer]
+            val manufacturerId = it[AircraftInfoTable.manufacturer]
             val manufacturer = if (manufacturerId != null) getManufacturerById(manufacturerId) else null
-            val name = it[AircraftModelTable.name]
-            val owner = it[AircraftModelTable.owner]
-            val enginesJson = it[AircraftModelTable.engines]
+            val model = it[AircraftInfoTable.model]
+            val owner = it[AircraftInfoTable.owner]
+            val enginesJson = it[AircraftInfoTable.engines]
 
-            val description = it[AircraftModelTable.description]
+            val description = it[AircraftInfoTable.description]
             val type = if (description != null) codeToType[description[0]] else null
 
             var engineEntries = if (enginesJson != null) Json.parse(engineEntriesListSerializer, enginesJson) else null
@@ -171,7 +171,7 @@ class OsnAircraftInfoService(
                   engineEntries?.map { entry -> AircraftEnginesEntry(entry.name, entry.count) })
             }
 
-            AircraftInfo(icao24, name, description, owner, manufacturer, engines, type)
+            AircraftInfo(icao24, model, description, owner, manufacturer, engines, type)
           }
           .firstOrNull()
     }
@@ -284,8 +284,8 @@ class OsnAircraftInfoService(
       val enginesRegex = "(?:([0-9]+)\\s+x\\s+)?(.+)".toRegex()
       val descriptionRegex = "[LSAHDG][1-9][PTJ](\\/.+)?".toRegex()
       for (it in readAllAsSequence().filter { it.first().isNotEmpty() }) {
-        val name = it[index.model]
-        if (name.isBlank())
+        val model = it[index.model]
+        if (model.isBlank())
           continue
 
         val icao24 = AircraftIcao24.parse(it[index.icao24])
@@ -324,13 +324,13 @@ class OsnAircraftInfoService(
         val enginesJson = Json.stringify(engineEntriesListSerializer, engines)
 
         newSuspendedTransaction(updateDispatcher, db = database) {
-          AircraftModelTable.upsert(AircraftModelTable.icao24) {
-            it[AircraftModelTable.icao24] = icao24.address
-            it[AircraftModelTable.name] = name
-            it[AircraftModelTable.description] = description
-            it[AircraftModelTable.engines] = enginesJson
-            it[AircraftModelTable.manufacturer] = manufacturer?.id
-            it[AircraftModelTable.owner] = owner
+          AircraftInfoTable.upsert(AircraftInfoTable.icao24) {
+            it[AircraftInfoTable.icao24] = icao24.address
+            it[AircraftInfoTable.model] = model
+            it[AircraftInfoTable.description] = description
+            it[AircraftInfoTable.engines] = enginesJson
+            it[AircraftInfoTable.manufacturer] = manufacturer?.id
+            it[AircraftInfoTable.owner] = owner
           }
         }
       }

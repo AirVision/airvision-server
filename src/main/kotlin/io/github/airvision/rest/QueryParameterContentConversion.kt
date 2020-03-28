@@ -65,6 +65,16 @@ private fun JsonElement.toTreeElement(): JsonTreeElement {
   }
 }
 
+private fun parse(value: String): JsonTreeElement {
+  return if (value.isNotEmpty() && value.first() == '[' && value.last() == ']') {
+    Json.parse(JsonArray.serializer(), value).toTreeElement()
+  } else if (value.isNotEmpty() && value.first() == '{' && value.last() == '}') {
+    Json.parse(JsonObject.serializer(), value).toTreeElement()
+  } else {
+    JsonTreePrimitive(value)
+  }
+}
+
 fun Application.installQueryParameterContentConversion(converter: RestSerializationConverter) {
   // Install query parameter based Content Conversion
   receivePipeline.intercept(ApplicationReceivePipeline.Transform) {
@@ -81,16 +91,9 @@ fun Application.installQueryParameterContentConversion(converter: RestSerializat
     parameters.entries()
         .forEach { (key, value) ->
           val element = if (value.size == 1) {
-            val first = value[0]
-            if (first.isNotEmpty() && first.first() == '[' && first.last() == ']') {
-              Json.parse(JsonArray.serializer(), first).toTreeElement()
-            } else if (first.isNotEmpty() && first.first() == '{' && first.last() == '}') {
-              Json.parse(JsonObject.serializer(), first).toTreeElement()
-            } else {
-              JsonTreePrimitive(value[0])
-            }
+            parse(value[0])
           } else {
-            JsonTreeArray(value.map { entry -> JsonTreePrimitive(entry) })
+            JsonTreeArray(value.map { entry -> parse(entry) })
           }
           tree.put(key, element)
         }

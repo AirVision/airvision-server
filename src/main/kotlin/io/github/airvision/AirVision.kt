@@ -18,7 +18,7 @@ import io.github.airvision.serializer.Vector3dSerializer
 import io.github.airvision.service.AircraftStateService
 import io.github.airvision.service.db.AircraftDataTable
 import io.github.airvision.service.db.AircraftManufacturerTable
-import io.github.airvision.service.db.AircraftModelTable
+import io.github.airvision.service.db.AircraftInfoTable
 import io.github.airvision.service.db.DatabaseSettings
 import io.github.airvision.service.openflights.OpenFlightsAirportService
 import io.github.airvision.service.openskynetwork.OsnAircraftFlightService
@@ -82,7 +82,7 @@ fun main() {
     SchemaUtils.createMissingTablesAndColumns(
         AircraftDataTable,
         AircraftManufacturerTable,
-        AircraftModelTable)
+        AircraftInfoTable)
   }
   AirVision.logger.info("Successfully connected to the database.")
   val databaseUpdateDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
