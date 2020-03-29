@@ -33,10 +33,13 @@ class OpenFlightsAirportService : AirportService {
   private val mutex = Mutex()
 
   override suspend fun getAll(): Collection<Airport> =
-      getAirportsCache().map.values
+      getAirportsCache().byIcao.values
 
   override suspend fun get(icao: AirportIcao): Airport? =
-      getAirportsCache().map[icao]
+      getAirportsCache().byIcao[icao]
+
+  override suspend fun get(iata: AirportIata): Airport? =
+      getAirportsCache().byIata[iata]
 
   // TODO: Update periodically to reduce delay when updating
 
@@ -55,7 +58,8 @@ class OpenFlightsAirportService : AirportService {
           } catch (ex: Exception) {
             if (cache == null)
               throw ex
-            AirportCache(cache!!.map, System.currentTimeMillis() + 1.minutes.toLongMilliseconds())
+            AirportCache(cache!!.byIcao, cache!!.byIata,
+                System.currentTimeMillis() + 1.minutes.toLongMilliseconds())
           }
           airportCache = cache
         }
@@ -66,12 +70,14 @@ class OpenFlightsAirportService : AirportService {
 
   private suspend fun loadCache(): AirportCache {
     val airports = requestAirports()
-    val map = airports.associateBy { it.icao }
-    return AirportCache(map, System.currentTimeMillis() + AirportsReadInvalidation)
+    val byIcao = airports.associateBy { it.icao }
+    val byIata = airports.associateBy { it.iata }
+    return AirportCache(byIcao, byIata, System.currentTimeMillis() + AirportsReadInvalidation)
   }
 
   private class AirportCache(
-      val map: Map<AirportIcao, Airport>,
+      val byIcao: Map<AirportIcao, Airport>,
+      val byIata: Map<AirportIata, Airport>,
       val invalidationTime: Long
   )
 
@@ -91,11 +97,11 @@ class OpenFlightsAirportService : AirportService {
 
   private fun decodeAirport(list: List<String>): Airport? {
     val icao = list[5].nullable()?.let { AirportIcao(it) } ?: return null
+    val iata = list[4].nullable()?.let { AirportIata(it) } ?: return null
     // val id = list[0].toInt()
     val name = list[1]
     val city = list[2]
     val country = list[3]
-    val iata = list[4].nullable()?.let { AirportIata(it) }!!
     val latitude = list[6].toDouble()
     val longitude = list[7].toDouble()
     val altitude = list[8].nullable()?.let { feetToMeters(it.toDouble()) } ?: 0.0

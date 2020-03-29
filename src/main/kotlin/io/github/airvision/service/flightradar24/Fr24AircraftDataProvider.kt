@@ -7,7 +7,7 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.service.openskynetwork
+package io.github.airvision.service.flightradar24
 
 import io.github.airvision.AirVision
 import io.github.airvision.service.AircraftData
@@ -22,12 +22,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import kotlin.time.Duration
 import kotlin.time.seconds
 
-@Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
-class OsnAircraftDataService(
+class Fr24AircraftDataProvider(
     private val dataSendChannel: SendChannel<AircraftData>,
-    private val restService: OsnRestService
+    private val restService: Fr24RestService,
+    private val rateLimit: Duration = 5.seconds
 ) {
 
   private var job: Job? = null
@@ -43,21 +44,20 @@ class OsnAircraftDataService(
     job = null
   }
 
+  // TODO: Less duplication
   private suspend fun read() {
-    AirVision.logger.info("OSN: Started reading with rate limit ${restService.rateLimit}")
+    AirVision.logger.info("FR24: Started reading with rate limit $rateLimit")
     while (true) {
       suspend fun handleTimeout() {
-        AirVision.logger.debug("OSN: Timeout while trying to receive aircraft states.")
+        AirVision.logger.debug("FR24: Timeout while trying to receive aircraft states.")
         delay(1.seconds)
       }
       try {
-        val (_, states) = withTimeout(20000) { restService.getAircrafts() }
-        AirVision.logger.debug("OSN: Received ${states?.size ?: 0} aircraft states.")
-        if (states != null) {
-          for (aircraft in states)
-            dataSendChannel.send(aircraft)
-        }
-        delay(restService.rateLimit) // TODO: Possibly read faster?
+        val entries = withTimeout(20000) { restService.getFlightData() }
+        AirVision.logger.debug("FR24: Received ${entries.size} entries of aircraft flight data.")
+        for (entry in entries)
+          dataSendChannel.send(entry)
+        delay(rateLimit)
       } catch (ex: TimeoutCancellationException) {
         handleTimeout()
       } catch (ex: SocketTimeoutException) {
@@ -65,7 +65,7 @@ class OsnAircraftDataService(
       } catch (ex: UnknownHostException) {
         handleTimeout()
       } catch (ex: ServerResponseException) {
-        AirVision.logger.debug("OSN: ${ex.message ?: "Server error"}")
+        AirVision.logger.debug("FR24: ${ex.message ?: "Server error"}")
         delay(1.seconds)
       } catch (ex: Exception) {
         AirVision.logger.debug("Internal server error", ex)

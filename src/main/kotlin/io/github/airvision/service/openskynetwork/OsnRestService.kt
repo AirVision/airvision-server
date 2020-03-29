@@ -70,7 +70,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    * Attempts to get the [OsnAircraftData] object for the given
    * [AircraftIcao24] identifier and optional time.
    */
-  suspend fun getAircraft(icao24: AircraftIcao24, time: Instant? = null): OsnAircraftsResponse {
+  suspend fun getState(icao24: AircraftIcao24, time: Instant? = null): OsnAircraftsResponse {
     return request("/states/all", buildMap {
       put("icao24", icao24)
       if (time != null)
@@ -81,7 +81,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   /**
    * Attempts to get the [OsnAircraftData] objects for the given [GeodeticBounds].
    */
-  suspend fun getAircrafts(bounds: GeodeticBounds, time: Instant? = null): OsnAircraftsResponse {
+  suspend fun getStates(bounds: GeodeticBounds, time: Instant? = null): OsnAircraftsResponse {
     val max = bounds.max
     val min = bounds.min
 
@@ -98,7 +98,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   /**
    * Attempts to get all the [OsnAircraftData] objects.
    */
-  suspend fun getAircrafts(time: Instant? = null): OsnAircraftsResponse {
+  suspend fun getStates(time: Instant? = null): OsnAircraftsResponse {
     return request("/states/all", buildMap {
       if (time != null)
         put("time", time.epochSecond)

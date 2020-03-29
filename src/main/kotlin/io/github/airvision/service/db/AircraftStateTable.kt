@@ -11,7 +11,7 @@ package io.github.airvision.service.db
 
 import org.jetbrains.exposed.sql.Table
 
-object AircraftDataTable : Table("aircraft_data") {
+object AircraftStateTable : Table("aircraft_data") {
   val icao24 = integer("icao24").primaryKey(0)
   val callsign = varchar("callsign", 100).nullable()
   val time = long("time").primaryKey(1)

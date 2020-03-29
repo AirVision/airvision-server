@@ -22,7 +22,7 @@ class OsnTest {
 
   @Test
   fun `get all aircrafts`() = runBlocking {
-    (osn.getAircrafts().data ?: listOf())
+    (osn.getStates().data ?: listOf())
         .asSequence()
         .take(10)
         .forEach { println(it) }
@@ -31,7 +31,7 @@ class OsnTest {
   @Test
   fun `get aircraft`() = runBlocking {
     val icao = AircraftIcao24.parse("A808C4")
-    println(osn.getAircraft(icao))
+    println(osn.getState(icao))
   }
 
   @Test
@@ -41,7 +41,7 @@ class OsnTest {
         max = GeodeticPosition(-18.0, -38.0)
     )
     // https://opensky-network.org/api/states/all?lamin=-26.0&lamax=-18.0&lomin=-47.0&lomax=-38.0
-    val aircrafts = osn.getAircrafts(bounds)
+    val aircrafts = osn.getStates(bounds)
     aircrafts.data?.forEach { println(it) }
   }
 }

@@ -26,8 +26,14 @@ class UpsertStatement<T : Any> internal constructor(
   init {
     when {
       conflictIndex != null -> {
-        indexName = conflictIndex.indexName
-        indexColumns = conflictIndex.columns
+        val columns = conflictIndex.columns
+        if (columns.size == 1) {
+          indexName = columns[0].name
+          indexColumns = columns
+        } else {
+          indexName = conflictIndex.indexName
+          indexColumns = conflictIndex.columns
+        }
       }
       conflictColumn != null -> {
         indexName = conflictColumn.name

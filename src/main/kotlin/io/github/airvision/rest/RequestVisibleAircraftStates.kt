@@ -70,7 +70,7 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
 
   val bounds = GeodeticBounds.ofCenterAndSize(request.position,
       Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
-  val possibleStates = context.aircraftStateService.getAllWithin(bounds)
+  val possibleStates = context.aircraftService.getAllWithin(bounds)
 
   var states = tryMatch(camera, possibleStates, request.aircrafts)
   if (states.count { it != null } != request.aircrafts.size) {

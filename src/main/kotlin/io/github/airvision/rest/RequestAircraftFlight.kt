@@ -26,7 +26,7 @@ suspend fun PipelineContext.handleAircraftFlightRequest(context: RestContext) {
   val request = call.receive<AircraftFlightRequest>()
   val icao24 = request.icao24
 
-  val response = context.aircraftFlightService.getFlight(icao24)
+  val response = context.aircraftService.getFlight(icao24)
       ?: error.notFound("Couldn't find a flight for $icao24")
   call.respond(response)
 }

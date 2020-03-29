@@ -10,9 +10,8 @@
 package io.github.airvision.rest
 
 import io.github.airvision.AirVision
-import io.github.airvision.service.AircraftFlightService
 import io.github.airvision.service.AircraftInfoService
-import io.github.airvision.service.AircraftStateService
+import io.github.airvision.service.AircraftService
 import io.github.airvision.service.AirportService
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -21,12 +20,8 @@ import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.ApplicationReceivePipeline
-import io.ktor.request.ApplicationReceiveRequest
 import io.ktor.request.ContentTransformationException
-import io.ktor.request.header
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
@@ -35,17 +30,11 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import io.ktor.util.pipeline.PipelineInterceptor
-import io.ktor.utils.io.ByteReadChannel
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecodingException
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 class Rest(
-    private val aircraftStateService: AircraftStateService,
+    private val aircraftService: AircraftService,
     private val aircraftInfoService: AircraftInfoService,
-    private val aircraftFlightService: AircraftFlightService,
     private val airportService: AirportService,
     private val config: AirVision.Config
 ) {
@@ -54,8 +43,7 @@ class Rest(
    * Setup of the server of the REST Web Service.
    */
   fun setup(application: Application) {
-    val context = RestContext(aircraftStateService, aircraftInfoService,
-        aircraftFlightService, airportService, config)
+    val context = RestContext(aircraftService, aircraftInfoService, airportService, config)
 
     // Build module
     application.apply {
@@ -116,9 +104,8 @@ private fun Route.postOrGet(path: String, body: PipelineInterceptor<Unit, Applic
 }
 
 class RestContext(
-    val aircraftStateService: AircraftStateService,
+    val aircraftService: AircraftService,
     val aircraftInfoService: AircraftInfoService,
-    val aircraftFlightService: AircraftFlightService,
     val airportService: AirportService,
     val config: AirVision.Config
 )

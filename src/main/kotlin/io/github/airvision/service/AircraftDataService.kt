@@ -13,12 +13,15 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
 import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
+import io.github.airvision.AirportIcao
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.exposed.abs
 import io.github.airvision.exposed.distinctBy
 import io.github.airvision.exposed.orderBy
-import io.github.airvision.service.db.AircraftDataTable
+import io.github.airvision.exposed.upsert
+import io.github.airvision.service.db.AircraftStateTable
+import io.github.airvision.service.db.AircraftFlightTable
 import io.github.airvision.util.delay
 import io.github.airvision.util.time.minus
 import kotlinx.coroutines.CoroutineDispatcher
@@ -56,13 +59,10 @@ class AircraftDataService(
     private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
-  /**
-   * Represents the latest aircraft data that was received.
-   */
-  private val lastAircraftData = Caffeine.newBuilder()
+  private val lastAircraftStateData = Caffeine.newBuilder()
       // Also apply the executor to reduce context switches on cleanup
       .executor(updateDispatcher.asExecutor())
-      .removalListener<AircraftIcao24, AircraftData> { _, value, cause ->
+      .removalListener<AircraftIcao24, AircraftStateData> { _, value, cause ->
         if (value != null && cause == RemovalCause.EXPIRED) {
           // Process on the dispatcher
           GlobalScope.launch(updateDispatcher) {
@@ -71,7 +71,11 @@ class AircraftDataService(
         }
       }
       .expireAfterWrite(60.seconds.toJavaDuration())
-      .build<AircraftIcao24, AircraftData>()
+      .build<AircraftIcao24, AircraftStateData>()
+
+  private val lastAircraftFlightData = Caffeine.newBuilder()
+      .expireAfterWrite(30.seconds.toJavaDuration())
+      .build<AircraftIcao24, AircraftFlightData>()
 
   private val channel = Channel<AircraftData>()
   private val mergeTime = 3.seconds
@@ -80,47 +84,47 @@ class AircraftDataService(
   private var job: Job? = null
 
   /**
-   * The channel that can be used to send [AircraftData]
+   * The channel that can be used to send [AircraftStateData]
    * data to this service.
    */
   val sendChannel: SendChannel<AircraftData>
     get() = channel
 
   /**
-   * Attempts to get [AircraftData] for the given [AircraftIcao24].
+   * Attempts to get [AircraftStateData] for the given [AircraftIcao24].
    */
-  suspend fun getAircraft(icao24: AircraftIcao24, time: Instant? = null): AircraftData? {
-    val aircraft = lastAircraftData.getIfPresent(icao24)
-    if (aircraft != null && (time == null || aircraft.time.minus(time) < mergeTime))
+  suspend fun getState(icao24: AircraftIcao24, time: Instant? = null): AircraftStateData? {
+    val aircraft = lastAircraftStateData.getIfPresent(icao24)
+    if (aircraft != null && (time == null || aircraft.time - time < mergeTime))
       return aircraft
     val seconds = (time ?: Instant.now()).epochSecond
     return newSuspendedTransaction(getDispatcher, db = database) {
-      AircraftDataTable
-          .select { AircraftDataTable.icao24 eq icao24.address }
-          .orderBy { abs(AircraftDataTable.time - seconds) }
+      AircraftStateTable
+          .select { AircraftStateTable.icao24 eq icao24.address }
+          .orderBy { abs(AircraftStateTable.time - seconds) }
           .andWhere {
-            AircraftDataTable.time.between(
+            AircraftStateTable.time.between(
                 seconds - validTime.inSeconds.toInt(),
                 seconds + validTime.inSeconds.toInt())
           }
           .firstOrNull()
-          ?.let { AircraftDataTable.fromRow(it) }
+          ?.let { AircraftStateTable.fromRow(it) }
     }
   }
 
   /**
-   * Attempts to get [AircraftData] for all the aircrafts. When [bounds] are specified,
+   * Attempts to get [AircraftStateData] for all the aircrafts. When [bounds] are specified,
    * they need to be located within the specific bounds.
    */
-  suspend fun getAircrafts(bounds: GeodeticBounds? = null, time: Instant? = null): Collection<AircraftData> {
-    val mapped = mutableMapOf<Int, AircraftData>()
+  suspend fun getStates(bounds: GeodeticBounds? = null, time: Instant? = null): Collection<AircraftStateData> {
+    val mapped = mutableMapOf<Int, AircraftStateData>()
     @Suppress("NAME_SHADOWING")
     val time = time ?: Instant.now()
     val now = Instant.now()
     fun addCachedValues(maxDiff: Duration) {
-      if (now.minus(time) < maxDiff) {
-        for ((_, value) in lastAircraftData.asMap()) {
-          if (time.minus(value.time).absoluteValue < maxDiff && value.icao24.address !in mapped)
+      if (now - time < maxDiff) {
+        for ((_, value) in lastAircraftStateData.asMap()) {
+          if ((time - value.time).absoluteValue < maxDiff && value.icao24.address !in mapped)
             mapped[value.icao24.address] = value
         }
       }
@@ -128,27 +132,27 @@ class AircraftDataService(
     addCachedValues(mergeTime)
     newSuspendedTransaction(getDispatcher, db = database) {
       val seconds = time.epochSecond
-      AircraftDataTable
+      AircraftStateTable
           .selectAll()
-          .distinctBy(AircraftDataTable.icao24)
-          .orderBy { abs(AircraftDataTable.time - seconds) }
+          .distinctBy(AircraftStateTable.icao24)
+          .orderBy { abs(AircraftStateTable.time - seconds) }
           .andWhere {
-            AircraftDataTable.time.between(
+            AircraftStateTable.time.between(
                 seconds - validTime.inSeconds.toInt(),
                 seconds + validTime.inSeconds.toInt())
           }
           .let {
             if (bounds != null) {
               it.andWhere {
-                AircraftDataTable.latitude.isNotNull() and AircraftDataTable.latitude.between(bounds.min.latitude, bounds.max.latitude) and
-                    AircraftDataTable.longitude.isNotNull() and AircraftDataTable.longitude.between(bounds.min.longitude, bounds.max.longitude)
+                AircraftStateTable.latitude.isNotNull() and AircraftStateTable.latitude.between(bounds.min.latitude, bounds.max.latitude) and
+                    AircraftStateTable.longitude.isNotNull() and AircraftStateTable.longitude.between(bounds.min.longitude, bounds.max.longitude)
               }
             } else it
           }
           .forEach {
-            val address = it[AircraftDataTable.icao24]
+            val address = it[AircraftStateTable.icao24]
             if (address !in mapped)
-              mapped[address] = AircraftDataTable.fromRow(it)
+              mapped[address] = AircraftStateTable.fromRow(it)
           }
     }
     addCachedValues(validTime)
@@ -156,9 +160,9 @@ class AircraftDataService(
   }
 
   /**
-   * Converts the given [ResultRow] into a [AircraftData].
+   * Converts the given [ResultRow] into a [AircraftStateData].
    */
-  private fun AircraftDataTable.fromRow(it: ResultRow): AircraftData {
+  private fun AircraftStateTable.fromRow(it: ResultRow): AircraftStateData {
     val icao24 = AircraftIcao24(it[icao24])
     val time = Instant.ofEpochSecond(it[time])
     val callsign = it[callsign]
@@ -172,15 +176,15 @@ class AircraftDataService(
     val velocity = it[velocity]
     val verticalRate = it[verticalRate]
     val heading = it[heading]
-    return SimpleAircraftData(time = time, icao24 = icao24, onGround = onGround, position = position,
+    return SimpleAircraftStateData(time = time, icao24 = icao24, onGround = onGround, position = position,
         callsign = callsign, velocity = velocity, verticalRate = verticalRate, heading = heading)
   }
 
   /**
    * Is called when for a while there wasn't any data received.
    */
-  private suspend fun cleanupAircraft(data: AircraftData) {
-    AircraftDataTable.insert(data)
+  private suspend fun cleanupAircraft(data: AircraftStateData) {
+    AircraftStateTable.insert(data)
   }
 
   /**
@@ -196,7 +200,8 @@ class AircraftDataService(
       val cleanup = launch {
         while (true) {
           delay(1.minutes)
-          AircraftDataTable.cleanup()
+          AircraftStateTable.cleanup()
+          cleanupFlightData()
         }
       }
       receive.join()
@@ -209,41 +214,99 @@ class AircraftDataService(
     job = null
   }
 
+  private suspend fun process(data: AircraftData) {
+    if (data is AircraftStateData)
+      process(data)
+    if (data is AircraftFlightData)
+      process(data)
+  }
+
   /**
-   * Merges the two [AircraftData].
+   * Merges the two [AircraftStateData].
    */
-  private fun AircraftData.merge(other: AircraftData): AircraftData {
+  private fun AircraftStateData.merge(other: AircraftStateData): AircraftStateData {
     return other.withTime(time)
   }
 
   /**
-   * Processes the [AircraftData].
+   * Processes the [AircraftStateData].
    */
-  private suspend fun process(data: AircraftData) {
-    val lastData = lastAircraftData.getIfPresent(data.icao24)
+  private suspend fun process(data: AircraftStateData) {
+    val lastData = lastAircraftStateData.getIfPresent(data.icao24)
     if (lastData != null) {
-      val difference = data.time.minus(lastData.time)
+      val difference = data.time - lastData.time
       // Merge entries if the time is close enough, to fill missing data, etc.
       if (difference < mergeTime) {
         val merged = lastData.merge(data)
-        lastAircraftData.put(merged.icao24, merged)
+        lastAircraftStateData.put(merged.icao24, merged)
       } else {
         try {
-          AircraftDataTable.insert(lastData)
+          AircraftStateTable.insert(lastData)
         } catch (ex: Exception) {
           AirVision.logger.error("An error occurred while trying to insert an entry", ex)
           println("Difference: $difference")
         }
-        lastAircraftData.put(data.icao24, data)
+        lastAircraftStateData.put(data.icao24, data)
       }
     } else {
-      lastAircraftData.put(data.icao24, data)
+      lastAircraftStateData.put(data.icao24, data)
     }
-
     // TODO: Bulk insert?
   }
 
-  private suspend fun AircraftDataTable.insert(data: AircraftData) {
+  suspend fun getFlight(icao24: AircraftIcao24): AircraftFlightData? {
+    return newSuspendedTransaction {
+      AircraftFlightTable
+          .select { AircraftFlightTable.icao24 eq icao24.address }
+          .map {
+            val time = Instant.ofEpochSecond(it[AircraftFlightTable.time])
+            val destination = it[AircraftFlightTable.destination]?.let { icao -> AirportIcao(icao) }
+            val origin = it[AircraftFlightTable.origin]?.let { icao -> AirportIcao(icao) }
+            SimpleAircraftFlightData(icao24, time, origin, destination)
+          }
+          .firstOrNull()
+    }
+  }
+
+  /**
+   * Processes changes in the flight destination and origin.
+   */
+  private suspend fun process(data: AircraftFlightData) {
+    val lastData = lastAircraftFlightData.getIfPresent(data.icao24)
+    if (lastData == null ||
+        lastData.flightDestination != data.flightDestination ||
+        lastData.flightOrigin != data.flightOrigin ||
+        // Refresh every 10 minutes, so it doesn't get cleaned up
+        (Instant.now() - lastData.time) > 10.minutes) {
+      // Needs an update
+      if (data.flightDestination == null && data.flightOrigin == null) {
+        // No flight, remove
+        newSuspendedTransaction {
+          AircraftFlightTable.deleteWhere { AircraftFlightTable.icao24 eq data.icao24.address }
+        }
+      } else {
+        // A flight, update
+        newSuspendedTransaction {
+          AircraftFlightTable.upsert {
+            it[icao24] = data.icao24.address
+            it[time] = data.time.epochSecond
+            it[destination] = data.flightDestination?.icao
+            it[origin] = data.flightOrigin?.icao
+          }
+        }
+      }
+    }
+  }
+
+  private suspend fun cleanupFlightData() {
+    // Remove all data older than 1 hour
+    val time = Instant.now() - 1.hours
+    newSuspendedTransaction {
+      AircraftFlightTable.deleteWhere { AircraftFlightTable.time less time.epochSecond }
+    }
+  }
+
+  private suspend fun AircraftStateTable.insert(data: AircraftStateData) {
     newSuspendedTransaction(updateDispatcher, db = database) {
       insert {
         it[icao24] = data.icao24.address
@@ -258,11 +321,11 @@ class AircraftDataService(
     }
   }
 
-  private suspend fun AircraftDataTable.cleanup() {
+  private suspend fun AircraftStateTable.cleanup() {
     val time = Instant.now().minus(1.hours)
     newSuspendedTransaction(updateDispatcher, db = database) {
       // For now, keep data up to and hour ago
-      deleteWhere { AircraftDataTable.time less time.epochSecond }
+      deleteWhere { AircraftStateTable.time less time.epochSecond }
 
       // TODO: Keep data for the current flight
       /*

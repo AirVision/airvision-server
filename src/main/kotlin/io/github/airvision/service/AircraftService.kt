@@ -1,0 +1,105 @@
+/*
+ * AirVision
+ *
+ * Copyright (c) AirVision <https://www.github.com/AirVision>
+ * Copyright (c) contributors
+ *
+ * This work is licensed under the terms of the MIT License (MIT). For
+ * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
+ */
+package io.github.airvision.service
+
+import io.github.airvision.AircraftFlight
+import io.github.airvision.AircraftState
+import io.github.airvision.AircraftIcao24
+import io.github.airvision.GeodeticBounds
+import io.github.airvision.service.adsb.AdsBAircraftDataProvider
+import io.github.airvision.service.flightradar24.Fr24AircraftDataProvider
+import io.github.airvision.service.flightradar24.Fr24RestService
+import io.github.airvision.service.openskynetwork.OsnAircraftDataProvider
+import io.github.airvision.service.openskynetwork.OsnAircraftFlightService
+import io.github.airvision.service.openskynetwork.OsnRestService
+import kotlinx.coroutines.CoroutineDispatcher
+import org.jetbrains.exposed.sql.Database
+import java.time.Instant
+
+class AircraftService(
+    private val database: Database,
+    private val databaseUpdateDispatcher: CoroutineDispatcher,
+    private val osnRestService: OsnRestService,
+    private val fr24RestService: Fr24RestService,
+    private val airportService: AirportService
+) {
+
+  private lateinit var dataService: AircraftDataService
+  private lateinit var adsBService: AdsBAircraftDataProvider
+  private lateinit var osnAircraftFlightService: OsnAircraftFlightService
+  private lateinit var osnAircraftDataProvider: OsnAircraftDataProvider
+  private lateinit var fr24AircraftDataProvider: Fr24AircraftDataProvider
+
+  fun init() {
+    val dataService = AircraftDataService(database, databaseUpdateDispatcher)
+        .also { dataService = it }
+    dataService.init()
+
+    val adsBService = AdsBAircraftDataProvider(dataService.sendChannel)
+        .also { adsBService = it }
+    adsBService.init()
+
+    val osnAircraftDataService = OsnAircraftDataProvider(dataService.sendChannel, osnRestService)
+        .also { osnAircraftDataProvider = it }
+    osnAircraftDataService.init()
+
+    val fr24RestService = Fr24AircraftDataProvider(dataService.sendChannel, fr24RestService)
+        .also { fr24AircraftDataProvider = it }
+    fr24RestService.init()
+
+    val osnAircraftFlightService = OsnAircraftFlightService(osnRestService, airportService)
+        .also { osnAircraftFlightService = it }
+    osnAircraftFlightService.init()
+  }
+
+  fun shutdown() {
+    dataService.shutdown()
+    adsBService.shutdown()
+    osnAircraftDataProvider.shutdown()
+  }
+
+  suspend fun getAll(time: Instant? = null): Collection<AircraftState> {
+    return dataService.getStates(time = time).map { it.toAircraft() }
+  }
+
+  suspend fun getAllWithin(bounds: GeodeticBounds, time: Instant? = null): Collection<AircraftState> {
+    return dataService.getStates(bounds = bounds, time = time).map { it.toAircraft() }
+  }
+
+  suspend fun get(icao24: AircraftIcao24, time: Instant? = null): AircraftState? {
+    return dataService.getState(icao24, time)?.toAircraft()
+  }
+
+  private fun AircraftStateData.toAircraft(): AircraftState {
+    return AircraftState(time = time, icao24 = icao24, onGround = onGround, velocity = velocity,
+        position = position, heading = heading, verticalRate = verticalRate)
+  }
+
+  suspend fun getFlight(icao24: AircraftIcao24): AircraftFlight? {
+    var flight = osnAircraftFlightService.getFlight(icao24)
+    if (flight?.departureAirport != null && flight.arrivalAirport != null)
+      return flight
+    val data = dataService.getFlight(icao24)
+    if (data != null) {
+      val origin = data.flightOrigin?.let { airportService.get(it) }
+      val destination = data.flightDestination?.let { airportService.get(it) }
+
+      if (flight != null) {
+        if (flight.departureAirport == null && origin != null)
+          flight = flight.copy(departureAirport = origin)
+        if (flight.arrivalAirport == null && destination != null)
+          flight = flight.copy(arrivalAirport = destination)
+      } else {
+        flight = AircraftFlight(icao24, origin, destination, null, null)
+      }
+    }
+    return flight
+  }
+}

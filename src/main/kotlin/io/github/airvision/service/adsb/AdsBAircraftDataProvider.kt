@@ -18,8 +18,8 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.service.AircraftData
-import io.github.airvision.service.SimpleAircraftData
+import io.github.airvision.service.AircraftStateData
+import io.github.airvision.service.SimpleAircraftStateData
 import io.github.airvision.util.delay
 import io.github.airvision.util.time.toDouble
 import kotlinx.coroutines.Dispatchers
@@ -47,16 +47,16 @@ import kotlin.time.seconds
 import org.opensky.libadsb.tools as AdsBTools
 
 /**
- * @param dataSendChannel The channel that will be used to send [AircraftData] data to
+ * @param dataSendChannel The channel that will be used to send [AircraftStateData] data to
  * @param receiverPosition The coordinates of the receiver, if known
  */
-class AdsBService(
-    private val dataSendChannel: SendChannel<AircraftData>,
+class AdsBAircraftDataProvider(
+    private val dataSendChannel: SendChannel<AircraftStateData>,
     receiverPosition: GeodeticPosition? = null
 ) {
 
   private data class AdsBCacheEntry(
-      val data: SimpleAircraftData,
+      val data: SimpleAircraftStateData,
       val positionDecoder: PositionDecoder = PositionDecoder(),
       val positionUpdateTime: Instant? = null
   )
@@ -104,10 +104,10 @@ class AdsBService(
     return GlobalScope.launch(Dispatchers.IO) {
       while (true) {
         delay(10.seconds)
-        var serialPort = this@AdsBService.serialPort
+        var serialPort = this@AdsBAircraftDataProvider.serialPort
         if (serialPort == null || serialPort.isOpen) {
           serialPort = startReading().fold({ null }, { it })
-          this@AdsBService.serialPort = serialPort
+          this@AdsBAircraftDataProvider.serialPort = serialPort
         }
         // Reconnect failed, so let's wait a bit longer
         if (serialPort == null)
@@ -141,9 +141,9 @@ class AdsBService(
     }
   }
 
-  private fun receiveMessage(time: Instant, message: ModeSReply): AircraftData {
+  private fun receiveMessage(time: Instant, message: ModeSReply): AircraftStateData {
     val icao24 = AircraftIcao24(message.transponderAddress)
-    val entry = adsBDataCache.get(icao24) { AdsBCacheEntry(SimpleAircraftData(time, icao24)) }!!
+    val entry = adsBDataCache.get(icao24) { AdsBCacheEntry(SimpleAircraftStateData(time, icao24)) }!!
 
     val (data, positionDecoder, positionUpdateTime) = entry
 

@@ -15,11 +15,13 @@ import io.github.airvision.serializer.InstantSerializer
 import io.github.airvision.serializer.QuaterniondSerializer
 import io.github.airvision.serializer.Vector2dSerializer
 import io.github.airvision.serializer.Vector3dSerializer
-import io.github.airvision.service.AircraftStateService
-import io.github.airvision.service.db.AircraftDataTable
+import io.github.airvision.service.AircraftService
+import io.github.airvision.service.db.AircraftFlightTable
+import io.github.airvision.service.db.AircraftStateTable
 import io.github.airvision.service.db.AircraftManufacturerTable
 import io.github.airvision.service.db.AircraftInfoTable
 import io.github.airvision.service.db.DatabaseSettings
+import io.github.airvision.service.flightradar24.Fr24RestService
 import io.github.airvision.service.openflights.OpenFlightsAirportService
 import io.github.airvision.service.openskynetwork.OsnAircraftFlightService
 import io.github.airvision.service.openskynetwork.OsnAircraftInfoService
@@ -80,34 +82,37 @@ fun main() {
   val database = Database.connect(dataSource)
   transaction(db = database) {
     SchemaUtils.createMissingTablesAndColumns(
-        AircraftDataTable,
+        AircraftFlightTable,
         AircraftManufacturerTable,
-        AircraftInfoTable)
+        AircraftInfoTable,
+        AircraftStateTable)
   }
   AirVision.logger.info("Successfully connected to the database.")
   val databaseUpdateDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
-  // Initialize the OpenSky Network rest service
-  val osn = OsnRestService(config.osn)
-
-  // Initialize the OpenSky Network aircraft model database service
-  val aircraftModelService = OsnAircraftInfoService(database, databaseUpdateDispatcher)
-  aircraftModelService.init()
-
-  // Initialize the aircraft service
-  val aircraftStateService = AircraftStateService(database, databaseUpdateDispatcher, osn)
-  aircraftStateService.init()
-
   // Initialize the airports service
   val airportService = OpenFlightsAirportService()
 
+  // Initialize the FlightRadar24 rest service
+  val fr24 = Fr24RestService(airportService)
+
+  // Initialize the OpenSky Network rest service
+  val osn = OsnRestService(config.osn)
+
+  // Initialize the OpenSky Network aircraft info database service
+  val aircraftInfoService = OsnAircraftInfoService(database, databaseUpdateDispatcher)
+  aircraftInfoService.init()
+
+  // Initialize the aircraft service
+  val aircraftService = AircraftService(database, databaseUpdateDispatcher, osn, fr24, airportService)
+  aircraftService.init()
+
   // Initialize the aircraft flight info service
-  val aircraftFlightService = OsnAircraftFlightService(osn, airportService)
-  aircraftFlightService.init()
+  val osnAircraftFlightService = OsnAircraftFlightService(osn, airportService)
+  osnAircraftFlightService.init()
 
   // Initialize the rest service
-  val rest = Rest(aircraftStateService, aircraftModelService,
-      aircraftFlightService, airportService, config)
+  val rest = Rest(aircraftService, aircraftInfoService, airportService, config)
   val restConfig = config.rest
 
   AirVision.logger.info("Starting the REST Server, bound to ${restConfig.host}:${restConfig.port}")

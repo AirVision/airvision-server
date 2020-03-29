@@ -10,8 +10,9 @@
 package io.github.airvision.service.openskynetwork
 
 import io.github.airvision.AircraftIcao24
+import io.github.airvision.AirportIcao
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.service.AircraftData
+import io.github.airvision.service.AircraftStateData
 import io.github.airvision.service.openskynetwork.serializer.OsnAircraftSerializer
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
@@ -36,7 +37,7 @@ data class OsnAircraftData(
     val squawk: String?,
     val spi: Boolean,
     val positionSource: OsnPositionSource
-) : AircraftData {
+) : AircraftStateData {
 
   override val position: GeodeticPosition?
     get() = if (latitude != null && longitude != null) {

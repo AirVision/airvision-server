@@ -10,7 +10,9 @@
 package io.github.airvision.service
 
 import io.github.airvision.Airport
+import io.github.airvision.AirportIata
 import io.github.airvision.AirportIcao
+import org.jetbrains.exposed.dao.EntityID
 
 /**
  * Represents a service that can provide information about [Airport]s.
@@ -26,4 +28,9 @@ interface AirportService {
    * Gets the airport for the given [AirportIcao], if it exists.
    */
   suspend fun get(icao: AirportIcao): Airport?
+
+  /**
+   * Gets the airport for the given [AirportIata], if it exists.
+   */
+  suspend fun get(iata: AirportIata): Airport?
 }

@@ -28,9 +28,9 @@ class AircraftStatesRequest(
 suspend fun PipelineContext.handleAircraftStatesRequest(context: RestContext) {
   val request = call.receive<AircraftStatesRequest>()
   val states = if (request.bounds != null) {
-    context.aircraftStateService.getAllWithin(request.bounds, request.time)
+    context.aircraftService.getAllWithin(request.bounds, request.time)
   } else {
-    context.aircraftStateService.getAll(request.time)
+    context.aircraftService.getAll(request.time)
   }
   call.respond(states)
 }

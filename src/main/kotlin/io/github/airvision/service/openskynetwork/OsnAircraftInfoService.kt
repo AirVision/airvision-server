@@ -55,7 +55,7 @@ class OsnAircraftInfoService(
   private var job: Job? = null
 
   fun init() {
-    val directory = Paths.get("model-service")
+    val directory = Paths.get("downloads")
     if (!Files.exists(directory))
       Files.createDirectories(directory)
 

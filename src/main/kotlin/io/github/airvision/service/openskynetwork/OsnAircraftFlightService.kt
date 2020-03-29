@@ -10,12 +10,11 @@
 package io.github.airvision.service.openskynetwork
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import io.github.airvision.AircraftFlight
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
-import io.github.airvision.service.AircraftFlight
-import io.github.airvision.service.AircraftFlightService
+import io.github.airvision.Waypoint
 import io.github.airvision.service.AirportService
-import io.github.airvision.service.Waypoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -30,7 +29,7 @@ import kotlin.time.toJavaDuration
 class OsnAircraftFlightService(
     private val osnRestService: OsnRestService,
     private val airportService: AirportService
-) : AircraftFlightService {
+) {
 
   private val cache = Caffeine.newBuilder()
       .expireAfterWrite(20.seconds.toJavaDuration())
@@ -94,5 +93,5 @@ class OsnAircraftFlightService(
     }
   }
 
-  override suspend fun getFlight(icao24: AircraftIcao24): AircraftFlight? = cache.get(icao24).await()
+  suspend fun getFlight(icao24: AircraftIcao24): AircraftFlight? = cache.get(icao24).await()
 }

@@ -19,8 +19,8 @@ fun Instant.toDouble(unit: DurationUnit): Double =
     Duration.convert(nano.toDouble(), DurationUnit.NANOSECONDS, unit) +
         Duration.convert(epochSecond.toDouble(), DurationUnit.SECONDS, unit)
 
-fun Instant.minus(other: Instant): Duration =
+operator fun Instant.minus(other: Instant): Duration =
     (toEpochMilli() - other.toEpochMilli()).milliseconds
 
-fun Instant.minus(duration: Duration): Instant =
+operator fun Instant.minus(duration: Duration): Instant =
     minus(duration.toJavaDuration())
