@@ -87,10 +87,6 @@ data class Camera(
 
 private const val Epsilon = 0.00001
 
-// Rotation to make swap +z and -z, originally +z was in the direction outside
-// of the camera lens view, but this needs to be -z
-private val invertZAxis = Matrix4d.createRotation(Quaterniond.fromAngleDegAxis(180.0, Vector3d.UNIT_Y))
-
 /**
  * Converts the 3d point to a 2d point within the camera view. Returns
  * null if the point isn't within the camera view.
@@ -98,14 +94,15 @@ private val invertZAxis = Matrix4d.createRotation(Quaterniond.fromAngleDegAxis(1
  * The returned position is within bounds [0,0] to [1,1]
  */
 fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
-  var pos = camera.viewMatrix.transform(this)
+  // Camera Coordinate System
+  // https://www.scratchapixel.com/images/upload/perspective-matrix/camera.png
 
+  var pos = camera.viewMatrix.transform(this)
   // Point is behind the camera, so not visible
-  if (pos.z < 0)
+  if (pos.z > 0)
     return null
 
   pos = camera.projectionMatrix.transform(pos)
-  pos = invertZAxis.transform(pos)
 
   // -1.0..1.0 -> 0.0..1.0
   // 0.0 is left, 1.0 is right
@@ -125,7 +122,7 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
 }
 
 private fun Matrix4d.transform(vector: Vector3d): Vector3d {
-  val transformed = this.transform(vector.toVector4(1.0))
+  val transformed = transform(vector.toVector4(1.0))
   return if (transformed.w != 1.0) {
     transformed.toVector3().div(transformed.w)
   } else {
