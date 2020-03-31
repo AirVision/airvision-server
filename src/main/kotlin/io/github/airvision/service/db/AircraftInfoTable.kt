@@ -9,10 +9,11 @@
  */
 package io.github.airvision.service.db
 
+import io.github.airvision.exposed.aircraftIcao24
 import org.jetbrains.exposed.dao.IntIdTable
 
 object AircraftInfoTable : IntIdTable("aircraft_info") {
-  val icao24 = integer("icao24")
+  val aircraftId = aircraftIcao24("icao24")
   val model = varchar("model", 500)
   // L1P, L2P, ... includes engine type, engine count, aircraft type
   val description = varchar("description", 10).nullable()
@@ -24,6 +25,6 @@ object AircraftInfoTable : IntIdTable("aircraft_info") {
   val owner = varchar("owner", 1000).nullable()
 
   init {
-    uniqueIndex(icao24)
+    uniqueIndex(aircraftId)
   }
 }

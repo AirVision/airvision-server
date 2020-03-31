@@ -78,7 +78,7 @@ class AircraftService(
   }
 
   private fun AircraftStateData.toAircraft(): AircraftState {
-    return AircraftState(time = time, icao24 = icao24, onGround = onGround, velocity = velocity,
+    return AircraftState(time = time, icao24 = aircraftId, onGround = onGround, velocity = velocity,
         position = position, heading = heading, verticalRate = verticalRate)
   }
 
@@ -88,16 +88,19 @@ class AircraftService(
       return flight
     val data = dataService.getFlight(icao24)
     if (data != null) {
-      val origin = data.flightOrigin?.let { airportService.get(it) }
-      val destination = data.flightDestination?.let { airportService.get(it) }
+      val departureAirport = data.departureAirport?.let { airportService.get(it) }
+      val arrivalAirport = data.arrivalAirport?.let { airportService.get(it) }
 
       if (flight != null) {
-        if (flight.departureAirport == null && origin != null)
-          flight = flight.copy(departureAirport = origin)
-        if (flight.arrivalAirport == null && destination != null)
-          flight = flight.copy(arrivalAirport = destination)
+        if (flight.departureAirport == null && departureAirport != null)
+          flight = flight.copy(departureAirport = departureAirport)
+        if (flight.arrivalAirport == null && arrivalAirport != null)
+          flight = flight.copy(arrivalAirport = arrivalAirport)
+        if (flight.code == null && data.code != null)
+          flight = flight.copy(code = data.code)
       } else {
-        flight = AircraftFlight(icao24, origin, destination, null, null)
+        flight = AircraftFlight(icao24, data.code, departureAirport,
+            arrivalAirport, null, null)
       }
     }
     return flight

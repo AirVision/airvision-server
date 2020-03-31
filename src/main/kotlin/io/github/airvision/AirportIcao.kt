@@ -18,5 +18,13 @@ import kotlinx.serialization.Serializable
 @Serializable(with = AirportIcaoSerializer::class)
 data class AirportIcao(val icao: String) {
 
+  init {
+    check(icao.length <= MaxLength) { "Airport icao \"$icao\" is too long." }
+  }
+
   override fun toString() = this.icao
+
+  companion object {
+     const val MaxLength = 4
+  }
 }

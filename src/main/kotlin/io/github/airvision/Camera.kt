@@ -42,9 +42,19 @@ data class Camera(
   fun withTransform(transform: Transform) = copy(transform = transform)
 
   /**
-   * Rotates this camera with the given [rotation] [Quaterniond].
+   * Gets a new [Camera] state with the given [rotation].
+   */
+  fun withRotation(rotation: Quaterniond) = withTransform(transform.withRotation(rotation))
+
+  /**
+   * Rotates this camera with the given [rotation].
    */
   fun rotate(rotation: Quaterniond) = withTransform(transform.rotate(rotation))
+
+  /**
+   * Gets a new [Camera] state with the given [position].
+   */
+  fun withPosition(position: Vector3d) = withTransform(transform.withPosition(position))
 
   /**
    * Rotates this camera with the given [translation] [Vector3d].
@@ -52,17 +62,17 @@ data class Camera(
   fun translate(translation: Vector3d) = withTransform(transform.translate(translation))
 
   /**
-   * Gets the y axis, relative to this camera.
+   * Gets the y axis.
    */
   val yAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_Y) }
 
   /**
-   * Gets the y axis, relative to this camera.
+   * Gets the y axis.
    */
   val xAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_X) }
 
   /**
-   * Gets the z axis, relative to this camera.
+   * Gets the z axis.
    */
   val zAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_Z) }
 

@@ -145,7 +145,7 @@ class OsnAircraftInfoService(
   override suspend fun get(icao24: AircraftIcao24): AircraftInfo? {
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftInfoTable
-          .select { AircraftInfoTable.icao24 eq icao24.address }
+          .select { AircraftInfoTable.aircraftId eq icao24 }
           .map {
             val manufacturerId = it[AircraftInfoTable.manufacturer]
             val manufacturer = if (manufacturerId != null) getManufacturerById(manufacturerId) else null
@@ -324,8 +324,8 @@ class OsnAircraftInfoService(
         val enginesJson = Json.stringify(engineEntriesListSerializer, engines)
 
         newSuspendedTransaction(updateDispatcher, db = database) {
-          AircraftInfoTable.upsert(AircraftInfoTable.icao24) {
-            it[AircraftInfoTable.icao24] = icao24.address
+          AircraftInfoTable.upsert(AircraftInfoTable.aircraftId) {
+            it[AircraftInfoTable.aircraftId] = icao24
             it[AircraftInfoTable.model] = model
             it[AircraftInfoTable.description] = description
             it[AircraftInfoTable.engines] = enginesJson

@@ -13,6 +13,6 @@ import io.github.airvision.AircraftIcao24
 import java.time.Instant
 
 interface AircraftData {
-  val icao24: AircraftIcao24
+  val aircraftId: AircraftIcao24
   val time: Instant
 }

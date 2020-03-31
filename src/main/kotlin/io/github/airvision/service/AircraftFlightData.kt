@@ -14,13 +14,17 @@ import io.github.airvision.AirportIcao
 import java.time.Instant
 
 interface AircraftFlightData : AircraftData {
-  val flightDestination: AirportIcao?
-  val flightOrigin: AirportIcao?
+  val arrivalAirport: AirportIcao?
+  val departureAirport: AirportIcao?
+  val estimatedArrivalTime: Instant?
+  val code: String?
 }
 
 data class SimpleAircraftFlightData(
-    override val icao24: AircraftIcao24,
+    override val aircraftId: AircraftIcao24,
     override val time: Instant,
-    override val flightOrigin: AirportIcao?,
-    override val flightDestination: AirportIcao?
+    override val code: String?,
+    override val departureAirport: AirportIcao?,
+    override val arrivalAirport: AirportIcao?,
+    override val estimatedArrivalTime: Instant? = null
 ) : AircraftFlightData

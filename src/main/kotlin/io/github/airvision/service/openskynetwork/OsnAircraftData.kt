@@ -20,7 +20,7 @@ import java.time.Instant
 
 @Serializable(with = OsnAircraftSerializer::class)
 data class OsnAircraftData(
-    override val icao24: AircraftIcao24,
+    override val aircraftId: AircraftIcao24,
     override val callsign: String?,
     val originCountry: String,
     @ContextualSerialization val timePosition: Instant?,

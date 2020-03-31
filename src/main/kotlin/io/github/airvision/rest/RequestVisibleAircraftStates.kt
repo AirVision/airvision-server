@@ -70,35 +70,37 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
 
   val bounds = GeodeticBounds.ofCenterAndSize(request.position,
       Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
-  val possibleStates = context.aircraftService.getAllWithin(bounds)
+  val possibleStates = context.aircraftService.getAllWithin(bounds, request.time)
 
   var states = tryMatch(camera, possibleStates, request.aircrafts)
   if (states.count { it != null } != request.aircrafts.size) {
-    // Try again with different error margins, to see if we get better results
-    val marginSize = 5.0
-    fun tryWithMargin(xModifier: Double, yModifier: Double): Boolean {
-      var cameraWithMargin = Camera.ofPerspective(fov)
+    // Try again with slight alterations to the camera orientation,
+    // rotate the camera in different directions and check for better
+    // results, e.g. 5 degrees up, down, left, right, up-left, etc.
+    val alteration = 5.0
+    fun tryWithAlteration(xModifier: Double, yModifier: Double): Boolean {
+      var alteredCamera = Camera.ofPerspective(fov)
           .withTransform(transform)
-      cameraWithMargin = cameraWithMargin.rotate(
-          Quaterniond.fromAngleDegAxis(marginSize / 2.0 * xModifier, cameraWithMargin.yAxis))
-      cameraWithMargin = cameraWithMargin.rotate(
-          Quaterniond.fromAngleDegAxis(marginSize / 2.0 * yModifier, cameraWithMargin.xAxis))
+      alteredCamera = alteredCamera.rotate(
+          Quaterniond.fromAngleDegAxis(alteration * xModifier, alteredCamera.yAxis))
+      alteredCamera = alteredCamera.rotate(
+          Quaterniond.fromAngleDegAxis(alteration * yModifier, alteredCamera.xAxis))
 
-      val statesForMargin = tryMatch(cameraWithMargin, possibleStates, request.aircrafts)
+      val statesForMargin = tryMatch(alteredCamera, possibleStates, request.aircrafts)
       if (statesForMargin.count { it != null } != request.aircrafts.size)
         return false
       // A better result was found
       states = statesForMargin
       return true
     }
-    tryWithMargin(+1.0, 0.0) ||
-        tryWithMargin(-1.0, 0.0) ||
-        tryWithMargin(0.0, +1.0) ||
-        tryWithMargin(0.0, -1.0) ||
-        tryWithMargin(+1.0, +1.0) ||
-        tryWithMargin(+1.0, -1.0) ||
-        tryWithMargin(-1.0, +1.0) ||
-        tryWithMargin(-1.0, -1.0)
+    tryWithAlteration(+1.0, 0.0) ||
+        tryWithAlteration(-1.0, 0.0) ||
+        tryWithAlteration(0.0, +1.0) ||
+        tryWithAlteration(0.0, -1.0) ||
+        tryWithAlteration(+1.0, +1.0) ||
+        tryWithAlteration(+1.0, -1.0) ||
+        tryWithAlteration(-1.0, +1.0) ||
+        tryWithAlteration(-1.0, -1.0)
   }
 
   call.respond(VisibleAircraftResponse(listOf()))
@@ -118,11 +120,16 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
       .sortedBy { (position, _, _) -> camera.transform.position.distanceSquared(position) }
 
   val closestLimited = closestInView.take(aircrafts.size)
+  val used = mutableSetOf<AircraftState>()
   return aircrafts.asSequence()
       .map { aircraft ->
         // TODO: Utilize size, if needed.
         val result = closestLimited
-            .minBy { (_, viewPosition, _) -> viewPosition.distanceSquared(aircraft.position) }
+            .asSequence()
+            .sortedBy { (_, viewPosition, _) -> viewPosition.distanceSquared(aircraft.position) }
+            // Only returns true the first time it was matched
+            .filter { (_, _, state) -> used.add(state) }
+            .firstOrNull()
         result?.third
       }
       .toList()

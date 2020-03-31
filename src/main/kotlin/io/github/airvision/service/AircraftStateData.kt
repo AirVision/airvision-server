@@ -21,13 +21,13 @@ interface AircraftStateData : AircraftData {
   val heading: Double?
   val callsign: String?
 
-  fun withTime(time: Instant) = SimpleAircraftStateData(time, icao24, callsign,
+  fun withTime(time: Instant) = SimpleAircraftStateData(time, aircraftId, callsign,
       onGround, position, velocity, verticalRate, heading)
 }
 
 data class SimpleAircraftStateData(
     override val time: Instant,
-    override val icao24: AircraftIcao24,
+    override val aircraftId: AircraftIcao24,
     override val callsign: String? = null,
     override val onGround: Boolean = false,
     override val position: GeodeticPosition? = null,

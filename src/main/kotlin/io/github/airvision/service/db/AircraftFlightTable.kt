@@ -9,15 +9,20 @@
  */
 package io.github.airvision.service.db
 
+import io.github.airvision.exposed.aircraftIcao24
+import io.github.airvision.exposed.airportIcao
+import io.github.airvision.exposed.epochSecond
 import org.jetbrains.exposed.sql.Table
 
 object AircraftFlightTable : Table("aircraft_flight") {
-  val icao24 = integer("icao24").primaryKey()
-  val time = long("time")
-  val origin = varchar("origin", 30).nullable()
-  val destination = varchar("destination", 30).nullable()
+  val aircraftId = aircraftIcao24("aircraft").primaryKey()
+  val time = epochSecond("time")
+  val code = varchar("code", 30).nullable()
+  val departureAirport = airportIcao("origin").nullable()
+  val arrivalAirport = airportIcao("destination").nullable()
+  val estimatedArrivalTime = epochSecond("est_arrival_time").nullable()
 
   init {
-    uniqueIndex(icao24)
+    uniqueIndex(aircraftId)
   }
 }

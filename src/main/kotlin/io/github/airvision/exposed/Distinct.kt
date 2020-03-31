@@ -18,19 +18,6 @@ import org.jetbrains.exposed.sql.QueryBuilder
 import org.jetbrains.exposed.sql.Slice
 import org.jetbrains.exposed.sql.SortOrder
 
-private class DistinctBy(
-    val expressions: Collection<ExpressionWithColumnType<*>>
-) : ExpressionWithColumnType<Int>() {
-
-  override val columnType: IColumnType = IntegerColumnType()
-
-  override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
-    append("DISTINCT ON (")
-    appendJoined(expressions)
-    append(") TRUE")
-  }
-}
-
 /**
  * Creates a [FieldSet] where entries will be unique based on the columns.
  *
@@ -65,4 +52,17 @@ fun Query.distinctBy(columns: Collection<Pair<ExpressionWithColumnType<*>, SortO
     val distinctOn = DistinctBy(expressions + columns.map { it.first })
     Slice(source, listOf(distinctOn) + fields)
   }.orderBy(*orderBy)
+}
+
+private class DistinctBy(
+    val expressions: Collection<ExpressionWithColumnType<*>>
+) : ExpressionWithColumnType<Int>() {
+
+  override val columnType: IColumnType = IntegerColumnType()
+
+  override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
+    append("DISTINCT ON (")
+    appendJoined(expressions)
+    append(") TRUE")
+  }
 }

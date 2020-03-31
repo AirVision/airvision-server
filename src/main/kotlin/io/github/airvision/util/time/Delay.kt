@@ -24,3 +24,6 @@ operator fun Instant.minus(other: Instant): Duration =
 
 operator fun Instant.minus(duration: Duration): Instant =
     minus(duration.toJavaDuration())
+
+operator fun Instant.plus(duration: Duration): Instant =
+    plus(duration.toJavaDuration())

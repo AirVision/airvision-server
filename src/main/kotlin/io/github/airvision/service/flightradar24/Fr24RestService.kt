@@ -52,12 +52,13 @@ class Fr24RestService(
       return null
     val icao24 = AircraftIcao24.parse(icao24Raw)
 
-    val originIata = this[11].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
-    val destinationIata = this[12].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
+    val code = this[13].contentOrNull?.toNullIfEmpty()
+    val departureAirportIata = this[11].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
+    val arrivalAirportIata = this[12].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
 
-    val origin = originIata?.let { airportService.get(it) }
-    val destination = destinationIata?.let { airportService.get(it) }
+    val departureAirport = departureAirportIata?.let { airportService.get(it) }
+    val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }
 
-    return SimpleAircraftFlightData(icao24, time, origin?.icao, destination?.icao)
+    return SimpleAircraftFlightData(icao24, time, code, departureAirport?.icao, arrivalAirport?.icao)
   }
 }

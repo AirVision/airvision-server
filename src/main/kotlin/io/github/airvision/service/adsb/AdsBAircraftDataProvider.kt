@@ -224,7 +224,7 @@ class AdsBAircraftDataProvider(
 
     val newData = data.copy(time = time, onGround = onGround, position = position,
         callsign = callsign, velocity = velocity, verticalRate = verticalRate, heading = heading)
-    adsBDataCache.put(data.icao24, entry.copy(data = newData, positionUpdateTime = newPositionUpdateTime))
+    adsBDataCache.put(data.aircraftId, entry.copy(data = newData, positionUpdateTime = newPositionUpdateTime))
     return newData
   }
 
