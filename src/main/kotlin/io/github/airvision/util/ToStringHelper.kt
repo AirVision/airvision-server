@@ -232,10 +232,7 @@ class ToStringHelper(
         if (entry.key != null) {
           builder.append(entry.key).append(this.nameValueSeparator)
         }
-        var value = entry.value.toString()
-        if (value.indexOfAny(quotedChars) != -1) {
-          value = "'$value'"
-        }
+        val value = entry.value.toString()
         builder.append(value)
         if (hasValue(entry.next)) {
           builder.append(this.entrySeparator)
@@ -261,9 +258,4 @@ class ToStringHelper(
   }
 
   private data class Entry(val key: String?, val value: Any?, var next: Entry? = null)
-
-  companion object {
-
-    private val quotedChars = charArrayOf(',', ' ')
-  }
 }

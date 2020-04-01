@@ -142,8 +142,8 @@ class AdsBAircraftDataProvider(
   }
 
   private fun receiveMessage(time: Instant, message: ModeSReply): AircraftStateData {
-    val icao24 = AircraftIcao24(message.transponderAddress)
-    val entry = adsBDataCache.get(icao24) { AdsBCacheEntry(SimpleAircraftStateData(time, icao24)) }!!
+    val aircraftId = AircraftIcao24(message.transponderAddress)
+    val entry = adsBDataCache.get(aircraftId) { AdsBCacheEntry(SimpleAircraftStateData(time, aircraftId)) }!!
 
     val (data, positionDecoder, positionUpdateTime) = entry
 

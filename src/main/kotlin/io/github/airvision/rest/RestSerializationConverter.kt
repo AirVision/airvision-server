@@ -60,7 +60,9 @@ class RestSerializationConverter(
     val channel = request.value as? ByteReadChannel ?: return null
     val charset = context.call.request.contentCharset() ?: Charsets.UTF_8
     val contentPacket = channel.readRemaining()
-    return convertForReceive(context, contentPacket.readText(charset))
+    val content = contentPacket.readText(charset)
+    // AirVision.logger.debug("REQ: $content")
+    return convertForReceive(context, content)
   }
 
   fun convertForReceive(context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>, content: String): Any {

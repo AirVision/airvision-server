@@ -73,8 +73,8 @@ class AircraftService(
     return dataService.getStates(bounds = bounds, time = time).map { it.toAircraft() }
   }
 
-  suspend fun get(icao24: AircraftIcao24, time: Instant? = null): AircraftState? {
-    return dataService.getState(icao24, time)?.toAircraft()
+  suspend fun get(aircraftId: AircraftIcao24, time: Instant? = null): AircraftState? {
+    return dataService.getState(aircraftId, time)?.toAircraft()
   }
 
   private fun AircraftStateData.toAircraft(): AircraftState {
@@ -82,11 +82,11 @@ class AircraftService(
         position = position, heading = heading, verticalRate = verticalRate)
   }
 
-  suspend fun getFlight(icao24: AircraftIcao24): AircraftFlight? {
-    var flight = osnAircraftFlightService.getFlight(icao24)
+  suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlight? {
+    var flight = osnAircraftFlightService.getFlight(aircraftId)
     if (flight?.departureAirport != null && flight.arrivalAirport != null)
       return flight
-    val data = dataService.getFlight(icao24)
+    val data = dataService.getFlight(aircraftId)
     if (data != null) {
       val departureAirport = data.departureAirport?.let { airportService.get(it) }
       val arrivalAirport = data.arrivalAirport?.let { airportService.get(it) }
@@ -99,7 +99,7 @@ class AircraftService(
         if (flight.code == null && data.code != null)
           flight = flight.copy(code = data.code)
       } else {
-        flight = AircraftFlight(icao24, data.code, departureAirport,
+        flight = AircraftFlight(aircraftId, data.code, departureAirport,
             arrivalAirport, null, null)
       }
     }

@@ -24,11 +24,11 @@ data class AircraftModelRequest(
 
 suspend fun PipelineContext.handleAircraftModelRequest(context: RestContext) {
   val request = call.receive<AircraftModelRequest>()
-  val model = context.aircraftInfoService.get(request.icao24)
+  val info = context.aircraftInfoService.get(request.icao24)
 
-  if (model == null) {
+  if (info == null) {
     call.respond(error.notFound("Couldn't find information for ${request.icao24}"))
     return
   }
-  call.respond(model)
+  call.respond(info)
 }

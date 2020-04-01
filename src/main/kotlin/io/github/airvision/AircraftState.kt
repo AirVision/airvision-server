@@ -23,7 +23,6 @@ import java.time.Instant
  * @property velocity The velocity in meters per second, if known
  * @property onGround Whether the aircraft is on the ground
  * @property verticalRate The vertical rate in meters per second, if known
- * @property index Only used for rest responses
  */
 @Serializable
 data class AircraftState(
@@ -33,9 +32,5 @@ data class AircraftState(
     val velocity: Double?,
     @SerialName("on_ground") val onGround: Boolean,
     @SerialName("vertical_rate") val verticalRate: Double?,
-    val heading: Double?,
-    val index: Int? = null
-) {
-
-  fun withIndex(index: Int) = copy(index = index)
-}
+    val heading: Double?
+)

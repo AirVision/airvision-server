@@ -17,6 +17,7 @@ import io.github.airvision.GeodeticPosition
 import io.github.airvision.toEcefPosition
 import io.github.airvision.toEcefTransform
 import io.github.airvision.toViewPosition
+import io.github.airvision.util.ToStringHelper
 import io.github.airvision.util.vector.min
 import io.ktor.application.call
 import io.ktor.request.receive
@@ -37,7 +38,16 @@ data class VisibleAircraftRequest(
     @ContextualSerialization val rotation: Vector3d,
     @ContextualSerialization val fov: Vector2d,
     val aircrafts: List<ImageAircraft>
-)
+) {
+
+  override fun toString() = ToStringHelper()
+      .add("time", this.time.epochSecond)
+      .add("position", this.position)
+      .add("rotation", this.rotation)
+      .add("fov", this.fov)
+      .add("aircrafts", this.aircrafts.joinToString(separator = ",", prefix = "[", postfix = "]"))
+      .toString()
+}
 
 @Serializable
 data class ImageAircraft(
@@ -55,7 +65,7 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
 
   // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
 
-  val enuRotation = request.rotation.let { Quaterniond.fromAxesAnglesRad(it.x, it.y, it.z) }
+  val enuRotation = request.rotation.let { Quaterniond.fromAxesAnglesDeg(it.x, it.y, it.z) }
   val enuTransform = EnuTransform(request.position, enuRotation)
 
   val transform = enuTransform.toEcefTransform()
@@ -103,7 +113,7 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
         tryWithAlteration(-1.0, -1.0)
   }
 
-  call.respond(VisibleAircraftResponse(listOf()))
+  call.respond(VisibleAircraftResponse(states))
 }
 
 fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<ImageAircraft>): List<AircraftState?> {

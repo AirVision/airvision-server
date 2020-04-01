@@ -142,10 +142,10 @@ class OsnAircraftInfoService(
 
   private val engineEntriesListSerializer = EngineEntry.serializer().list
 
-  override suspend fun get(icao24: AircraftIcao24): AircraftInfo? {
+  override suspend fun get(aircraftId: AircraftIcao24): AircraftInfo? {
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftInfoTable
-          .select { AircraftInfoTable.aircraftId eq icao24 }
+          .select { AircraftInfoTable.aircraftId eq aircraftId }
           .map {
             val manufacturerId = it[AircraftInfoTable.manufacturer]
             val manufacturer = if (manufacturerId != null) getManufacturerById(manufacturerId) else null
@@ -171,7 +171,7 @@ class OsnAircraftInfoService(
                   engineEntries?.map { entry -> AircraftEnginesEntry(entry.name, entry.count) })
             }
 
-            AircraftInfo(icao24, model, description, owner, manufacturer, engines, type)
+            AircraftInfo(aircraftId, model, description, owner, manufacturer, engines, type)
           }
           .firstOrNull()
     }

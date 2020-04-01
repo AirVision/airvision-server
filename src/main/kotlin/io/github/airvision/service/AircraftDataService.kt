@@ -93,20 +93,17 @@ class AircraftDataService(
   /**
    * Attempts to get [AircraftStateData] for the given [AircraftIcao24].
    */
-  suspend fun getState(icao24: AircraftIcao24, time: Instant? = null): AircraftStateData? {
-    val aircraft = lastAircraftStateData.getIfPresent(icao24)
+  suspend fun getState(aircraftId: AircraftIcao24, time: Instant? = null): AircraftStateData? {
+    val aircraft = lastAircraftStateData.getIfPresent(aircraftId)
     if (aircraft != null && (time == null || aircraft.time - time < mergeTime))
       return aircraft
-    val seconds = time ?: Instant.now()
+    @Suppress("NAME_SHADOWING")
+    val time = time ?: Instant.now()
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftStateTable
-          .select { AircraftStateTable.aircraftId eq icao24 }
-          .orderBy { abs(AircraftStateTable.time - seconds) }
-          .andWhere {
-            AircraftStateTable.time.between(
-                seconds - validTime,
-                seconds + validTime)
-          }
+          .select { AircraftStateTable.aircraftId eq aircraftId }
+          .orderBy { abs(AircraftStateTable.time - time) }
+          .andWhere { AircraftStateTable.time.between(time - validTime, time + validTime) }
           .firstOrNull()
           ?.let { AircraftStateTable.fromRow(it) }
     }
@@ -135,9 +132,7 @@ class AircraftDataService(
           .selectAll()
           .distinctBy(AircraftStateTable.aircraftId)
           .orderBy { abs(AircraftStateTable.time - time) }
-          .andWhere {
-            AircraftStateTable.time.between(time - validTime, time + validTime)
-          }
+          .andWhere { AircraftStateTable.time.between(time - validTime, time + validTime) }
           .let {
             if (bounds != null) {
               it.andWhere {
@@ -147,9 +142,9 @@ class AircraftDataService(
             } else it
           }
           .forEach {
-            val icao24 = it[AircraftStateTable.aircraftId]
-            if (icao24 !in mapped)
-              mapped[icao24] = AircraftStateTable.fromRow(it)
+            val aircraftId = it[AircraftStateTable.aircraftId]
+            if (aircraftId !in mapped)
+              mapped[aircraftId] = AircraftStateTable.fromRow(it)
           }
     }
     addCachedValues(validTime)

@@ -167,6 +167,7 @@ tasks {
       useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
       useExperimentalAnnotation("kotlin.experimental.ExperimentalTypeInference")
       useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+      useExperimentalAnnotation("kotlinx.serialization.UnstableDefault")
       useExperimentalAnnotation("kotlinx.serialization.ImplicitReflectionSerializer")
       useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
       useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")

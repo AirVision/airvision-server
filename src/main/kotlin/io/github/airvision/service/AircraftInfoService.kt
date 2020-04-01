@@ -14,5 +14,5 @@ import io.github.airvision.AircraftInfo
 
 interface AircraftInfoService {
 
-  suspend fun get(icao24: AircraftIcao24): AircraftInfo?
+  suspend fun get(aircraftId: AircraftIcao24): AircraftInfo?
 }

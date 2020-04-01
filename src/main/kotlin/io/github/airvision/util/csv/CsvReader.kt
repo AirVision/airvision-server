@@ -13,12 +13,15 @@ import com.github.doyaaaaaken.kotlincsv.client.CsvFileReader
 import com.github.doyaaaaaken.kotlincsv.client.CsvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.io.InputStream
 
 suspend fun <T> CsvReader.suspendedOpen(inputStream: InputStream, read: suspend CsvFileReader.() -> T): T {
-  return open(inputStream) {
-    runBlocking(Dispatchers.IO) {
-      read()
+  return withContext(Dispatchers.IO) {
+    open(inputStream) {
+      runBlocking {
+        read()
+      }
     }
   }
 }
