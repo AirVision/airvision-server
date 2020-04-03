@@ -25,14 +25,10 @@ data class AircraftRequest(
 suspend fun PipelineContext.handleRtAircraftRequest(context: RestContext) {
   val request = call.receive<AircraftRequest>()
   val aircraft = context.aircraftService.get(request.icao24)
+      ?: error.notFound("Aircraft with icao24 ${request.icao24} isn't found")
 
-  if (aircraft == null) {
-    call.respond(error.notFound("Aircraft with icao24 ${request.icao24} isn't found"))
-    return
-  }
   if (aircraft.velocity == null || aircraft.position == null) {
-    call.respond(error.notFound("Aircraft with icao24 ${request.icao24} has incomplete data"))
-    return
+    error.notFound("Aircraft with icao24 ${request.icao24} has incomplete data")
   }
   call.respond(aircraft)
 }

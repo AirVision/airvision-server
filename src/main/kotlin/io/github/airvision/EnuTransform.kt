@@ -35,7 +35,8 @@ fun EnuTransform.toEcefTransform(): Transform {
 
   val enuToEcefRotation = Quaterniond.fromRotationMatrix(
       position.getEnuToEcefRotationMatrix())
-  val ecefRotation = rotation.add(enuToEcefRotation) // TODO: Is this good? Or subtract?
+  // https://answers.unity.com/questions/1353333/how-to-add-2-quaternions.html
+  val ecefRotation = rotation.mul(enuToEcefRotation)
 
   return Transform(ecefPosition, ecefRotation)
 }
@@ -59,5 +60,5 @@ private fun GeodeticPosition.getEnuToEcefRotationMatrix(): Matrix3d {
       -sinLon, -sinLat * cosLon, cosLat * cosLon,
       cosLon, -sinLat * sinLon, cosLat * sinLon,
       0.0, cosLat, sinLat
-  )
+  ) // TODO: Needs to be transposed?
 }

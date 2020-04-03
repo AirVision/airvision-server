@@ -9,6 +9,7 @@
  */
 package io.github.airvision.rest
 
+import io.github.airvision.AirVision
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.features.ContentConverter
@@ -61,7 +62,7 @@ class RestSerializationConverter(
     val charset = context.call.request.contentCharset() ?: Charsets.UTF_8
     val contentPacket = channel.readRemaining()
     val content = contentPacket.readText(charset)
-    // AirVision.logger.debug("REQ: $content")
+    AirVision.logger.debug("REQ: $content")
     return convertForReceive(context, content)
   }
 

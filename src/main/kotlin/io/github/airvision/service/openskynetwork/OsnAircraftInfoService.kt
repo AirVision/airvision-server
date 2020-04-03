@@ -260,7 +260,7 @@ class OsnAircraftInfoService(
     private fun <K, V> buildCache(fn: suspend (key: K) -> V): AsyncLoadingCache<K, V> = Caffeine.newBuilder()
         .executor(getDispatcher.asExecutor())
         .expireAfterAccess(10.seconds.toJavaDuration())
-        .buildAsync<K, V> { key, executor ->
+        .buildAsync { key, executor ->
           GlobalScope.future(executor.asCoroutineDispatcher()) {
             fn(key)
           }
@@ -273,7 +273,7 @@ class OsnAircraftInfoService(
       val header = readAllAsSequence().first()
           .map { it.toLowerCase() }
       val index = object {
-        val icao24 = header.indexOf("icao24")
+        val aircraftId = header.indexOf("icao24")
         val manufacturerCode = header.indexOf("manufacturericao")
         val manufacturerName = header.indexOf("manufacturername")
         val model = header.indexOf("model")
@@ -282,13 +282,13 @@ class OsnAircraftInfoService(
         val engines = header.indexOf("engines")
       }
       val enginesRegex = "(?:([0-9]+)\\s+x\\s+)?(.+)".toRegex()
-      val descriptionRegex = "[LSAHDG][1-9][PTJ](\\/.+)?".toRegex()
+      val descriptionRegex = "[LSAHDG][1-9][PTJ](/.+)?".toRegex()
       for (it in readAllAsSequence().filter { it.first().isNotEmpty() }) {
         val model = it[index.model]
         if (model.isBlank())
           continue
 
-        val icao24 = AircraftIcao24.parse(it[index.icao24])
+        val aircraftId = AircraftIcao24.parse(it[index.aircraftId])
         val manufacturerCode = it[index.manufacturerCode].toNullIfEmpty()
         val manufacturerName = it[index.manufacturerName].trim()
         val owner = it[index.owner].toNullIfEmpty()
@@ -325,7 +325,7 @@ class OsnAircraftInfoService(
 
         newSuspendedTransaction(updateDispatcher, db = database) {
           AircraftInfoTable.upsert(AircraftInfoTable.aircraftId) {
-            it[AircraftInfoTable.aircraftId] = icao24
+            it[AircraftInfoTable.aircraftId] = aircraftId
             it[AircraftInfoTable.model] = model
             it[AircraftInfoTable.description] = description
             it[AircraftInfoTable.engines] = enginesJson

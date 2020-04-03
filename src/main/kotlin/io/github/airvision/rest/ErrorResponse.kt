@@ -14,19 +14,19 @@ import io.ktor.http.HttpStatusCode
 /**
  * Constructs a new [ErrorResponse] with the given [code] and optional [message].
  */
-fun error(code: HttpStatusCode, message: String? = code.description): ErrorResponse
-    = ErrorResponse(code, message)
+fun error(code: HttpStatusCode, message: String? = code.description): Nothing
+    = throw ErrorResponseException(ErrorResponse(code, message))
 
 @Suppress("ClassName")
 object error {
 
-  fun badRequest(message: String? = HttpStatusCode.BadRequest.description)
+  fun badRequest(message: String? = HttpStatusCode.BadRequest.description): Nothing
       = error(HttpStatusCode.BadRequest, message)
 
-  fun notFound(message: String? = HttpStatusCode.NotFound.description)
+  fun notFound(message: String? = HttpStatusCode.NotFound.description): Nothing
       = error(HttpStatusCode.NotFound, message)
 
-  fun internalError(message: String? = HttpStatusCode.InternalServerError.description)
+  fun internalError(message: String? = HttpStatusCode.InternalServerError.description): Nothing
       = error(HttpStatusCode.InternalServerError, message)
 }
 
@@ -43,5 +43,7 @@ object error {
  */
 class ErrorResponse(
     val code: HttpStatusCode,
-    val message: String? = null
+    val message: String? = code.description
 )
+
+class ErrorResponseException(val response: ErrorResponse) : Exception()

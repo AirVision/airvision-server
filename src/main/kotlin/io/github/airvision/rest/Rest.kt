@@ -61,7 +61,7 @@ class Rest(
       install(StatusPages) {
         suspend fun PipelineContext<Unit, ApplicationCall>.handleBadRequest(cause: Exception) {
           AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
-          call.respond(HttpStatusCode.BadRequest, error.badRequest(
+          call.respond(HttpStatusCode.BadRequest, ErrorResponse(HttpStatusCode.BadRequest,
               "Invalid request${if (cause.message != null) ": $cause.message" else ""}"))
         }
         exception<ContentTransformationException> { cause ->
@@ -70,12 +70,17 @@ class Rest(
         exception<JsonDecodingException> { cause ->
           handleBadRequest(cause)
         }
+        exception<ErrorResponseException> { cause ->
+          val response = cause.response
+          call.respond(response.code, response)
+        }
         exception<Throwable> { cause ->
           AirVision.logger.error("Error while handling ${call.request.local.uri}", cause)
-          call.respond(HttpStatusCode.InternalServerError, error.internalError())
+          call.respond(HttpStatusCode.InternalServerError, ErrorResponse(HttpStatusCode.InternalServerError))
         }
         status(HttpStatusCode.NotFound) {
-          call.respond(HttpStatusCode.NotFound, error.notFound("Path not found: ${call.request.local.uri}"))
+          call.respond(HttpStatusCode.NotFound, ErrorResponse(HttpStatusCode.NotFound,
+              "Path not found: ${call.request.local.uri}"))
         }
       }
 

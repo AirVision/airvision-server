@@ -1,0 +1,56 @@
+[
+  {
+    "icao24": "FFFF01",
+    "model": "Test Aircraft 1",
+    "position": [
+      51.03227347222222,
+      4.677712083333334,
+      83
+    ]
+  },
+  {
+    "icao24": "FFFF02",
+    "model": "Test Aircraft 2",
+    "position": [
+      51.0328705,
+      4.6789591,
+      86
+    ]
+  },
+  {
+    "icao24": "FFFF03",
+    "model": "Test Aircraft 3",
+    "position": [
+      51.0317181,
+      4.675628000000001,
+      75
+    ]
+  },
+  {
+    "icao24": "FFFF04",
+    "model": "Test Aircraft 4",
+    "position": [
+      51.030631299999996,
+      4.6761026,
+      75
+    ]
+  },
+  {
+    "icao24": "FFFF05",
+    "model": "Test Aircraft 5",
+    "position": [
+      51.02964,
+      4.674814700000001,
+      83
+    ]
+  },
+  {
+    "icao24": "FFFF06",
+    "model": "Test Aircraft 6",
+    "position": [
+      51.0303355,
+      4.6780289,
+      67
+    ]
+  }
+]

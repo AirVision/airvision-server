@@ -9,6 +9,7 @@
  */
 package io.github.airvision.rest
 
+import io.github.airvision.AirVision
 import io.github.airvision.AircraftState
 import io.github.airvision.Camera
 import io.github.airvision.EnuTransform
@@ -26,7 +27,6 @@ import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
-import org.spongepowered.math.vector.Vector3d
 import java.time.Instant
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
@@ -35,7 +35,7 @@ import java.time.Instant
 data class VisibleAircraftRequest(
     @ContextualSerialization val time: Instant,
     val position: GeodeticPosition,
-    @ContextualSerialization val rotation: Vector3d,
+    @ContextualSerialization val rotation: Quaterniond,
     @ContextualSerialization val fov: Vector2d,
     val aircrafts: List<ImageAircraft>
 ) {
@@ -65,9 +65,7 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
 
   // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
 
-  val enuRotation = request.rotation.let { Quaterniond.fromAxesAnglesDeg(it.x, it.y, it.z) }
-  val enuTransform = EnuTransform(request.position, enuRotation)
-
+  val enuTransform = EnuTransform(request.position, request.rotation)
   val transform = enuTransform.toEcefTransform()
 
   val maxFov = Vector2d(179.0, 179.0)
@@ -80,7 +78,16 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
 
   val bounds = GeodeticBounds.ofCenterAndSize(request.position,
       Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
+  AirVision.logger.debug("Bounds: $bounds")
   val possibleStates = context.aircraftService.getAllWithin(bounds, request.time)
+      .also {
+        AirVision.logger.debug("Candidates: ${it.size}")
+        it.forEach { state ->
+          if (state.icao24.address > 0xffff00) {
+            AirVision.logger.debug("   Test Candidate: $state")
+          }
+        }
+      }
 
   var states = tryMatch(camera, possibleStates, request.aircrafts)
   if (states.count { it != null } != request.aircrafts.size) {
@@ -121,8 +128,14 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
       .map { state ->
         val position = state.position?.toEcefPosition()
             ?: return@map null // Position not known
+        if (state.icao24.address > 0xffff00) {
+          AirVision.logger.debug("Test Aircraft in area: $state")
+        }
         val viewPosition = position.toViewPosition(camera)
             ?: return@map null // Not within the camera view
+        if (state.icao24.address > 0xffff00) {
+          AirVision.logger.debug("Test Aircraft in view: $viewPosition")
+        }
         Triple(position, viewPosition, state)
       }
       .filterNotNull()

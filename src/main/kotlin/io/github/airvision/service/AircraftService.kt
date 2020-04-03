@@ -19,6 +19,7 @@ import io.github.airvision.service.flightradar24.Fr24RestService
 import io.github.airvision.service.openskynetwork.OsnAircraftDataProvider
 import io.github.airvision.service.openskynetwork.OsnAircraftFlightService
 import io.github.airvision.service.openskynetwork.OsnRestService
+import io.github.airvision.service.test.TestAircraftDataProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import java.time.Instant
@@ -36,6 +37,7 @@ class AircraftService(
   private lateinit var osnAircraftFlightService: OsnAircraftFlightService
   private lateinit var osnAircraftDataProvider: OsnAircraftDataProvider
   private lateinit var fr24AircraftDataProvider: Fr24AircraftDataProvider
+  private lateinit var testAircraftDataProvider: TestAircraftDataProvider
 
   fun init() {
     val dataService = AircraftDataService(database, databaseUpdateDispatcher)
@@ -54,6 +56,10 @@ class AircraftService(
         .also { fr24AircraftDataProvider = it }
     fr24RestService.init()
 
+    val testAircraftDataProvider = TestAircraftDataProvider(dataService.sendChannel)
+        .also { testAircraftDataProvider = it }
+    testAircraftDataProvider.init()
+
     val osnAircraftFlightService = OsnAircraftFlightService(osnRestService, airportService)
         .also { osnAircraftFlightService = it }
     osnAircraftFlightService.init()
@@ -63,6 +69,8 @@ class AircraftService(
     dataService.shutdown()
     adsBService.shutdown()
     osnAircraftDataProvider.shutdown()
+    fr24AircraftDataProvider.shutdown()
+    testAircraftDataProvider.shutdown()
   }
 
   suspend fun getAll(time: Instant? = null): Collection<AircraftState> {
