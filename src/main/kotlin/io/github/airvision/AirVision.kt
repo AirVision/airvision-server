@@ -158,7 +158,8 @@ object AirVision {
      */
     @Serializable
     class VisibleAircraft(
-        val range: Double = 4.0 // TODO: Find a good value
+        // https://physics.stackexchange.com/questions/129317/how-much-of-the-sky-is-visible-from-a-particular-location
+        val range: Double = 0.185
     )
   }
 }

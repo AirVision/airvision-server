@@ -19,6 +19,7 @@ import io.github.airvision.toEcefPosition
 import io.github.airvision.toEcefTransform
 import io.github.airvision.toViewPosition
 import io.github.airvision.util.ToStringHelper
+import io.github.airvision.util.radToDeg
 import io.github.airvision.util.vector.min
 import io.ktor.application.call
 import io.ktor.request.receive
@@ -28,6 +29,7 @@ import kotlinx.serialization.Serializable
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
 import java.time.Instant
+import kotlin.math.acos
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
 
@@ -130,6 +132,16 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
             ?: return@map null // Position not known
         if (state.icao24.address > 0xffff00) {
           AirVision.logger.debug("Test Aircraft in area: $state")
+
+          val cameraDir = camera.zAxis.negate()
+          println("    Camera dir: $cameraDir")
+          val aircraftRelative = position.sub(camera.transform.position)
+          println("    Aircraft distance: ${aircraftRelative.length()}")
+          val aircraftDir = position.sub(camera.transform.position).normalize()
+          println("    Aircraft dir: $aircraftDir")
+          val rotation = Quaterniond.fromRotationTo(cameraDir, aircraftDir).normalize()
+          val angle = radToDeg(2 * acos(rotation.w))
+          AirVision.logger.info("  -> Angle: $angle")
         }
         val viewPosition = position.toViewPosition(camera)
             ?: return@map null // Not within the camera view

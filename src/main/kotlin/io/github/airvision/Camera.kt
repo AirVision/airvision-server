@@ -42,6 +42,11 @@ data class Camera(
   fun withTransform(transform: Transform) = copy(transform = transform)
 
   /**
+   * The rotation of the camera.
+   */
+  val rotation: Quaterniond get() = transform.rotation
+
+  /**
    * Gets a new [Camera] state with the given [rotation].
    */
   fun withRotation(rotation: Quaterniond) = withTransform(transform.withRotation(rotation))
@@ -50,6 +55,11 @@ data class Camera(
    * Rotates this camera with the given [rotation].
    */
   fun rotate(rotation: Quaterniond) = withTransform(transform.rotate(rotation))
+
+  /**
+   * The position of the camera.
+   */
+  val position: Vector3d get() = transform.position
 
   /**
    * Gets a new [Camera] state with the given [position].
@@ -107,6 +117,9 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
   // Camera Coordinate System
   // https://www.scratchapixel.com/images/upload/perspective-matrix/camera.png
 
+  // Information on camera projection
+  // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
+
   var pos = camera.viewMatrix.transform(this)
   // Point is behind the camera, so not visible
   if (pos.z > 0)
@@ -133,6 +146,7 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
 
 private fun Matrix4d.transform(vector: Vector3d): Vector3d {
   val transformed = transform(vector.toVector4(1.0))
+  // normalize if w is different than 1 (convert from homogeneous to cartesian coordinates)
   return if (transformed.w != 1.0) {
     transformed.toVector3().div(transformed.w)
   } else {

@@ -13,6 +13,7 @@ import io.github.airvision.AirVision
 import io.github.airvision.service.AircraftStateData
 import io.github.airvision.util.delay
 import io.ktor.client.features.ServerResponseException
+import io.ktor.network.sockets.ConnectTimeoutException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -63,6 +64,8 @@ class OsnAircraftDataProvider(
       } catch (ex: SocketTimeoutException) {
         handleTimeout()
       } catch (ex: UnknownHostException) {
+        handleTimeout()
+      } catch (ex: ConnectTimeoutException) {
         handleTimeout()
       } catch (ex: ServerResponseException) {
         AirVision.logger.debug("OSN: ${ex.message ?: "Server error"}")

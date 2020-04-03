@@ -121,8 +121,15 @@ class AircraftDataService(
     fun addCachedValues(maxDiff: Duration) {
       if (now - time < maxDiff) {
         for ((_, value) in lastAircraftStateData.asMap()) {
-          if ((time - value.time).absoluteValue < maxDiff && value.aircraftId !in mapped)
-            mapped[value.aircraftId] = value
+          if ((time - value.time).absoluteValue > maxDiff || value.aircraftId in mapped)
+            continue
+          if (bounds != null) {
+            val position = value.position ?: continue
+            if (position.latitude !in bounds.min.latitude..bounds.max.latitude ||
+                position.longitude !in bounds.min.longitude..bounds.max.longitude)
+              continue
+          }
+          mapped[value.aircraftId] = value
         }
       }
     }

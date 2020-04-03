@@ -60,5 +60,5 @@ private fun GeodeticPosition.getEnuToEcefRotationMatrix(): Matrix3d {
       -sinLon, -sinLat * cosLon, cosLat * cosLon,
       cosLon, -sinLat * sinLon, cosLat * sinLon,
       0.0, cosLat, sinLat
-  ) // TODO: Needs to be transposed?
+  )
 }
