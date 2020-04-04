@@ -100,10 +100,12 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
     fun tryWithAlteration(xModifier: Double, yModifier: Double): Boolean {
       var alteredCamera = Camera.ofPerspective(fov)
           .withTransform(transform)
+      val xAxis = alteredCamera.xAxis
+      val yAxis = alteredCamera.yAxis
       alteredCamera = alteredCamera.rotate(
-          Quaterniond.fromAngleDegAxis(alteration * xModifier, alteredCamera.yAxis))
+          Quaterniond.fromAngleDegAxis(alteration * xModifier, yAxis))
       alteredCamera = alteredCamera.rotate(
-          Quaterniond.fromAngleDegAxis(alteration * yModifier, alteredCamera.xAxis))
+          Quaterniond.fromAngleDegAxis(alteration * yModifier, xAxis))
 
       val statesForMargin = tryMatch(alteredCamera, possibleStates, request.aircrafts)
       if (statesForMargin.count { it != null } != request.aircrafts.size)

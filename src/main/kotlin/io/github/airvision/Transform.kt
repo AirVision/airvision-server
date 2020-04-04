@@ -29,7 +29,7 @@ data class Transform(
 
   fun withRotation(rotation: Quaterniond) = copy(rotation = rotation)
 
-  fun rotate(rotation: Quaterniond) = withRotation(this.rotation.add(rotation))
+  fun rotate(rotation: Quaterniond) = withRotation(this.rotation.mul(rotation))
 
   companion object {
 
