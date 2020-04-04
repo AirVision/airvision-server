@@ -18,6 +18,21 @@ data class GeodeticBounds(
     val max: GeodeticPosition
 ) {
 
+  operator fun contains(position: GeodeticPosition): Boolean {
+    val containsLatitude = { latitude: Double ->
+      latitude >= min.latitude && latitude <= max.latitude
+    }
+    val containsLongitude = { longitude: Double ->
+      if (min.longitude <= max.longitude) {
+        longitude >= min.longitude && longitude <= max.longitude
+      } else {
+        longitude >= min.longitude || longitude <= max.longitude
+      }
+    }
+    return containsLatitude(position.latitude) &&
+        containsLongitude(position.longitude)
+  }
+
   companion object {
 
     private const val latitudeMax = 85

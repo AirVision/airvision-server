@@ -38,6 +38,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -125,8 +126,7 @@ class AircraftDataService(
             continue
           if (bounds != null) {
             val position = value.position ?: continue
-            if (position.latitude !in bounds.min.latitude..bounds.max.latitude ||
-                position.longitude !in bounds.min.longitude..bounds.max.longitude)
+            if (!bounds.contains(position))
               continue
           }
           mapped[value.aircraftId] = value
@@ -140,13 +140,19 @@ class AircraftDataService(
           .distinctBy(AircraftStateTable.aircraftId)
           .orderBy { abs(AircraftStateTable.time - time) }
           .andWhere { AircraftStateTable.time.between(time - validTime, time + validTime) }
-          .let {
+          .let { query ->
             if (bounds != null) {
-              it.andWhere {
-                AircraftStateTable.latitude.isNotNull() and AircraftStateTable.latitude.between(bounds.min.latitude, bounds.max.latitude) and
-                    AircraftStateTable.longitude.isNotNull() and AircraftStateTable.longitude.between(bounds.min.longitude, bounds.max.longitude)
+              query.andWhere {
+                AircraftStateTable.latitude.isNotNull() and AircraftStateTable.latitude.between(bounds.min.latitude, bounds.max.latitude)
+              }.andWhere {
+                AircraftStateTable.longitude.isNotNull() and if (bounds.min.longitude <= bounds.max.longitude) {
+                  AircraftStateTable.longitude.between(bounds.min.longitude, bounds.max.longitude)
+                } else {
+                  AircraftStateTable.longitude.greaterEq(bounds.min.longitude) or
+                      AircraftStateTable.longitude.lessEq(bounds.max.longitude)
+                }
               }
-            } else it
+            } else query
           }
           .forEach {
             val aircraftId = it[AircraftStateTable.aircraftId]
