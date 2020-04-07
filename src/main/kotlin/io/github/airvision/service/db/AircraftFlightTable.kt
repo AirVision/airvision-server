@@ -17,7 +17,7 @@ import org.jetbrains.exposed.sql.Table
 object AircraftFlightTable : Table("aircraft_flight") {
   val aircraftId = aircraftIcao24("aircraft").primaryKey()
   val time = epochSecond("time")
-  val code = varchar("code", 30).nullable()
+  val number = varchar("code", 30).nullable()
   val departureAirport = airportIcao("origin").nullable()
   val arrivalAirport = airportIcao("destination").nullable()
   val estimatedArrivalTime = epochSecond("est_arrival_time").nullable()

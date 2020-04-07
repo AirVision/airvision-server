@@ -62,7 +62,7 @@ private class DistinctBy(
 
   override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
     append("DISTINCT ON (")
-    appendJoined(expressions)
+    expressions.appendTo { +it }
     append(") TRUE")
   }
 }

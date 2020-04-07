@@ -20,7 +20,7 @@ import io.github.airvision.service.db.AircraftManufacturerTable
 import io.github.airvision.service.db.AircraftInfoTable
 import io.github.airvision.service.db.Entity
 import io.github.airvision.util.csv.suspendedOpen
-import io.github.airvision.util.delay
+import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.file.*
 import io.github.airvision.util.ktor.downloadUpdateToFile
 import io.github.airvision.util.toNullIfEmpty

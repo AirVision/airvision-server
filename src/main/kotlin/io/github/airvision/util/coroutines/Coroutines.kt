@@ -7,7 +7,7 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.util
+package io.github.airvision.util.coroutines
 
 import kotlin.time.Duration
 

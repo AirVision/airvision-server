@@ -9,6 +9,7 @@
  */
 package io.github.airvision.service
 
+import arrow.core.Some
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
 import io.github.airvision.AirVision
@@ -21,7 +22,8 @@ import io.github.airvision.exposed.orderBy
 import io.github.airvision.exposed.upsert
 import io.github.airvision.service.db.AircraftFlightTable
 import io.github.airvision.service.db.AircraftStateTable
-import io.github.airvision.util.delay
+import io.github.airvision.util.coroutines.delay
+import io.github.airvision.util.ifSome
 import io.github.airvision.util.time.minus
 import io.github.airvision.util.time.plus
 import kotlinx.coroutines.CoroutineDispatcher
@@ -265,11 +267,11 @@ class AircraftDataService(
           .select { AircraftFlightTable.aircraftId eq aircraftId }
           .map {
             val time = it[AircraftFlightTable.time]
-            val code = it[AircraftFlightTable.code]
+            val number = Some(it[AircraftFlightTable.number])
             val arrivalAirport = it[AircraftFlightTable.arrivalAirport]
             val departureAirport = it[AircraftFlightTable.departureAirport]
-            val estimatedArrivalTime = it[AircraftFlightTable.estimatedArrivalTime]
-            SimpleAircraftFlightData(aircraftId, time, code,
+            val estimatedArrivalTime = Some(it[AircraftFlightTable.estimatedArrivalTime])
+            SimpleAircraftFlightData(aircraftId, time, number,
                 departureAirport, arrivalAirport, estimatedArrivalTime)
           }
           .firstOrNull()
@@ -298,10 +300,10 @@ class AircraftDataService(
           AircraftFlightTable.upsert {
             it[aircraftId] = data.aircraftId
             it[time] = data.time
-            it[code] = data.number
+            data.number.ifSome { value -> it[number] = value }
             it[arrivalAirport] = data.arrivalAirport
             it[departureAirport] = data.departureAirport
-            it[estimatedArrivalTime] = data.estimatedArrivalTime
+            data.estimatedArrivalTime.ifSome { value -> it[estimatedArrivalTime] = value }
           }
         }
       }

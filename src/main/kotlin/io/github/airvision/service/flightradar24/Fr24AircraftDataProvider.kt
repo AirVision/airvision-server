@@ -11,17 +11,15 @@ package io.github.airvision.service.flightradar24
 
 import io.github.airvision.AirVision
 import io.github.airvision.service.AircraftData
-import io.github.airvision.util.delay
-import io.ktor.client.features.ServerResponseException
+import io.github.airvision.util.coroutines.delay
+import io.github.airvision.util.ktor.Failure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
 import kotlin.time.seconds
 
@@ -48,29 +46,51 @@ class Fr24AircraftDataProvider(
   private suspend fun read() {
     AirVision.logger.info("FR24: Started reading with rate limit $rateLimit")
     while (true) {
-      suspend fun handleTimeout() {
-        AirVision.logger.debug("FR24: Timeout while trying to receive aircraft states.")
-        delay(1.seconds)
+      val mutex = Mutex()
+
+      val queueMap = mutableMapOf<String, FrAircraftFlightData>()
+      val queue = ArrayDeque<String>()
+
+      suspend fun queue(data: FrAircraftFlightData) {
+        mutex.withLock {
+          if (queueMap.putIfAbsent(data.id, data) == null)
+            queue.add(data.id)
+        }
       }
-      try {
-        val entries = withTimeout(20000) { restService.getFlightData() }
+
+      suspend fun poll(): FrAircraftFlightData? {
+        return mutex.withLock {
+          if (queue.isNotEmpty()) {
+            val id = queue.removeFirst()
+            queueMap.remove(id)
+          } else null
+        }
+      }
+
+      val result = restService.getFlightData()
+      result.fold({ failure ->
+        when (failure) {
+          Failure.Timeout -> {
+            AirVision.logger.debug("FR24: Timeout while trying to receive aircraft states.")
+            delay(1.seconds)
+          }
+          is Failure.ErrorResponse -> {
+            AirVision.logger.debug("FR24: ${failure.message}")
+            delay(1.seconds)
+          }
+          is Failure.InternalError -> {
+            AirVision.logger.debug("Internal server error", failure.exception)
+            delay(1.seconds)
+          }
+        }
+      }, { entries ->
         AirVision.logger.debug("FR24: Received ${entries.size} entries of aircraft flight data.")
-        for (entry in entries)
+        for (entry in entries) {
           dataSendChannel.send(entry)
-        delay(rateLimit)
-      } catch (ex: TimeoutCancellationException) {
-        handleTimeout()
-      } catch (ex: SocketTimeoutException) {
-        handleTimeout()
-      } catch (ex: UnknownHostException) {
-        handleTimeout()
-      } catch (ex: ServerResponseException) {
-        AirVision.logger.debug("FR24: ${ex.message ?: "Server error"}")
-        delay(1.seconds)
-      } catch (ex: Exception) {
-        AirVision.logger.debug("Internal server error", ex)
-        delay(1.seconds)
-      }
+          queue(entry)
+        }
+      })
+      delay(rateLimit)
     }
   }
 }

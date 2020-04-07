@@ -9,6 +9,7 @@
  */
 package io.github.airvision.service.openskynetwork
 
+import arrow.core.orNull
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.airvision.AircraftFlight
 import io.github.airvision.AircraftIcao24
@@ -48,7 +49,7 @@ class OsnAircraftFlightService(
       val trackTask = async { osnRestService.getTrack(icao24) }
       val flightTask = async { osnRestService.getFlight(icao24) }
 
-      val flight = flightTask.await() ?: return@coroutineScope null
+      val flight = flightTask.await().orNull() ?: return@coroutineScope null
 
       val arrivalAirportTask = if (flight.estArrivalAirport != null) {
         async { airportService.get(flight.estArrivalAirport) }
@@ -58,7 +59,7 @@ class OsnAircraftFlightService(
         async { airportService.get(flight.estDepartureAirport) }
       } else null
 
-      val track = trackTask.await()
+      val track = trackTask.await().orNull()
       val arrivalAirport = arrivalAirportTask?.await()
       val departureAirport = departureAirportTask?.await()
       val estimatedArrivalTime = flight.lastSeen

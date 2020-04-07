@@ -14,7 +14,7 @@ import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AircraftStateData
 import io.github.airvision.service.SimpleAircraftStateData
-import io.github.airvision.util.delay
+import io.github.airvision.util.coroutines.delay
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.SendChannel
