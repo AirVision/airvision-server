@@ -18,30 +18,13 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.vendors.PostgreSQLDialect
 
 class UpsertStatement<T : Any> internal constructor(
-    table: Table, conflictColumn: Column<*>? = null, conflictIndex: Index? = null
+    table: Table, conflictColumn: Column<*>? = null, private val conflictIndex: Index? = null
 ) : InsertStatement<T>(table, false) {
 
-  private val indexName: String
-  private val indexColumns: List<Column<*>>
-
-  init {
-    when {
-      conflictIndex != null -> {
-        val columns = conflictIndex.columns
-        if (columns.size == 1) {
-          indexName = columns[0].name
-          indexColumns = columns
-        } else {
-          indexName = conflictIndex.indexName
-          indexColumns = conflictIndex.columns
-        }
-      }
-      conflictColumn != null -> {
-        indexName = conflictColumn.name
-        indexColumns = listOf(conflictColumn)
-      }
-      else -> throw IllegalArgumentException()
-    }
+  private val indexColumns: List<Column<*>> = when {
+    conflictIndex != null -> conflictIndex.columns
+    conflictColumn != null -> listOf(conflictColumn)
+    else -> throw IllegalArgumentException()
   }
 
   override fun prepareSQL(transaction: Transaction) = buildString {
@@ -49,13 +32,19 @@ class UpsertStatement<T : Any> internal constructor(
 
     val dialect = transaction.db.dialect
     if (dialect is PostgreSQLDialect) {
-      append(" ON CONFLICT(")
-      append(indexName)
-      append(") DO UPDATE SET ")
-      values.keys.filter { it !in indexColumns }.joinTo(this) { "${transaction.identity(it)}=EXCLUDED.${transaction.identity(it)}" }
+      append(" ON CONFLICT ")
+      if (conflictIndex == null) {
+        append('(', indexColumns[0].name, ')')
+      } else {
+        append("ON CONSTRAINT ", conflictIndex.indexName)
+      }
+      append(" DO UPDATE SET ")
+      values.keys.filter { it !in indexColumns }.joinTo(this) {
+        "${transaction.identity(it)}=EXCLUDED.${transaction.identity(it)}" }
     } else {
       append(" ON DUPLICATE KEY UPDATE ")
-      values.keys.filter { it !in indexColumns }.joinTo(this) { "${transaction.identity(it)}=VALUES(${transaction.identity(it)})" }
+      values.keys.filter { it !in indexColumns }.joinTo(this) {
+        "${transaction.identity(it)}=VALUES(${transaction.identity(it)})" }
     }
   }
 }

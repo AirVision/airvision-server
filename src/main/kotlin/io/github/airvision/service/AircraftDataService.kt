@@ -320,7 +320,7 @@ class AircraftDataService(
 
   private suspend fun AircraftStateTable.insert(data: AircraftStateData) {
     newSuspendedTransaction(updateDispatcher, db = database) {
-      insert {
+      upsert {
         it[aircraftId] = data.aircraftId
         it[time] = data.time
         it[latitude] = data.position?.latitude
