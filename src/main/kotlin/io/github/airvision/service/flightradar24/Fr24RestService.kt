@@ -13,7 +13,11 @@ import arrow.core.Either
 import arrow.core.Some
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.AirportIata
+import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AirportService
+import io.github.airvision.util.feetPerMinuteToMetersPerSecond
+import io.github.airvision.util.feetToMeters
+import io.github.airvision.util.knotsToMetersPerSecond
 import io.github.airvision.util.ktor.Failure
 import io.github.airvision.util.ktor.requestTimeout
 import io.github.airvision.util.ktor.tryToGet
@@ -47,7 +51,7 @@ class Fr24RestService(
     }
   }
 
-  suspend fun getFlightData(): Either<Failure, List<FrAircraftFlightData>> {
+  suspend fun getData(): Either<Failure, List<FrAircraftData>> {
     val result = client.tryToGet<JsonObject>(
         "$baseUrl/zones/fcgi/feed.js?gnd=1")
     val time = Instant.now()
@@ -58,29 +62,46 @@ class Fr24RestService(
     }
   }
 
-  suspend fun getExtendedFlightData(id: String): Either<Failure, FrAircraftFlightData?> {
+  suspend fun getExtendedData(id: String): Either<Failure, FrAircraftData?> {
     val result = client.tryToGet<JsonObject>(
         "$baseUrl/clickhandler?flight=$id&version=1.5")
-    return result.suspendedMap { json -> json.toExtendedFlightData() }
+    return result.suspendedMap { json -> json.toExtendedData() }
   }
 
-  private suspend fun JsonObject.toExtendedFlightData(): FrAircraftFlightData? {
+  private suspend fun JsonObject.toExtendedData(): FrAircraftData? {
     return TODO()
   }
 
-  private suspend fun JsonArray.toFlightData(id: String, time: Instant): FrAircraftFlightData? {
+  private suspend fun JsonArray.toFlightData(id: String, receiveTime: Instant): FrAircraftData? {
     val icao24Raw = this[0].content
     if (icao24Raw.isEmpty())
       return null
-    val icao24 = AircraftIcao24.parse(icao24Raw)
 
-    val code = Some(this[13].contentOrNull?.toNullIfEmpty())
+    val icao24 = AircraftIcao24.parse(icao24Raw)
+    val callsign = this[16].contentOrNull?.toNullIfEmpty()
+
+    val latitude = this[1].contentOrNull?.toDoubleOrNull()
+    val longitude = this[2].contentOrNull?.toDoubleOrNull()
+    val altitude = this[4].contentOrNull?.toDoubleOrNull()?.feetToMeters()
+
+    val position = if (latitude != null && longitude != null) {
+      GeodeticPosition(latitude, longitude, altitude ?: 0.0)
+    } else null
+
+    val time = this[10].contentOrNull?.toLongOrNull()?.let { Instant.ofEpochSecond(it) } ?: receiveTime
+    val heading = this[3].contentOrNull?.toDoubleOrNull()
+    val velocity = this[5].contentOrNull?.toDoubleOrNull()?.knotsToMetersPerSecond()
+    val verticalRate = this[15].contentOrNull?.toDoubleOrNull()?.feetPerMinuteToMetersPerSecond()
+    val onGround = this[14].contentOrNull?.toIntOrNull() != 1
+
+    val flightNumber = Some(this[13].contentOrNull?.toNullIfEmpty())
     val departureAirportIata = this[11].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
     val arrivalAirportIata = this[12].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
 
     val departureAirport = departureAirportIata?.let { airportService.get(it) }
     val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }
 
-    return FrAircraftFlightData(icao24, id, time, code, departureAirport?.icao, arrivalAirport?.icao)
+    return FrAircraftData(icao24, id, time, flightNumber, departureAirport?.icao, arrivalAirport?.icao, position,
+        velocity, onGround, verticalRate, heading, callsign)
   }
 }

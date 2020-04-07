@@ -171,6 +171,7 @@ tasks {
       useExperimentalAnnotation("kotlinx.serialization.ImplicitReflectionSerializer")
       useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
       useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
+      useExperimentalAnnotation("kotlinx.coroutines.InternalCoroutinesApi")
 
       freeCompilerArgs = args
     }

@@ -104,7 +104,7 @@ class OpenFlightsAirportService : AirportService {
     val country = list[3]
     val latitude = list[6].toDouble()
     val longitude = list[7].toDouble()
-    val altitude = list[8].nullable()?.let { feetToMeters(it.toDouble()) } ?: 0.0
+    val altitude = list[8].nullable()?.toDouble()?.feetToMeters() ?: 0.0
     val position = GeodeticPosition(latitude, longitude, altitude)
     // val timezone = list[9].toDoubleOrNull()
     // val dst = list[10]

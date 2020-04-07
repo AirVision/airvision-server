@@ -26,5 +26,17 @@ inline fun radToDeg(radians: Double): Double =
 /**
  * Converts from feet (ft) to meters (m).
  */
-fun feetToMeters(feet: Double): Double =
-    feet * 0.3048
+fun Double.feetToMeters(): Double =
+    this * 0.3048
+
+/**
+ * Converts from knots to meters per second (m/s).
+ */
+fun Double.knotsToMetersPerSecond(): Double =
+    this * 0.514444
+
+/**
+ * Converts from feet per minute (ft/min) to meters per second (m/s).
+ */
+fun Double.feetPerMinuteToMetersPerSecond(): Double =
+    this * 0.00508

@@ -13,17 +13,25 @@ import arrow.core.None
 import arrow.core.Option
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.AirportIcao
+import io.github.airvision.GeodeticPosition
 import io.github.airvision.Waypoint
 import io.github.airvision.service.AircraftFlightData
+import io.github.airvision.service.AircraftStateData
 import java.time.Instant
 
-class FrAircraftFlightData(
+class FrAircraftData(
     override val aircraftId: AircraftIcao24,
     val id: String,
     override val time: Instant,
-    override val number: Option<String?>,
+    override val flightNumber: Option<String?>,
     override val arrivalAirport: AirportIcao?,
     override val departureAirport: AirportIcao?,
+    override val position: GeodeticPosition?,
+    override val velocity: Double?,
+    override val onGround: Boolean,
+    override val verticalRate: Double?,
+    override val heading: Double?,
+    override val callsign: String?,
     override val estimatedArrivalTime: Option<Instant?> = None,
     override val waypoints: Option<List<Waypoint>?> = None
-) : AircraftFlightData
+) : AircraftFlightData, AircraftStateData

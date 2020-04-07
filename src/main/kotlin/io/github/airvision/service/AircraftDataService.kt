@@ -39,7 +39,6 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -232,7 +231,13 @@ class AircraftDataService(
    * Merges the two [AircraftStateData].
    */
   private fun AircraftStateData.merge(other: AircraftStateData): AircraftStateData {
-    return other.withTime(time)
+    val position = other.position ?: position
+    val heading = other.heading ?: heading
+    val velocity = other.velocity ?: velocity
+    val verticalRate = other.verticalRate ?: verticalRate
+    val callsign = other.callsign ?: callsign
+    val onGround = other.onGround
+    return SimpleAircraftStateData(time, aircraftId, callsign, onGround, position, velocity, verticalRate, heading)
   }
 
   /**
@@ -300,7 +305,7 @@ class AircraftDataService(
           AircraftFlightTable.upsert {
             it[aircraftId] = data.aircraftId
             it[time] = data.time
-            data.number.ifSome { value -> it[number] = value }
+            data.flightNumber.ifSome { value -> it[number] = value }
             it[arrivalAirport] = data.arrivalAirport
             it[departureAirport] = data.departureAirport
             data.estimatedArrivalTime.ifSome { value -> it[estimatedArrivalTime] = value }
