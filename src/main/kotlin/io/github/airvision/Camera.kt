@@ -30,6 +30,10 @@ data class Camera(
     Matrix4d.createRotation(transform.rotation.invert())
   }
 
+  /**
+   * The transformation matrix to transform world coordinates to
+   * the camera coordinate system.
+   */
   val viewMatrix: Matrix4d by lazy {
     val rotationMatrix = inverseRotationMatrix
     val positionMatrix = Matrix4d.createTranslation(transform.position.negate())
@@ -120,12 +124,21 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
   // Information on camera projection
   // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
 
+  // Transform the point in the world (ECEF) coordinate system
+  // to the camera coordinate system, see the image above
   var pos = camera.viewMatrix.transform(this)
-  // Point is behind the camera, so not visible
+  // The point is behind the camera, so not visible
   if (pos.z > 0)
     return null
 
+  // Project the point (in the camera coordinate system) to the
+  // camera projection plane, everything in range -1.0..1.0 in
+  // the x and y direction is within the visible area of the
+  // camera
   pos = camera.projectionMatrix.transform(pos)
+
+  // Convert the projection output to a image coordinate system
+  // so top left is (0,0), bottom right is (1,1)
 
   // -1.0..1.0 -> 0.0..1.0
   // 0.0 is left, 1.0 is right
@@ -146,7 +159,7 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
 
 private fun Matrix4d.transform(vector: Vector3d): Vector3d {
   val transformed = transform(vector.toVector4(1.0))
-  // normalize if w is different than 1 (convert from homogeneous to cartesian coordinates)
+  // Normalize if w is different than 1 (convert from homogeneous to cartesian coordinates)
   return if (transformed.w != 1.0) {
     transformed.toVector3().div(transformed.w)
   } else {

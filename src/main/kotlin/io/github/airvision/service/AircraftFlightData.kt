@@ -17,13 +17,13 @@ interface AircraftFlightData : AircraftData {
   val arrivalAirport: AirportIcao?
   val departureAirport: AirportIcao?
   val estimatedArrivalTime: Instant?
-  val code: String?
+  val number: String?
 }
 
 data class SimpleAircraftFlightData(
     override val aircraftId: AircraftIcao24,
     override val time: Instant,
-    override val code: String?,
+    override val number: String?,
     override val departureAirport: AirportIcao?,
     override val arrivalAirport: AirportIcao?,
     override val estimatedArrivalTime: Instant? = null

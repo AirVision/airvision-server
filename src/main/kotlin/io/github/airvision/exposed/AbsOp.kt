@@ -22,4 +22,5 @@ private class AbsOp<T>(
   override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder { append("ABS(", expression, ')') }
 }
 
-fun <T> abs(expr: ExpressionWithColumnType<T>): ExpressionWithColumnType<T> = AbsOp(expr, expr.columnType)
+val <T> ExpressionWithColumnType<T>.abs: ExpressionWithColumnType<T>
+  get() = AbsOp(this, columnType)

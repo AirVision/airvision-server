@@ -21,7 +21,7 @@ private class MinOp<T>(
 
   override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
     append("LEAST(")
-    appendJoined(expressions)
+    expressions.appendTo { +it }
     append(')')
   }
 }

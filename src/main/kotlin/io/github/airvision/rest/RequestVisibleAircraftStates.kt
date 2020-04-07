@@ -137,9 +137,9 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
 
           val cameraDir = camera.zAxis.negate()
           println("    Camera dir: $cameraDir")
-          val aircraftRelative = position.sub(camera.transform.position)
+          val aircraftRelative = position.sub(camera.position)
           println("    Aircraft distance: ${aircraftRelative.length()}")
-          val aircraftDir = position.sub(camera.transform.position).normalize()
+          val aircraftDir = position.sub(camera.position).normalize()
           println("    Aircraft dir: $aircraftDir")
           val rotation = Quaterniond.fromRotationTo(cameraDir, aircraftDir).normalize()
           val angle = radToDeg(2 * acos(rotation.w))
@@ -154,7 +154,7 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
       }
       .filterNotNull()
       // Sort by the aircraft closest to the camera first
-      .sortedBy { (position, _, _) -> camera.transform.position.distanceSquared(position) }
+      .sortedBy { (position, _, _) -> camera.position.distanceSquared(position) }
 
   val closestLimited = closestInView.take(aircrafts.size)
   val used = mutableSetOf<AircraftState>()

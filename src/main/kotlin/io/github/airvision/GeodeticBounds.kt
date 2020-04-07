@@ -35,7 +35,7 @@ data class GeodeticBounds(
 
   companion object {
 
-    private const val latitudeMax = 85
+    private const val latitudeMax = 90
     private const val latitudeRange = latitudeMax * 2
 
     private const val longitudeMax = 180

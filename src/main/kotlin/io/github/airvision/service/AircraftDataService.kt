@@ -103,7 +103,7 @@ class AircraftDataService(
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftStateTable
           .select { AircraftStateTable.aircraftId eq aircraftId }
-          .orderBy { abs(AircraftStateTable.time - time) }
+          .orderBy { (AircraftStateTable.time - time).abs }
           .andWhere { AircraftStateTable.time.between(time - validTime, time + validTime) }
           .firstOrNull()
           ?.let { AircraftStateTable.fromRow(it) }
@@ -138,7 +138,7 @@ class AircraftDataService(
       AircraftStateTable
           .selectAll()
           .distinctBy(AircraftStateTable.aircraftId)
-          .orderBy { abs(AircraftStateTable.time - time) }
+          .orderBy { (AircraftStateTable.time - time).abs }
           .andWhere { AircraftStateTable.time.between(time - validTime, time + validTime) }
           .let { query ->
             if (bounds != null) {
@@ -298,7 +298,7 @@ class AircraftDataService(
           AircraftFlightTable.upsert {
             it[aircraftId] = data.aircraftId
             it[time] = data.time
-            it[code] = data.code
+            it[code] = data.number
             it[arrivalAirport] = data.arrivalAirport
             it[departureAirport] = data.departureAirport
             it[estimatedArrivalTime] = data.estimatedArrivalTime

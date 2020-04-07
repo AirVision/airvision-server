@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.vendors.PostgreSQLDialect
 
 class UpsertStatement<T : Any> internal constructor(
     table: Table, conflictColumn: Column<*>? = null, conflictIndex: Index? = null
@@ -46,8 +47,8 @@ class UpsertStatement<T : Any> internal constructor(
   override fun prepareSQL(transaction: Transaction) = buildString {
     append(super.prepareSQL(transaction))
 
-    val dialect = transaction.db.vendor
-    if (dialect == "postgresql") {
+    val dialect = transaction.db.dialect
+    if (dialect is PostgreSQLDialect) {
       append(" ON CONFLICT(")
       append(indexName)
       append(") DO UPDATE SET ")

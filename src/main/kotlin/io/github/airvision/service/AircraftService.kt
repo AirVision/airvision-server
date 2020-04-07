@@ -104,10 +104,10 @@ class AircraftService(
           flight = flight.copy(departureAirport = departureAirport)
         if (flight.arrivalAirport == null && arrivalAirport != null)
           flight = flight.copy(arrivalAirport = arrivalAirport)
-        if (flight.code == null && data.code != null)
-          flight = flight.copy(code = data.code)
+        if (flight.number == null && data.number != null)
+          flight = flight.copy(number = data.number)
       } else {
-        flight = AircraftFlight(aircraftId, data.code, departureAirport,
+        flight = AircraftFlight(aircraftId, data.number, departureAirport,
             arrivalAirport, null, null)
       }
     }

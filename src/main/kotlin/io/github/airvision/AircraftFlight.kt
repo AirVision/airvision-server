@@ -17,7 +17,7 @@ import java.time.Instant
 @Serializable
 data class AircraftFlight(
     val icao24: AircraftIcao24,
-    val code: String? = null,
+    val number: String? = null,
     @SerialName("departure_airport") val departureAirport: Airport? = null,
     @SerialName("arrival_airport") val arrivalAirport: Airport? = null,
     @ContextualSerialization @SerialName("estimated_arrival_time") val estimatedArrivalTime: Instant? = null,

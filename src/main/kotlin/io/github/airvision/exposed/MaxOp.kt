@@ -21,7 +21,7 @@ private class MaxOp<T>(
 
   override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
     append("GREATEST(")
-    appendJoined(expressions)
+    expressions.appendTo { +it }
     append(')')
   }
 }
