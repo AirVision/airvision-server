@@ -52,7 +52,17 @@ private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E
       channel.send(element)
   }
 
-  override fun iterator(): ChannelIterator<E> = TODO()
+  override fun iterator(): ChannelIterator<E> {
+    val it = channel.iterator()
+    return object : ChannelIterator<E> {
+      override suspend fun hasNext() = it.hasNext()
+      override fun next(): E {
+        val value = it.next()
+        keys.remove(keyProvider(value))
+        return value
+      }
+    }
+  }
 
   @ObsoleteCoroutinesApi
   @Deprecated(
