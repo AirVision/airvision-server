@@ -35,5 +35,5 @@ class Fr24AircraftData(
 ) : AircraftFlightData, AircraftStateData {
 
   override val estimatedArrivalTime: Option<Instant?> get() = None
-  override val waypoints: Option<List<Waypoint>?>  get() = None
+  override val waypoints: Option<List<Waypoint>?> get() = None
 }

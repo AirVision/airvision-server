@@ -15,4 +15,6 @@ import java.time.Instant
 interface AircraftData {
   val aircraftId: AircraftIcao24
   val time: Instant
+
+  fun copy(aircraftId: AircraftIcao24 = this.aircraftId, time: Instant = this.time): AircraftData
 }

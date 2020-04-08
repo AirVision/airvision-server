@@ -22,6 +22,20 @@ interface AircraftFlightData : AircraftData {
   val estimatedArrivalTime: Option<Instant?>
   val flightNumber: Option<String?>
   val waypoints: Option<List<Waypoint>?>
+
+  override fun copy(aircraftId: AircraftIcao24, time: Instant) =
+      copy(aircraftId, time, arrivalAirport, departureAirport, estimatedArrivalTime, flightNumber, waypoints)
+
+  fun copy(
+      aircraftId: AircraftIcao24 = this.aircraftId,
+      time: Instant = this.time,
+      arrivalAirport: AirportIcao? = this.arrivalAirport,
+      departureAirport: AirportIcao? = this.departureAirport,
+      estimatedArrivalTime: Option<Instant?> = this.estimatedArrivalTime,
+      flightNumber: Option<String?> = this.flightNumber,
+      waypoints: Option<List<Waypoint>?> = this.waypoints
+  ): AircraftFlightData = SimpleAircraftFlightData(
+      aircraftId, time, flightNumber, departureAirport, arrivalAirport, estimatedArrivalTime, waypoints)
 }
 
 data class SimpleAircraftFlightData(

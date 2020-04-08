@@ -296,15 +296,19 @@ class AircraftDataService(
    * Processes changes in the flight destination and origin.
    */
   private suspend fun process(data: AircraftFlightData) {
+    @Suppress("NAME_SHADOWING")
+    val data = data.waypoints.fold(
+        { data.copy(waypoints = Some(waypointsCache.getIfPresent(data.aircraftId))) },
+        { waypoints ->
+          if (waypoints == null) {
+            waypointsCache.invalidate(data.aircraftId)
+          } else {
+            waypointsCache.put(data.aircraftId, waypoints)
+          }
+          data
+        })
+
     val lastData = lastAircraftFlightData.getIfPresent(data.aircraftId)
-    // This won't be put in the database, to reduce calculations
-    data.waypoints.ifSome { waypoints ->
-      if (waypoints == null) {
-        waypointsCache.invalidate(data.aircraftId)
-      } else {
-        waypointsCache.put(data.aircraftId, waypoints)
-      }
-    }
     if (lastData == null ||
         lastData.arrivalAirport != data.arrivalAirport ||
         lastData.departureAirport != data.departureAirport ||
