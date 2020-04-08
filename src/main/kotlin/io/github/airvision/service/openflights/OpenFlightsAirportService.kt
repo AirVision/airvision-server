@@ -15,7 +15,7 @@ import io.github.airvision.AirportIata
 import io.github.airvision.AirportIcao
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AirportService
-import io.github.airvision.util.feetToMeters
+import io.github.airvision.util.math.feetToMeters
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import kotlinx.coroutines.sync.Mutex

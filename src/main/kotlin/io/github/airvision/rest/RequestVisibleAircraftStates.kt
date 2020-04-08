@@ -19,8 +19,8 @@ import io.github.airvision.toEcefPosition
 import io.github.airvision.toEcefTransform
 import io.github.airvision.toViewPosition
 import io.github.airvision.util.ToStringHelper
-import io.github.airvision.util.radToDeg
-import io.github.airvision.util.vector.min
+import io.github.airvision.util.math.radToDeg
+import io.github.airvision.util.math.min
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond

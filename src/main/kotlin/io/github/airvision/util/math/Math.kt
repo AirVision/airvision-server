@@ -9,7 +9,7 @@
  */
 @file:Suppress("NOTHING_TO_INLINE")
 
-package io.github.airvision.util
+package io.github.airvision.util.math
 
 /**
  * Converts from degrees to radians.

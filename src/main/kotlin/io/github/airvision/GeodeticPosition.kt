@@ -10,7 +10,7 @@
 package io.github.airvision
 
 import io.github.airvision.serializer.GeodeticPositionSerializer
-import io.github.airvision.util.degToRad
+import io.github.airvision.util.math.degToRad
 import io.github.airvision.util.toString
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.vector.Vector3d

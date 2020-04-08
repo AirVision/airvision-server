@@ -15,11 +15,11 @@ import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.service.AircraftStateData
 import io.github.airvision.service.openskynetwork.serializer.OsnAircraftStateDataSerializer
+import io.github.airvision.util.arrow.flatMapLeft
 import io.github.airvision.util.ktor.Failure
 import io.github.airvision.util.ktor.requestTimeout
 import io.github.airvision.util.ktor.tryToGet
 import io.ktor.client.HttpClient
-import io.ktor.client.features.ClientRequestException
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
@@ -129,18 +129,16 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    * Attempts to get the current track for the given [AircraftIcao24].
    */
   suspend fun getTrack(aircraftId: AircraftIcao24): Either<Failure, OsnTrackResponse?> {
-    return Either.catch {
-      request<OsnTrackResponse>("/tracks", mapOf(
-          "icao24" to aircraftId,
-          "time" to 0
-      ))
-    }.fold({ cause ->
-      if (cause is ClientRequestException && cause.response.status == HttpStatusCode.NotFound) {
+    return request<OsnTrackResponse>("/tracks", mapOf(
+        "icao24" to aircraftId,
+        "time" to 0
+    )).flatMapLeft { failure ->
+      if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
         Either.right(null)
       } else {
-        throw cause
+        Either.left(failure)
       }
-    }, { it })
+    }
   }
 
   /**
@@ -155,17 +153,15 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
 
   private suspend fun requestAircraftFlights(
       aircraftId: AircraftIcao24, beginTime: Instant, endTime: Instant
-  ) = Either.catch {
-    request<List<OsnFlight>>("/flights/aircraft", mapOf(
-        "icao24" to aircraftId,
-        "begin" to beginTime.epochSecond,
-        "end" to endTime.epochSecond
-    ))
-  }.fold({ cause ->
-    if (cause is ClientRequestException && cause.response.status == HttpStatusCode.NotFound) {
+  ) = request<List<OsnFlight>>("/flights/aircraft", mapOf(
+      "icao24" to aircraftId,
+      "begin" to beginTime.epochSecond,
+      "end" to endTime.epochSecond
+  )).flatMapLeft { failure ->
+    if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
       Either.right(emptyList())
     } else {
-      throw cause
+      Either.left(failure)
     }
-  }, { it })
+  }
 }

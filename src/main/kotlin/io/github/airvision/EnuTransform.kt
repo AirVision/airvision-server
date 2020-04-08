@@ -9,7 +9,7 @@
  */
 package io.github.airvision
 
-import io.github.airvision.util.degToRad
+import io.github.airvision.util.math.degToRad
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.matrix.Matrix3d
 import kotlin.math.cos

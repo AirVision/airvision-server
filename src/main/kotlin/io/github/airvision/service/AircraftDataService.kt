@@ -24,7 +24,7 @@ import io.github.airvision.exposed.upsert
 import io.github.airvision.service.db.AircraftFlightTable
 import io.github.airvision.service.db.AircraftStateTable
 import io.github.airvision.util.coroutines.delay
-import io.github.airvision.util.ifSome
+import io.github.airvision.util.arrow.ifSome
 import io.github.airvision.util.time.minus
 import io.github.airvision.util.time.plus
 import kotlinx.coroutines.CoroutineDispatcher

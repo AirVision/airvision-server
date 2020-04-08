@@ -7,9 +7,10 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
-package io.github.airvision.util
+package io.github.airvision.util.math
 
-import arrow.core.Option
+import org.spongepowered.math.vector.Vector2d
+import java.lang.Double.min
 
-inline fun <T> Option<T>.ifSome(ifSome: (T) -> Unit): Unit = fold({}, ifSome)
-inline fun <T> Option<T>.ifNone(ifNone: () -> Unit): Unit = fold(ifNone, {})
+fun min(a: Vector2d, b: Vector2d): Vector2d =
+    Vector2d(min(a.x, b.x), min(a.y, b.y))
