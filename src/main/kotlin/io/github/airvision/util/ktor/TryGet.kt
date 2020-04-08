@@ -12,7 +12,7 @@ package io.github.airvision.util.ktor
 import arrow.core.Either
 import io.ktor.client.HttpClient
 import io.ktor.client.features.HttpRequestTimeoutException
-import io.ktor.client.features.ServerResponseException
+import io.ktor.client.features.ResponseException
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
@@ -50,7 +50,7 @@ suspend fun <R> tryToHandle(fn: suspend () -> R): Either<Failure, R> {
       // Lets assume that this is also a timeout exception, since the host couldn't be found
       is UnknownHostException -> Failure.Timeout
       // Something just went wrong with getting a valid response
-      is ServerResponseException -> Failure.ErrorResponse(ex.response)
+      is ResponseException -> Failure.ErrorResponse(ex.response)
       // Something else went wrong on our end
       else -> Failure.InternalError(ex)
     }

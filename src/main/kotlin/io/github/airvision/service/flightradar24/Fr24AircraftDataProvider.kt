@@ -14,6 +14,8 @@ import io.github.airvision.service.AircraftData
 import io.github.airvision.util.channel.distinct
 import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.ktor.Failure
+import io.github.airvision.util.time.minus
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -21,7 +23,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.minutes
 import kotlin.time.seconds
 
 class Fr24AircraftDataProvider(
@@ -46,7 +50,7 @@ class Fr24AircraftDataProvider(
   private suspend fun read() = coroutineScope {
     AirVision.logger.info("FR24: Started reading with rate limit $rateLimit")
 
-    val extendedDataQueue = Channel<String>().distinct()
+    val extendedDataQueue = Channel<String>(Channel.UNLIMITED).distinct()
 
     val readEntriesJob = launch {
       while (true) {
@@ -59,7 +63,7 @@ class Fr24AircraftDataProvider(
           }
           delay(1.seconds)
         }, { entries ->
-          AirVision.logger.debug("FR24: Received ${entries.size} entries of aircraft flight data.")
+          AirVision.logger.debug("FR24: Received ${entries.size} aircraft states and flight data.")
           for (entry in entries) {
             extendedDataQueue.offer(entry.id)
           }
@@ -71,27 +75,38 @@ class Fr24AircraftDataProvider(
       }
     }
 
-    /*
     val readExtendedDataJob = launch {
+      val lastUpdateTime = mutableMapOf<String, Instant>()
+
       while (true) {
         val id = extendedDataQueue.receive()
+        if (id in lastUpdateTime)
+          continue
 
         val result = restService.getExtendedFlightData(id)
         result.fold({ failure ->
           when (failure) {
             Failure.Timeout -> AirVision.logger.debug("FR24: Timeout while trying to get extended flight data for $id.")
-            is Failure.ErrorResponse -> AirVision.logger.debug("FR24: ${failure.message}")
-            is Failure.InternalError -> AirVision.logger.debug("Internal server error", failure.exception)
+            is Failure.ErrorResponse -> {
+              if (failure.response.status != HttpStatusCode.PaymentRequired)
+                AirVision.logger.debug("FR24: ${failure.message}")
+            }
+            is Failure.InternalError -> { AirVision.logger.debug("Internal server error", failure.exception) }
           }
         }, { data ->
-          if (data != null)
+          if (data != null) {
             dataSendChannel.send(data)
+            AirVision.logger.debug("FR24: Received extended flight data for ${data.aircraftId}")
+          }
+          lastUpdateTime[id] = Instant.now()
         })
+
+        val now = Instant.now()
+        lastUpdateTime.values.removeIf { it - now > 5.minutes }
       }
     }
-    readExtendedDataJob.join()
-    */
 
     readEntriesJob.join()
+    readExtendedDataJob.join()
   }
 }

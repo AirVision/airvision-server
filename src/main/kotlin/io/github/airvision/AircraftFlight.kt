@@ -27,6 +27,5 @@ data class AircraftFlight(
 @Serializable
 data class Waypoint(
     @ContextualSerialization val time: Instant,
-    val position: GeodeticPosition,
-    @SerialName("on_ground") val onGround: Boolean
+    @SerialName("pos") val position: GeodeticPosition
 )

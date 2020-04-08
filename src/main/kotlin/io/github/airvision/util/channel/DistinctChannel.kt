@@ -42,7 +42,7 @@ private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E
   }
 
   override fun offer(element: E): Boolean {
-    if (keys.add(keyProvider(element)))
+    if (!keys.add(keyProvider(element)))
       return false
     return channel.offer(element)
   }

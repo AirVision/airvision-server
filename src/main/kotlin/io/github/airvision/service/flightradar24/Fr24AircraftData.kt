@@ -19,7 +19,7 @@ import io.github.airvision.service.AircraftFlightData
 import io.github.airvision.service.AircraftStateData
 import java.time.Instant
 
-class FrAircraftData(
+class Fr24AircraftData(
     override val aircraftId: AircraftIcao24,
     val id: String,
     override val time: Instant,
@@ -31,7 +31,9 @@ class FrAircraftData(
     override val onGround: Boolean,
     override val verticalRate: Double?,
     override val heading: Double?,
-    override val callsign: String?,
-    override val estimatedArrivalTime: Option<Instant?> = None,
-    override val waypoints: Option<List<Waypoint>?> = None
-) : AircraftFlightData, AircraftStateData
+    override val callsign: String?
+) : AircraftFlightData, AircraftStateData {
+
+  override val estimatedArrivalTime: Option<Instant?> get() = None
+  override val waypoints: Option<List<Waypoint>?>  get() = None
+}

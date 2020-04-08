@@ -83,7 +83,7 @@ class OsnAircraftFlightService(
             if (waypoint.baroAltitude != null)
               altitude = waypoint.baroAltitude
             val position = GeodeticPosition(latitude!!.toDouble(), longitude!!.toDouble(), altitude.toDouble())
-            waypoints += Waypoint(waypoint.time, position, waypoint.onGround)
+            waypoints += Waypoint(waypoint.time, position)
           }
           waypoints
         }

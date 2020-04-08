@@ -16,6 +16,7 @@ import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
+import io.github.airvision.Waypoint
 import io.github.airvision.exposed.abs
 import io.github.airvision.exposed.distinctBy
 import io.github.airvision.exposed.orderBy
@@ -78,6 +79,10 @@ class AircraftDataService(
   private val lastAircraftFlightData = Caffeine.newBuilder()
       .expireAfterWrite(30.seconds.toJavaDuration())
       .build<AircraftIcao24, AircraftFlightData>()
+
+  private val waypointsCache = Caffeine.newBuilder()
+      .expireAfterWrite(30.minutes.toJavaDuration())
+      .build<AircraftIcao24, List<Waypoint>>()
 
   private val channel = Channel<AircraftData>()
   private val mergeTime = 3.seconds
@@ -205,7 +210,7 @@ class AircraftDataService(
       }
       val cleanup = launch {
         while (true) {
-          AircraftStateTable.cleanup()
+          cleanupStateData()
           cleanupFlightData()
           delay(1.minutes)
         }
@@ -267,6 +272,10 @@ class AircraftDataService(
   }
 
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlightData? {
+    val data = lastAircraftFlightData.getIfPresent(aircraftId)
+    if (data != null)
+      return data
+    val waypoints = Some(waypointsCache.getIfPresent(aircraftId))
     return newSuspendedTransaction(getDispatcher) {
       AircraftFlightTable
           .select { AircraftFlightTable.aircraftId eq aircraftId }
@@ -277,7 +286,7 @@ class AircraftDataService(
             val departureAirport = it[AircraftFlightTable.departureAirport]
             val estimatedArrivalTime = Some(it[AircraftFlightTable.estimatedArrivalTime])
             SimpleAircraftFlightData(aircraftId, time, number,
-                departureAirport, arrivalAirport, estimatedArrivalTime)
+                departureAirport, arrivalAirport, estimatedArrivalTime, waypoints)
           }
           .firstOrNull()
     }
@@ -288,6 +297,14 @@ class AircraftDataService(
    */
   private suspend fun process(data: AircraftFlightData) {
     val lastData = lastAircraftFlightData.getIfPresent(data.aircraftId)
+    // This won't be put in the database, to reduce calculations
+    data.waypoints.ifSome { waypoints ->
+      if (waypoints == null) {
+        waypointsCache.invalidate(data.aircraftId)
+      } else {
+        waypointsCache.put(data.aircraftId, waypoints)
+      }
+    }
     if (lastData == null ||
         lastData.arrivalAirport != data.arrivalAirport ||
         lastData.departureAirport != data.departureAirport ||
@@ -299,7 +316,12 @@ class AircraftDataService(
         newSuspendedTransaction(updateDispatcher) {
           AircraftFlightTable.deleteWhere { AircraftFlightTable.aircraftId eq data.aircraftId }
         }
+        // Remove from the cache
+        lastAircraftFlightData.invalidate(data.aircraftId)
       } else {
+        // Add to the cache
+        lastAircraftFlightData.put(data.aircraftId, data)
+
         // A flight, update
         newSuspendedTransaction(updateDispatcher) {
           AircraftFlightTable.upsert {
@@ -338,11 +360,11 @@ class AircraftDataService(
     }
   }
 
-  private suspend fun AircraftStateTable.cleanup() {
+  private suspend fun cleanupStateData() {
     val time = Instant.now() - 1.hours
     newSuspendedTransaction(updateDispatcher, db = database) {
       // For now, keep data up to and hour ago
-      deleteWhere { AircraftStateTable.time less time }
+      AircraftStateTable.deleteWhere { AircraftStateTable.time less time }
 
       // TODO: Keep data for the current flight
       /*

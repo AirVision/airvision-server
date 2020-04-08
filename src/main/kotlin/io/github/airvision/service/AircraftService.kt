@@ -10,8 +10,8 @@
 package io.github.airvision.service
 
 import io.github.airvision.AircraftFlight
-import io.github.airvision.AircraftState
 import io.github.airvision.AircraftIcao24
+import io.github.airvision.AircraftState
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.service.adsb.AdsBAircraftDataProvider
 import io.github.airvision.service.flightradar24.Fr24AircraftDataProvider
@@ -91,26 +91,11 @@ class AircraftService(
   }
 
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlight? {
-    var flight = osnAircraftFlightService.getFlight(aircraftId)
-    if (flight?.departureAirport != null && flight.arrivalAirport != null)
-      return flight
-    val data = dataService.getFlight(aircraftId)
-    if (data != null) {
+    return dataService.getFlight(aircraftId)?.let { data ->
       val departureAirport = data.departureAirport?.let { airportService.get(it) }
       val arrivalAirport = data.arrivalAirport?.let { airportService.get(it) }
-
-      if (flight != null) {
-        if (flight.departureAirport == null && departureAirport != null)
-          flight = flight.copy(departureAirport = departureAirport)
-        if (flight.arrivalAirport == null && arrivalAirport != null)
-          flight = flight.copy(arrivalAirport = arrivalAirport)
-        if (flight.number == null && data.flightNumber.orNull() != null)
-          flight = flight.copy(number = data.flightNumber.orNull())
-      } else {
-        flight = AircraftFlight(aircraftId, data.flightNumber.orNull(), departureAirport,
-            arrivalAirport, null, null)
-      }
+      AircraftFlight(data.aircraftId, data.flightNumber.orNull(), departureAirport,
+          arrivalAirport, data.estimatedArrivalTime.orNull(), data.waypoints.orNull())
     }
-    return flight
   }
 }
