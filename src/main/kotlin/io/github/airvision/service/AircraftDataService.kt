@@ -174,7 +174,7 @@ class AircraftDataService(
    * Converts the given [ResultRow] into a [AircraftStateData].
    */
   private fun AircraftStateTable.fromRow(it: ResultRow): AircraftStateData {
-    val icao24 = it[aircraftId]
+    val aircraftId = it[aircraftId]
     val time = it[time]
     val callsign = it[callsign]
     val latitude = it[latitude]
@@ -187,8 +187,7 @@ class AircraftDataService(
     val velocity = it[velocity]
     val verticalRate = it[verticalRate]
     val heading = it[heading]
-    return SimpleAircraftStateData(time = time, aircraftId = icao24, onGround = onGround, position = position,
-        callsign = callsign, velocity = velocity, verticalRate = verticalRate, heading = heading)
+    return AircraftStateData(aircraftId, time, position, velocity, onGround, verticalRate, heading, callsign)
   }
 
   /**
@@ -242,7 +241,7 @@ class AircraftDataService(
     val verticalRate = other.verticalRate ?: verticalRate
     val callsign = other.callsign ?: callsign
     val onGround = other.onGround
-    return SimpleAircraftStateData(time, aircraftId, callsign, onGround, position, velocity, verticalRate, heading)
+    return AircraftStateData(aircraftId, time, position, velocity, onGround, verticalRate, heading, callsign)
   }
 
   /**
@@ -285,8 +284,8 @@ class AircraftDataService(
             val arrivalAirport = it[AircraftFlightTable.arrivalAirport]
             val departureAirport = it[AircraftFlightTable.departureAirport]
             val estimatedArrivalTime = Some(it[AircraftFlightTable.estimatedArrivalTime])
-            SimpleAircraftFlightData(aircraftId, time, number,
-                departureAirport, arrivalAirport, estimatedArrivalTime, waypoints)
+            AircraftFlightData(aircraftId, time, departureAirport, arrivalAirport,
+                estimatedArrivalTime, number, waypoints)
           }
           .firstOrNull()
     }

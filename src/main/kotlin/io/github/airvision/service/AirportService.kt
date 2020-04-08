@@ -12,7 +12,6 @@ package io.github.airvision.service
 import io.github.airvision.Airport
 import io.github.airvision.AirportIata
 import io.github.airvision.AirportIcao
-import org.jetbrains.exposed.dao.EntityID
 
 /**
  * Represents a service that can provide information about [Airport]s.

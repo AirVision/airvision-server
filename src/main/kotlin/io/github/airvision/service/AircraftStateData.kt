@@ -13,25 +13,13 @@ import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import java.time.Instant
 
-interface AircraftStateData : AircraftData {
-  val position: GeodeticPosition?
-  val velocity: Double?
-  val onGround: Boolean
-  val verticalRate: Double?
-  val heading: Double?
-  val callsign: String?
-
-  fun withTime(time: Instant) = SimpleAircraftStateData(time, aircraftId, callsign,
-      onGround, position, velocity, verticalRate, heading)
-}
-
-data class SimpleAircraftStateData(
-    override val time: Instant,
+data class AircraftStateData(
     override val aircraftId: AircraftIcao24,
-    override val callsign: String? = null,
-    override val onGround: Boolean = false,
-    override val position: GeodeticPosition? = null,
-    override val velocity: Double? = null,
-    override val verticalRate: Double? = null,
-    override val heading: Double? = null
-) : AircraftStateData
+    override val time: Instant,
+    val position: GeodeticPosition? = null,
+    val velocity: Double? = null,
+    val onGround: Boolean = false,
+    val verticalRate: Double? = null,
+    val heading: Double? = null,
+    val callsign: String? = null
+) : AircraftData

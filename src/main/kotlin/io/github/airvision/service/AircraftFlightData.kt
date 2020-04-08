@@ -9,38 +9,18 @@
  */
 package io.github.airvision.service
 
-import arrow.core.None
 import arrow.core.Option
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.AirportIcao
 import io.github.airvision.Waypoint
 import java.time.Instant
 
-interface AircraftFlightData : AircraftData {
-  val arrivalAirport: AirportIcao?
-  val departureAirport: AirportIcao?
-  val estimatedArrivalTime: Option<Instant?>
-  val flightNumber: Option<String?>
-  val waypoints: Option<List<Waypoint>?>
-
-  fun copy(
-      aircraftId: AircraftIcao24 = this.aircraftId,
-      time: Instant = this.time,
-      arrivalAirport: AirportIcao? = this.arrivalAirport,
-      departureAirport: AirportIcao? = this.departureAirport,
-      estimatedArrivalTime: Option<Instant?> = this.estimatedArrivalTime,
-      flightNumber: Option<String?> = this.flightNumber,
-      waypoints: Option<List<Waypoint>?> = this.waypoints
-  ): AircraftFlightData = SimpleAircraftFlightData(
-      aircraftId, time, flightNumber, departureAirport, arrivalAirport, estimatedArrivalTime, waypoints)
-}
-
-data class SimpleAircraftFlightData(
+data class AircraftFlightData(
     override val aircraftId: AircraftIcao24,
     override val time: Instant,
-    override val flightNumber: Option<String?>,
-    override val departureAirport: AirportIcao?,
-    override val arrivalAirport: AirportIcao?,
-    override val estimatedArrivalTime: Option<Instant?> = None,
-    override val waypoints: Option<List<Waypoint>?> = None
-) : AircraftFlightData
+    val departureAirport: AirportIcao?,
+    val arrivalAirport: AirportIcao?,
+    val estimatedArrivalTime: Option<Instant?>,
+    val flightNumber: Option<String?>,
+    val waypoints: Option<List<Waypoint>?>
+) : AircraftData

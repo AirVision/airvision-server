@@ -65,10 +65,11 @@ class Fr24AircraftDataProvider(
         }, { entries ->
           AirVision.logger.debug("FR24: Received ${entries.size} aircraft states and flight data.")
           for (entry in entries) {
-            extendedDataQueue.offer(entry.id)
+            extendedDataQueue.offer(entry.flightId)
           }
           for (entry in entries) {
-            dataSendChannel.send(entry)
+            dataSendChannel.send(entry.flight)
+            dataSendChannel.send(entry.state)
           }
           delay(rateLimit)
         })

@@ -26,6 +26,10 @@ inline class Path(val parts: List<String>) {
 
   inline operator fun get(index: Int) = parts[index]
 
+  inline operator fun plus(other: Path): Path = Path(parts + other.parts)
+
+  inline operator fun plus(other: String): Path = Path(parts + other)
+
   inline fun isEmpty() = parts.isEmpty()
 
   override fun toString() = parts.joinToString(prefix = "[", postfix = "]")

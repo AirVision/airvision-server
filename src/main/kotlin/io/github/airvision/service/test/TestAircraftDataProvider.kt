@@ -13,7 +13,6 @@ import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AircraftStateData
-import io.github.airvision.service.SimpleAircraftStateData
 import io.github.airvision.util.coroutines.delay
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -45,7 +44,7 @@ class TestAircraftDataProvider(
         val time = Instant.now()
         AirVision.logger.debug("TEST: Received ${entries.size} test aircraft states.")
         entries.forEach { entry ->
-          dataSendChannel.send(SimpleAircraftStateData(time, entry.icao24, position = entry.position))
+          dataSendChannel.send(AircraftStateData(entry.icao24, time, entry.position))
         }
         delay(5.seconds)
       }

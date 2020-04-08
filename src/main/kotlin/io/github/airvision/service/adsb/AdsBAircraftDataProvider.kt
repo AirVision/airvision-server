@@ -19,7 +19,6 @@ import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.service.AircraftStateData
-import io.github.airvision.service.SimpleAircraftStateData
 import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.time.toDouble
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +55,7 @@ class AdsBAircraftDataProvider(
 ) {
 
   private data class AdsBCacheEntry(
-      val data: SimpleAircraftStateData,
+      val data: AircraftStateData,
       val positionDecoder: PositionDecoder = PositionDecoder(),
       val positionUpdateTime: Instant? = null
   )
@@ -143,7 +142,7 @@ class AdsBAircraftDataProvider(
 
   private fun receiveMessage(time: Instant, message: ModeSReply): AircraftStateData {
     val aircraftId = AircraftIcao24(message.transponderAddress)
-    val entry = adsBDataCache.get(aircraftId) { AdsBCacheEntry(SimpleAircraftStateData(time, aircraftId)) }!!
+    val entry = adsBDataCache.get(aircraftId) { AdsBCacheEntry(AircraftStateData(aircraftId, time)) }!!
 
     val (data, positionDecoder, positionUpdateTime) = entry
 

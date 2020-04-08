@@ -10,6 +10,7 @@
 package io.github.airvision.service.flightradar24
 
 import arrow.core.Either
+import arrow.core.None
 import arrow.core.Some
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.AirportIata
@@ -17,8 +18,8 @@ import io.github.airvision.AirportIcao
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.Waypoint
 import io.github.airvision.service.AircraftFlightData
+import io.github.airvision.service.AircraftStateData
 import io.github.airvision.service.AirportService
-import io.github.airvision.service.SimpleAircraftFlightData
 import io.github.airvision.util.feetPerMinuteToMetersPerSecond
 import io.github.airvision.util.feetToMeters
 import io.github.airvision.util.json.getPrimitiveOrNull
@@ -103,12 +104,12 @@ class Fr24RestService(
           val time = Instant.ofEpochSecond(json.getPrimitive("ts").long)
           val latitude = json.getPrimitive("lat").double
           val longitude = json.getPrimitive("lng").double
-          val altitude = json.getPrimitive("alt").double
+          val altitude = json.getPrimitive("alt").double.feetToMeters()
           Waypoint(time, GeodeticPosition(latitude, longitude, altitude))
         }
 
-    return SimpleAircraftFlightData(aircraftId, Instant.now(), Some(flightNumber),
-        departureAirport, arrivalAirport, Some(estimatedArrivalTime), Some(waypoints))
+    return AircraftFlightData(aircraftId, Instant.now(),
+        departureAirport, arrivalAirport, Some(estimatedArrivalTime), Some(flightNumber), Some(waypoints))
   }
 
   private suspend fun JsonArray.toFlightData(id: String, receiveTime: Instant): Fr24AircraftData? {
@@ -140,7 +141,11 @@ class Fr24RestService(
     val departureAirport = departureAirportIata?.let { airportService.get(it) }
     val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }
 
-    return Fr24AircraftData(aircraftId, id, time, flightNumber, departureAirport?.icao, arrivalAirport?.icao, position,
-        velocity, onGround, verticalRate, heading, callsign)
+    val flightData = AircraftFlightData(aircraftId, time,
+        departureAirport?.icao, arrivalAirport?.icao, None, flightNumber, None)
+    val stateData = AircraftStateData(aircraftId, time,
+        position, velocity, onGround, verticalRate, heading, callsign)
+
+    return Fr24AircraftData(aircraftId, stateData, id, flightData)
   }
 }
