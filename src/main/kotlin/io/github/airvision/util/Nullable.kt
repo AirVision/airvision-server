@@ -9,5 +9,5 @@
  */
 package io.github.airvision.util
 
-inline fun String.toNullIfEmpty(): String? =
+fun String.notEmptyOrNull(): String? =
     if (this.isEmpty()) null else this

@@ -31,7 +31,7 @@ import io.github.airvision.util.ktor.Failure
 import io.github.airvision.util.ktor.requestTimeout
 import io.github.airvision.util.ktor.tryToGet
 import io.github.airvision.util.arrow.suspendedMap
-import io.github.airvision.util.toNullIfEmpty
+import io.github.airvision.util.notEmptyOrNull
 import io.ktor.client.HttpClient
 import io.ktor.client.features.HttpTimeout
 import io.ktor.client.features.json.JsonFeature
@@ -42,6 +42,9 @@ import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.content
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.longOrNull
 import java.time.Instant
 import kotlin.time.seconds
 
@@ -118,25 +121,25 @@ class Fr24RestService(
       return null
 
     val aircraftId = AircraftIcao24.parse(rawAircraftId)
-    val callsign = this[16].contentOrNull?.toNullIfEmpty()
+    val callsign = this[16].contentOrNull?.notEmptyOrNull()
 
-    val latitude = this[1].contentOrNull?.toDoubleOrNull()
-    val longitude = this[2].contentOrNull?.toDoubleOrNull()
-    val altitude = this[4].contentOrNull?.toDoubleOrNull()?.feetToMeters()
+    val latitude = this[1].doubleOrNull
+    val longitude = this[2].doubleOrNull
+    val altitude = this[4].doubleOrNull?.feetToMeters()
 
     val position = if (latitude != null && longitude != null) {
       GeodeticPosition(latitude, longitude, altitude ?: 0.0)
     } else null
 
-    val time = this[10].contentOrNull?.toLongOrNull()?.let { Instant.ofEpochSecond(it) } ?: receiveTime
-    val heading = this[3].contentOrNull?.toDoubleOrNull()
-    val velocity = this[5].contentOrNull?.toDoubleOrNull()?.knotsToMetersPerSecond()
-    val verticalRate = this[15].contentOrNull?.toDoubleOrNull()?.feetPerMinuteToMetersPerSecond()
-    val onGround = this[14].contentOrNull?.toIntOrNull() != 1
+    val time = this[10].longOrNull?.let { Instant.ofEpochSecond(it) } ?: receiveTime
+    val heading = this[3].doubleOrNull
+    val velocity = this[5].doubleOrNull?.knotsToMetersPerSecond()
+    val verticalRate = this[15].doubleOrNull?.feetPerMinuteToMetersPerSecond()
+    val onGround = this[14].intOrNull != 1
 
-    val flightNumber = Some(this[13].contentOrNull?.toNullIfEmpty())
-    val departureAirportIata = this[11].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
-    val arrivalAirportIata = this[12].contentOrNull?.toNullIfEmpty()?.let { AirportIata(it) }
+    val flightNumber = Some(this[13].contentOrNull?.notEmptyOrNull())
+    val departureAirportIata = this[11].contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
+    val arrivalAirportIata = this[12].contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
 
     val departureAirport = departureAirportIata?.let { airportService.get(it) }
     val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }

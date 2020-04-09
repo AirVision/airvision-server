@@ -23,6 +23,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.content
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.long
 import java.time.Instant
 
@@ -38,13 +39,13 @@ object OsnAircraftStateDataSerializer : KSerializer<AircraftStateData> {
     val aircraftId = AircraftIcao24.parse(json[0].content)
     val callsign = json[1].contentOrNull
     val time = Instant.ofEpochSecond(json[4].long)
-    val longitude = json[5].contentOrNull?.toDoubleOrNull()
-    val latitude = json[6].contentOrNull?.toDoubleOrNull()
-    val baroAltitude = json[7].contentOrNull?.toDoubleOrNull()
-    val geoAltitude = json[13].contentOrNull?.toDoubleOrNull()
-    val velocity = json[9].contentOrNull?.toDoubleOrNull()
-    val verticalRate = json[11].contentOrNull?.toDoubleOrNull()
-    val heading = json[10].contentOrNull?.toDoubleOrNull()
+    val longitude = json[5].doubleOrNull
+    val latitude = json[6].doubleOrNull
+    val baroAltitude = json[7].doubleOrNull
+    val geoAltitude = json[13].doubleOrNull
+    val velocity = json[9].doubleOrNull
+    val verticalRate = json[11].doubleOrNull
+    val heading = json[10].doubleOrNull
     val onGround = json[8].boolean
     val altitude = baroAltitude ?: geoAltitude ?: 0.0
     val position = if (latitude != null && longitude != null) {

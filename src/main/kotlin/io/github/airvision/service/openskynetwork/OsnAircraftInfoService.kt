@@ -23,7 +23,7 @@ import io.github.airvision.util.csv.suspendedOpen
 import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.file.*
 import io.github.airvision.util.ktor.downloadUpdateToFile
-import io.github.airvision.util.toNullIfEmpty
+import io.github.airvision.util.notEmptyOrNull
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
@@ -289,11 +289,11 @@ class OsnAircraftInfoService(
           continue
 
         val aircraftId = AircraftIcao24.parse(it[index.aircraftId])
-        val manufacturerCode = it[index.manufacturerCode].toNullIfEmpty()
+        val manufacturerCode = it[index.manufacturerCode].notEmptyOrNull()
         val manufacturerName = it[index.manufacturerName].trim()
-        val owner = it[index.owner].toNullIfEmpty()
+        val owner = it[index.owner].notEmptyOrNull()
 
-        var description = it[index.description].toNullIfEmpty()
+        var description = it[index.description].notEmptyOrNull()
         if (description != null && !descriptionRegex.matches(description))
           description = null
 

@@ -12,36 +12,6 @@ package io.github.airvision.serializer
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.builtins.IntArraySerializer
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
-
-private val nullableStringSerializer = String.serializer().nullable
-private val nullableIntSerializer = Int.serializer().nullable
-private val nullableFloatSerializer = Float.serializer().nullable
-private val nullableDoubleSerializer = Double.serializer().nullable
-private val nullableIntArraySerializer = IntArraySerializer().nullable
-
-fun CompositeDecoder.decodeIcao24(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, AircraftIcao24Serializer)
-
-fun CompositeDecoder.decodeNullableString(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, nullableStringSerializer)
-
-fun CompositeDecoder.decodeNullableInt(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, nullableIntSerializer)
-
-fun CompositeDecoder.decodeNullableFloat(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, nullableFloatSerializer)
-
-fun CompositeDecoder.decodeNullableDouble(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, nullableDoubleSerializer)
-
-fun CompositeDecoder.decodeIntArray(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, IntArraySerializer())
-
-fun CompositeDecoder.decodeNullableIntArray(desc: SerialDescriptor, index: Int) =
-    decodeSerializableElement(desc, index, nullableIntArraySerializer)
 
 inline fun <R> Decoder.structure(desc: SerialDescriptor, fn: CompositeDecoder.() -> R): R {
   val decoder = beginStructure(desc)

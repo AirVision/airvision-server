@@ -31,7 +31,7 @@ data class OsnTrackResponse(
       val latitude: Float?,
       val longitude: Float?,
       val baroAltitude: Float?,
-      val trueTrack: Float?,
+      val heading: Float?,
       val onGround: Boolean
   )
 }
