@@ -9,6 +9,7 @@
  */
 package io.github.airvision.service
 
+import arrow.core.None
 import arrow.core.Some
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
@@ -23,8 +24,8 @@ import io.github.airvision.exposed.orderBy
 import io.github.airvision.exposed.upsert
 import io.github.airvision.service.db.AircraftFlightTable
 import io.github.airvision.service.db.AircraftStateTable
-import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.arrow.ifSome
+import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.time.minus
 import io.github.airvision.util.time.plus
 import kotlinx.coroutines.CoroutineDispatcher
@@ -58,6 +59,7 @@ import kotlin.time.toJavaDuration
  */
 class AircraftDataService(
     private val database: Database,
+    private val airportService: AirportService,
     private val updateDispatcher: CoroutineDispatcher,
     private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
@@ -82,7 +84,7 @@ class AircraftDataService(
 
   private val waypointsCache = Caffeine.newBuilder()
       .expireAfterWrite(30.minutes.toJavaDuration())
-      .build<AircraftIcao24, List<Waypoint>>()
+      .build<AircraftIcao24, WaypointsBuilder> { WaypointsBuilder() }
 
   private val channel = Channel<AircraftData>()
   private val mergeTime = 3.seconds
@@ -247,13 +249,15 @@ class AircraftDataService(
   /**
    * Processes the [AircraftStateData].
    */
-  private suspend fun process(data: AircraftStateData) {
-    val lastData = lastAircraftStateData.getIfPresent(data.aircraftId)
+  private suspend fun process(state: AircraftStateData) {
+    waypointsCache.get(state.aircraftId)!!.append(state)
+
+    val lastData = lastAircraftStateData.getIfPresent(state.aircraftId)
     if (lastData != null) {
-      val difference = data.time - lastData.time
+      val difference = state.time - lastData.time
       // Merge entries if the time is close enough, to fill missing data, etc.
       if (difference < mergeTime) {
-        val merged = lastData.merge(data)
+        val merged = lastData.merge(state)
         lastAircraftStateData.put(merged.aircraftId, merged)
       } else {
         try {
@@ -262,19 +266,22 @@ class AircraftDataService(
           AirVision.logger.error("An error occurred while trying to insert an entry", ex)
           println("Difference: $difference")
         }
-        lastAircraftStateData.put(data.aircraftId, data)
+        lastAircraftStateData.put(state.aircraftId, state)
       }
     } else {
-      lastAircraftStateData.put(data.aircraftId, data)
+      lastAircraftStateData.put(state.aircraftId, state)
     }
     // TODO: Bulk insert?
   }
 
+  private suspend fun getFlightWaypoints(aircraftId: AircraftIcao24): List<Waypoint>? =
+      waypointsCache.getIfPresent(aircraftId)?.getWaypoints()
+
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlightData? {
     val data = lastAircraftFlightData.getIfPresent(aircraftId)
+    val waypoints = Some(getFlightWaypoints(aircraftId))
     if (data != null)
-      return data
-    val waypoints = Some(waypointsCache.getIfPresent(aircraftId))
+      return data.copy(waypoints = waypoints)
     return newSuspendedTransaction(getDispatcher) {
       AircraftFlightTable
           .select { AircraftFlightTable.aircraftId eq aircraftId }
@@ -283,8 +290,9 @@ class AircraftDataService(
             val number = Some(it[AircraftFlightTable.number])
             val arrivalAirport = it[AircraftFlightTable.arrivalAirport]
             val departureAirport = it[AircraftFlightTable.departureAirport]
+            val departureTime = Some(it[AircraftFlightTable.departureTime])
             val estimatedArrivalTime = Some(it[AircraftFlightTable.estimatedArrivalTime])
-            AircraftFlightData(aircraftId, time, departureAirport, arrivalAirport,
+            AircraftFlightData(aircraftId, time, departureAirport, departureTime, arrivalAirport,
                 estimatedArrivalTime, number, waypoints)
           }
           .firstOrNull()
@@ -295,17 +303,12 @@ class AircraftDataService(
    * Processes changes in the flight destination and origin.
    */
   private suspend fun process(data: AircraftFlightData) {
+    val waypointsBuilder = waypointsCache.get(data.aircraftId)!!
+    waypointsBuilder.append(data, airportService)
+
     @Suppress("NAME_SHADOWING")
-    val data = data.waypoints.fold(
-        { data.copy(waypoints = Some(waypointsCache.getIfPresent(data.aircraftId))) },
-        { waypoints ->
-          if (waypoints == null) {
-            waypointsCache.invalidate(data.aircraftId)
-          } else {
-            waypointsCache.put(data.aircraftId, waypoints)
-          }
-          data
-        })
+    val data = data.waypoints
+        .fold({ data.copy(waypoints = None) }, { data })
 
     val lastData = lastAircraftFlightData.getIfPresent(data.aircraftId)
     if (lastData == null ||
@@ -333,6 +336,7 @@ class AircraftDataService(
             data.flightNumber.ifSome { value -> it[number] = value }
             it[arrivalAirport] = data.arrivalAirport
             it[departureAirport] = data.departureAirport
+            data.departureTime.ifSome { value -> it[departureTime] = value }
             data.estimatedArrivalTime.ifSome { value -> it[estimatedArrivalTime] = value }
           }
         }

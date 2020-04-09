@@ -96,19 +96,34 @@ fun <E> MutableList<E>.pollLastWhile(fn: (E) -> Boolean): List<E> {
 }
 
 @JvmName("reverseMutableIterator")
-fun <E> MutableList<E>.reverseIterator(): MutableIterator<E> {
+fun <E> MutableList<E>.reverseIterator(): MutableListIterator<E> {
   val it = listIterator(size)
-  return object : MutableIterator<E> {
+  return object : MutableListIterator<E> {
     override fun hasNext() = it.hasPrevious()
     override fun next() = it.previous()
+    override fun nextIndex() = it.previousIndex()
     override fun remove() = it.remove()
+    override fun hasPrevious() = it.hasNext()
+    override fun previous() = it.next()
+    override fun previousIndex() = it.nextIndex()
+    override fun set(element: E) = it.set(element)
+    override fun add(element: E) {
+      it.add(element)
+      // Adding a element makes it the new
+      // previous value, so skip that one
+      it.previous()
+    }
   }
 }
 
-fun <E> List<E>.reverseIterator(): Iterator<E> {
+fun <E> List<E>.reverseIterator(): ListIterator<E> {
   val it = listIterator(size)
-  return object : Iterator<E> {
+  return object : ListIterator<E> {
     override fun hasNext() = it.hasPrevious()
     override fun next() = it.previous()
+    override fun nextIndex() = it.previousIndex()
+    override fun hasPrevious() = it.hasNext()
+    override fun previous() = it.next()
+    override fun previousIndex() = it.nextIndex()
   }
 }

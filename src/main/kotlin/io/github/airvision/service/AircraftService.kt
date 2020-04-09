@@ -40,7 +40,7 @@ class AircraftService(
   private lateinit var testAircraftDataProvider: TestAircraftDataProvider
 
   fun init() {
-    val dataService = AircraftDataService(database, databaseUpdateDispatcher)
+    val dataService = AircraftDataService(database, airportService, databaseUpdateDispatcher)
         .also { dataService = it }
     dataService.init()
 

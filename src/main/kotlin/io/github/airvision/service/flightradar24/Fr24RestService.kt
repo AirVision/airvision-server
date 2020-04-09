@@ -87,6 +87,8 @@ class Fr24RestService(
     val realArrivalTime = pathOf("time", "real", "arrival")
     val departureAirport = pathOf("airport", "origin", "code", "icao")
     val arrivalAirport = pathOf("airport", "destination", "code", "icao")
+    val scheduledDepartureTime = pathOf("time", "scheduled", "departure")
+    val realDepartureTime = pathOf("time", "real", "departure")
   }
 
   private fun JsonObject.toExtendedFlightData(): AircraftFlightData? {
@@ -95,10 +97,12 @@ class Fr24RestService(
     val aircraftId = AircraftIcao24.parse(rawAircraftId)
     val flightNumber = getStringOrNull(ExtendedDataPaths.flightNumber)
 
-    val estimatedArrivalTime = getPrimitiveOrNull(ExtendedDataPaths.estimatedArrivalTime)?.instantOrNull
-        ?: getPrimitiveOrNull(ExtendedDataPaths.realArrivalTime)?.instantOrNull
+    val estimatedArrivalTime = (getPrimitiveOrNull(ExtendedDataPaths.estimatedArrivalTime)
+        ?: getPrimitiveOrNull(ExtendedDataPaths.realArrivalTime))?.instantOrNull
     val departureAirport = getStringOrNull(ExtendedDataPaths.departureAirport)?.let { AirportIcao(it) }
     val arrivalAirport = getStringOrNull(ExtendedDataPaths.arrivalAirport)?.let { AirportIcao(it) }
+    val departureTime = (getPrimitiveOrNull(ExtendedDataPaths.realDepartureTime)
+        ?: getPrimitiveOrNull(ExtendedDataPaths.scheduledDepartureTime))?.instantOrNull
 
     val trailArray = getArrayOrNull("trail")
     val waypoints = trailArray?.content
@@ -111,8 +115,8 @@ class Fr24RestService(
           Waypoint(time, GeodeticPosition(latitude, longitude, altitude))
         }
 
-    return AircraftFlightData(aircraftId, Instant.now(),
-        departureAirport, arrivalAirport, Some(estimatedArrivalTime), Some(flightNumber), Some(waypoints))
+    return AircraftFlightData(aircraftId, Instant.now(), departureAirport, Some(departureTime),
+        arrivalAirport, Some(estimatedArrivalTime), Some(flightNumber), Some(waypoints))
   }
 
   private suspend fun JsonArray.toFlightData(id: String, receiveTime: Instant): Fr24AircraftData? {
@@ -135,7 +139,7 @@ class Fr24RestService(
     val heading = this[3].doubleOrNull
     val velocity = this[5].doubleOrNull?.knotsToMetersPerSecond()
     val verticalRate = this[15].doubleOrNull?.feetPerMinuteToMetersPerSecond()
-    val onGround = this[14].intOrNull != 1
+    val onGround = this[14].intOrNull == 1
 
     val flightNumber = Some(this[13].contentOrNull?.notEmptyOrNull())
     val departureAirportIata = this[11].contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
@@ -145,7 +149,7 @@ class Fr24RestService(
     val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }
 
     val flightData = AircraftFlightData(aircraftId, time,
-        departureAirport?.icao, arrivalAirport?.icao, None, flightNumber, None)
+        departureAirport?.icao, None, arrivalAirport?.icao, None, flightNumber, None)
     val stateData = AircraftStateData(aircraftId, time,
         position, velocity, onGround, verticalRate, heading, callsign)
 

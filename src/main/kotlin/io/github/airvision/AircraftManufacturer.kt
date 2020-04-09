@@ -18,5 +18,5 @@ import kotlinx.serialization.Serializable
 data class AircraftManufacturer(
     val code: String?,
     val name: String,
-    val country: String?
+    val country: String? = null
 )

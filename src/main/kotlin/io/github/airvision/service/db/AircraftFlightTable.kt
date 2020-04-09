@@ -19,6 +19,7 @@ object AircraftFlightTable : Table("aircraft_flight") {
   val time = epochSecond("time")
   val number = varchar("code", 30).nullable()
   val departureAirport = airportIcao("origin").nullable()
+  val departureTime = epochSecond("departure_time").nullable()
   val arrivalAirport = airportIcao("destination").nullable()
   val estimatedArrivalTime = epochSecond("est_arrival_time").nullable()
 

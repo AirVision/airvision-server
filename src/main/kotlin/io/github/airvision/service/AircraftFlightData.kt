@@ -19,6 +19,7 @@ data class AircraftFlightData(
     override val aircraftId: AircraftIcao24,
     override val time: Instant,
     val departureAirport: AirportIcao?,
+    val departureTime: Option<Instant?>,
     val arrivalAirport: AirportIcao?,
     val estimatedArrivalTime: Option<Instant?>,
     val flightNumber: Option<String?>,

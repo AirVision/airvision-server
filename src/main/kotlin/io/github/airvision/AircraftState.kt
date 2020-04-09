@@ -28,9 +28,9 @@ import java.time.Instant
 data class AircraftState(
     @ContextualSerialization val time: Instant,
     val icao24: AircraftIcao24,
-    val position: GeodeticPosition?,
-    val velocity: Double?,
+    val position: GeodeticPosition? = null,
+    val velocity: Double? = null,
     @SerialName("on_ground") val onGround: Boolean,
-    @SerialName("vertical_rate") val verticalRate: Double?,
-    val heading: Double?
+    @SerialName("vertical_rate") val verticalRate: Double? = null,
+    val heading: Double? = null
 )
