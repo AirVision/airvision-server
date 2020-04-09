@@ -19,6 +19,7 @@ import io.github.airvision.toEcefPosition
 import io.github.airvision.toEcefTransform
 import io.github.airvision.toViewPosition
 import io.github.airvision.util.ToStringHelper
+import io.github.airvision.util.collections.poll
 import io.github.airvision.util.math.radToDeg
 import io.github.airvision.util.math.min
 import io.ktor.application.call
@@ -28,8 +29,10 @@ import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
+import org.spongepowered.math.vector.Vector2i
 import java.time.Instant
 import kotlin.math.acos
+import kotlin.math.roundToInt
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
 
@@ -156,18 +159,50 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
       // Sort by the aircraft closest to the camera first
       .sortedBy { (position, _, _) -> camera.position.distanceSquared(position) }
 
-  val closestLimited = closestInView.take(aircrafts.size)
+  val closestMutable = closestInView.toMutableList()
   val used = mutableSetOf<AircraftState>()
-  return aircrafts.asSequence()
-      .map { aircraft ->
-        // TODO: Utilize size, if needed.
-        val result = closestLimited
-            .asSequence()
-            .sortedBy { (_, viewPosition, _) -> viewPosition.distanceSquared(aircraft.position) }
-            // Only returns true the first time it was matched
-            .filter { (_, _, state) -> used.add(state) }
-            .firstOrNull()
-        result?.third
+  return aircrafts
+      .withIndex()
+      // We need to make groups for image sizes, sometimes, most most likely when
+      // aircraft's are far away, the sizes will be almost the same, so we can no
+      // longer depend on the distance, in this case we need to depend on the screen
+      // positions. The groups make sure that the images are in the groups where the
+      // size is more or less the same.
+      .groupBy { entry ->
+        val (_, aircraft) = entry
+
+        // 0.0 to 1.0 range
+        // group everything by difference sections in x and y
+        val maxDifference = 0.1 // TODO: Adjust this value, if needed
+        val position = aircraft.position
+
+        val xGroup = (position.x / maxDifference).roundToInt()
+        val yGroup = (position.y / maxDifference).roundToInt()
+        Vector2i(xGroup, yGroup)
       }
+      .asSequence()
+      // The biggest images have priority, which means they're closer,
+      // the closest are also first in the closestLimited list
+      .sortedBy { (group, _) -> group.x * group.y }
+      .map { (_, entries) ->
+        // In every group, the closest aircraft based on the screen position will be
+        // used, when in different groups, the distance will be mainly used
+        val closest = closestMutable.poll(entries.size)
+        entries.map { entry ->
+          val (index, aircraft) = entry
+          val result = closest
+              .asSequence()
+              .sortedBy { (_, viewPosition, _) -> viewPosition.distanceSquared(aircraft.position) }
+              // Only returns true the first time it was matched
+              .filter { (_, _, state) -> used.add(state) }
+              .firstOrNull()
+          index to result?.third
+        }
+      }
+      .flatten()
+      // Bring back the original ordering
+      .sortedBy { (index, _) -> index }
+      // Extract only the state
+      .map { (_, state) -> state }
       .toList()
 }

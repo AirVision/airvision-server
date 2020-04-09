@@ -151,13 +151,24 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
     return requestAircraftFlights(aircraftId, begin, end).map { it.firstOrNull() }
   }
 
+  /**
+   * Attempts to get all the current flights.
+   */
+  suspend fun getFlights(): Either<Failure, List<OsnFlight>> {
+    val now = Instant.now()
+    val begin = now.minusMillis(5000)
+    val end = now.plusMillis(5000)
+    return requestAircraftFlights(null, begin, end)
+  }
+
   private suspend fun requestAircraftFlights(
-      aircraftId: AircraftIcao24, beginTime: Instant, endTime: Instant
-  ) = request<List<OsnFlight>>("/flights/aircraft", mapOf(
-      "icao24" to aircraftId,
-      "begin" to beginTime.epochSecond,
-      "end" to endTime.epochSecond
-  )).flatMapLeft { failure ->
+      aircraftId: AircraftIcao24?, beginTime: Instant, endTime: Instant
+  ) = request<List<OsnFlight>>("/flights/aircraft", buildMap {
+    put("begin", beginTime.epochSecond)
+    put("end", endTime.epochSecond)
+    if (aircraftId != null)
+      put("icao24", aircraftId)
+  }).flatMapLeft { failure ->
     if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
       Either.right(emptyList())
     } else {
