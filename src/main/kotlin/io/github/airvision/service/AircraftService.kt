@@ -74,20 +74,27 @@ class AircraftService(
   }
 
   suspend fun getAll(time: Instant? = null): Collection<AircraftState> {
-    return dataService.getStates(time = time).map { it.toAircraft() }
+    return dataService.getStates(time = time)
+        .filterNot { state -> state.onGround }
+        .map { state -> state.toAircraft() }
   }
 
   suspend fun getAllWithin(bounds: GeodeticBounds, time: Instant? = null): Collection<AircraftState> {
-    return dataService.getStates(bounds = bounds, time = time).map { it.toAircraft() }
+    return dataService.getStates(bounds = bounds, time = time).asSequence()
+        .filterNot { state -> state.onGround }
+        .map { state -> state.toAircraft() }
+        .toList()
   }
 
   suspend fun get(aircraftId: AircraftIcao24, time: Instant? = null): AircraftState? {
-    return dataService.getState(aircraftId, time)?.toAircraft()
+    val state = dataService.getState(aircraftId, time)
+    if (state == null || state.onGround)
+      return null
+    return state.toAircraft()
   }
 
   private fun AircraftStateData.toAircraft(): AircraftState {
-    return AircraftState(time = time, icao24 = aircraftId, onGround = onGround, velocity = velocity,
-        position = position, heading = heading, verticalRate = verticalRate)
+    return AircraftState(time, aircraftId, position, velocity, verticalRate, heading)
   }
 
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlight? {
