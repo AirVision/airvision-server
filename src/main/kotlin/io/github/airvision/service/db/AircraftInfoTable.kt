@@ -9,6 +9,7 @@
  */
 package io.github.airvision.service.db
 
+import io.github.airvision.WeightCategory
 import io.github.airvision.exposed.aircraftIcao24
 import org.jetbrains.exposed.dao.IntIdTable
 
@@ -23,6 +24,8 @@ object AircraftInfoTable : IntIdTable("aircraft_info") {
   val manufacturer = reference("manufacturer", AircraftManufacturerTable).nullable()
   // The owner
   val owner = varchar("owner", 1000).nullable()
+  // The owner
+  val weightCategory = enumeration("weight_cat", WeightCategory::class).nullable()
 
   init {
     uniqueIndex(aircraftId)

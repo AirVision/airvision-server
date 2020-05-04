@@ -26,7 +26,7 @@ class WaypointsBuilder {
   private var departureWaypoint: Waypoint? = null
   private var departureTime: Instant? = null
   private var cachedWaypoints: MutableList<Waypoint>? = null
-  private var prependedExternalWaypoints: Boolean = false
+  private var prependedExternalWaypoints = false
 
   private val mutex = Mutex()
 
@@ -39,9 +39,11 @@ class WaypointsBuilder {
       if (waypoints == null) {
         waypoints = builtWaypoints.toMutableList()
         if (waypoints.isNotEmpty()) {
-          val departureWaypoint = this.departureWaypoint
-          if (departureWaypoint != null)
-            waypoints.add(0, departureWaypoint)
+          if (!prependedExternalWaypoints) {
+            val departureWaypoint = this.departureWaypoint
+            if (departureWaypoint != null)
+              waypoints.add(0, departureWaypoint)
+          }
           val lastState = this.lastState
           if (lastState?.position != null && lastState.position != waypoints.last().position)
             waypoints.add(Waypoint(lastState.time, lastState.position))
@@ -71,6 +73,8 @@ class WaypointsBuilder {
   }
 
   private suspend fun doAppend(flight: AircraftFlightData, airportService: AirportService) {
+    if (lastState == null)
+      return
     doAppendStartAirport(flight, airportService)
     flight.waypoints.ifSome { waypoints ->
       if (waypoints != null)

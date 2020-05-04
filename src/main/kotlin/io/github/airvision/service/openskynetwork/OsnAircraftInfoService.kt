@@ -40,6 +40,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import kotlin.time.Duration
 import kotlin.time.days
 import kotlin.time.minutes
 import kotlin.time.seconds
@@ -50,6 +51,8 @@ class OsnAircraftInfoService(
     private val updateDispatcher: CoroutineDispatcher,
     private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AircraftInfoService {
+
+  private val infoCache = buildCache(10.minutes) { aircraftId: AircraftIcao24 -> loadById(aircraftId) }
 
   private val client = HttpClient()
   private var job: Job? = null
@@ -142,7 +145,10 @@ class OsnAircraftInfoService(
 
   private val engineEntriesListSerializer = EngineEntry.serializer().list
 
-  override suspend fun get(aircraftId: AircraftIcao24): AircraftInfo? {
+  override suspend fun get(aircraftId: AircraftIcao24): AircraftInfo? =
+      this.infoCache.get(aircraftId).await()
+
+  private suspend fun loadById(aircraftId: AircraftIcao24): AircraftInfo? {
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftInfoTable
           .select { AircraftInfoTable.aircraftId eq aircraftId }
@@ -160,6 +166,8 @@ class OsnAircraftInfoService(
             if (engineEntries == null)
               engineEntries = null
 
+            val weightCategory = it[AircraftInfoTable.weightCategory]
+
             val engineCount = if (description != null) {
               description[1].toString().toInt()
             } else if (engineEntries != null && engineEntries.all { entry -> entry.count != null }) {
@@ -171,7 +179,7 @@ class OsnAircraftInfoService(
                   engineEntries?.map { entry -> AircraftEnginesEntry(entry.name, entry.count) })
             }
 
-            AircraftInfo(aircraftId, model, description, owner, manufacturer, engines, type)
+            AircraftInfo(aircraftId, model, description, owner, manufacturer, engines, type, weightCategory)
           }
           .firstOrNull()
     }
@@ -196,10 +204,21 @@ class OsnAircraftInfoService(
     return AircraftManufacturer(code, name, country)
   }
 
+  private fun <K, V> buildCache(
+      expireDuration: Duration, fn: suspend (key: K) -> V
+  ): AsyncLoadingCache<K, V> = Caffeine.newBuilder()
+      .executor(getDispatcher.asExecutor())
+      .expireAfterAccess(expireDuration.toJavaDuration())
+      .buildAsync { key, executor ->
+        GlobalScope.future(executor.asCoroutineDispatcher()) {
+          fn(key)
+        }
+      }
+
   private inner class ManufacturerHelper {
 
-    private val byName = buildCache<String, Entity<Int, AircraftManufacturer>?> { loadByName(it) }
-    private val byCode = buildCache<String, Entity<Int, AircraftManufacturer>?> { loadByCode(it) }
+    private val byName = buildCache<String, Entity<Int, AircraftManufacturer>?>(10.seconds) { loadByName(it) }
+    private val byCode = buildCache<String, Entity<Int, AircraftManufacturer>?>(10.seconds) { loadByCode(it) }
 
     suspend fun getByCode(code: String): Entity<Int, AircraftManufacturer>? = byCode[code].await()
     suspend fun getByName(name: String): Entity<Int, AircraftManufacturer>? = byName[name].await()
@@ -256,15 +275,6 @@ class OsnAircraftInfoService(
         byCode.put(code, completed)
       return entity
     }
-
-    private fun <K, V> buildCache(fn: suspend (key: K) -> V): AsyncLoadingCache<K, V> = Caffeine.newBuilder()
-        .executor(getDispatcher.asExecutor())
-        .expireAfterAccess(10.seconds.toJavaDuration())
-        .buildAsync { key, executor ->
-          GlobalScope.future(executor.asCoroutineDispatcher()) {
-            fn(key)
-          }
-        }
   }
 
   private suspend fun updateAircrafts(inputStream: InputStream) {
@@ -280,6 +290,7 @@ class OsnAircraftInfoService(
         val description = header.indexOf("icaoaircrafttype")
         val owner = header.indexOf("owner")
         val engines = header.indexOf("engines")
+        val categoryDescription = header.indexOf("categorydescription")
       }
       val enginesRegex = "(?:([0-9]+)\\s+x\\s+)?(.+)".toRegex()
       val descriptionRegex = "[LSAHDG][1-9][PTJ](/.+)?".toRegex()
@@ -292,6 +303,7 @@ class OsnAircraftInfoService(
         val manufacturerCode = it[index.manufacturerCode].notEmptyOrNull()
         val manufacturerName = it[index.manufacturerName].trim()
         val owner = it[index.owner].notEmptyOrNull()
+        val categoryDescription = it[index.categoryDescription].toLowerCase()
 
         var description = it[index.description].notEmptyOrNull()
         if (description != null && !descriptionRegex.matches(description))
@@ -299,6 +311,16 @@ class OsnAircraftInfoService(
 
         val manufacturer = if (manufacturerName.isBlank()) null else
           manufacturers.getOrInsert(CsvManufacturer(manufacturerCode, manufacturerName, null))
+
+        val weightCategory = when {
+          categoryDescription.contains("glider") ||
+              categoryDescription.contains("ultralight") -> WeightCategory.Ultralight
+          categoryDescription.contains("light") -> WeightCategory.Light
+          categoryDescription.contains("small") -> WeightCategory.Normal
+          categoryDescription.contains("large") -> WeightCategory.Heavy
+          categoryDescription.contains("heavy") -> WeightCategory.VeryHeavy
+          else -> null
+        }
 
         var engines = it[index.engines]
             .split("<br>")
@@ -331,6 +353,7 @@ class OsnAircraftInfoService(
             it[AircraftInfoTable.engines] = enginesJson
             it[AircraftInfoTable.manufacturer] = manufacturer?.id
             it[AircraftInfoTable.owner] = owner
+            it[AircraftInfoTable.weightCategory] = weightCategory
           }
         }
       }

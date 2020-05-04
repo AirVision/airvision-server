@@ -11,6 +11,7 @@ package io.github.airvision.service
 
 import io.github.airvision.AircraftFlight
 import io.github.airvision.AircraftIcao24
+import io.github.airvision.AircraftInfo
 import io.github.airvision.AircraftState
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.service.adsb.AdsBAircraftDataProvider
@@ -29,7 +30,8 @@ class AircraftService(
     private val databaseUpdateDispatcher: CoroutineDispatcher,
     private val osnRestService: OsnRestService,
     private val fr24RestService: Fr24RestService,
-    private val airportService: AirportService
+    private val airportService: AirportService,
+    private val aircraftInfoService: AircraftInfoService
 ) {
 
   private lateinit var dataService: AircraftDataService
@@ -74,27 +76,37 @@ class AircraftService(
   }
 
   suspend fun getAll(time: Instant? = null): Collection<AircraftState> {
-    return dataService.getStates(time = time)
+    return dataService.getStates(time = time).asSequence()
         .filterNot { state -> state.onGround }
-        .map { state -> state.toAircraft() }
+        .toStates()
   }
 
   suspend fun getAllWithin(bounds: GeodeticBounds, time: Instant? = null): Collection<AircraftState> {
     return dataService.getStates(bounds = bounds, time = time).asSequence()
         .filterNot { state -> state.onGround }
-        .map { state -> state.toAircraft() }
-        .toList()
+        .toStates()
+  }
+
+  private suspend fun Sequence<AircraftStateData>.toStates(): Collection<AircraftState> {
+    val states = mutableListOf<AircraftState>()
+    for (data in this) {
+      val info = aircraftInfoService.get(data.aircraftId)
+      states.add(toAircraftState(data, info))
+    }
+    return states
   }
 
   suspend fun get(aircraftId: AircraftIcao24, time: Instant? = null): AircraftState? {
     val state = dataService.getState(aircraftId, time)
+    val info = aircraftInfoService.get(aircraftId)
     if (state == null || state.onGround)
       return null
-    return state.toAircraft()
+    return toAircraftState(state, info)
   }
 
-  private fun AircraftStateData.toAircraft(): AircraftState {
-    return AircraftState(time, aircraftId, position, velocity, verticalRate, heading)
+  private fun toAircraftState(data: AircraftStateData, info: AircraftInfo?): AircraftState {
+    return AircraftState(data.time, data.aircraftId, data.position, data.velocity,
+        data.verticalRate, data.heading, info?.weightCategory)
   }
 
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlight? {

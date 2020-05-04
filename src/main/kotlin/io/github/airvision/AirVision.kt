@@ -104,7 +104,8 @@ fun main() {
   aircraftInfoService.init()
 
   // Initialize the aircraft service
-  val aircraftService = AircraftService(database, databaseUpdateDispatcher, osn, fr24, airportService)
+  val aircraftService = AircraftService(database, databaseUpdateDispatcher,
+      osn, fr24, airportService, aircraftInfoService)
   aircraftService.init()
 
   // Initialize the aircraft flight info service

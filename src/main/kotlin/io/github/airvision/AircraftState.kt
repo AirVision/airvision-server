@@ -30,5 +30,6 @@ data class AircraftState(
     val position: GeodeticPosition? = null,
     val velocity: Double? = null,
     @SerialName("vertical_rate") val verticalRate: Double? = null,
-    val heading: Double? = null
+    val heading: Double? = null,
+    @SerialName("weight_category") val weightCategory: WeightCategory? = null
 )

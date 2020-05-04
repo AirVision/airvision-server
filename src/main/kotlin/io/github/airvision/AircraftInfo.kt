@@ -9,6 +9,7 @@
  */
 package io.github.airvision
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -19,7 +20,8 @@ data class AircraftInfo(
     val owner: String? = null,
     val manufacturer: AircraftManufacturer? = null,
     val engines: AircraftEngines? = null,
-    val type: Type? = null
+    val type: Type? = null,
+    @SerialName("weight_category") val weightCategory: WeightCategory? = null
 ) {
 
   enum class Type {

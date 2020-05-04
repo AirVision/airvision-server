@@ -278,10 +278,10 @@ class AircraftDataService(
       waypointsCache.getIfPresent(aircraftId)?.getWaypoints()
 
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlightData? {
-    val data = lastAircraftFlightData.getIfPresent(aircraftId)
-    val waypoints = Some(getFlightWaypoints(aircraftId))
-    if (data != null)
-      return data.copy(waypoints = waypoints)
+    val cachedData = lastAircraftFlightData.getIfPresent(aircraftId)
+    val waypoints = getFlightWaypoints(aircraftId)
+    if (cachedData != null)
+      return cachedData.copy(waypoints = Some(waypoints))
     return newSuspendedTransaction(getDispatcher) {
       AircraftFlightTable
           .select { AircraftFlightTable.aircraftId eq aircraftId }
@@ -293,9 +293,15 @@ class AircraftDataService(
             val departureTime = Some(it[AircraftFlightTable.departureTime])
             val estimatedArrivalTime = Some(it[AircraftFlightTable.estimatedArrivalTime])
             AircraftFlightData(aircraftId, time, departureAirport, departureTime, arrivalAirport,
-                estimatedArrivalTime, number, waypoints)
+                estimatedArrivalTime, number, Some(waypoints))
           }
           .firstOrNull()
+          // Fallback to just waypoint data if it exists.
+          ?: run {
+            if (waypoints != null) {
+              AircraftFlightData(aircraftId, waypoints.last().time, waypoints = Some(waypoints))
+            } else null
+          }
     }
   }
 

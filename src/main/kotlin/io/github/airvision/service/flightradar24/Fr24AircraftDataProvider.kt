@@ -68,8 +68,8 @@ class Fr24AircraftDataProvider(
             extendedDataQueue.offer(entry.flightId)
           }
           for (entry in entries) {
-            dataSendChannel.send(entry.flight)
             dataSendChannel.send(entry.state)
+            dataSendChannel.send(entry.flight)
           }
           delay(rateLimit)
         })
