@@ -38,19 +38,20 @@ class WaypointsBuilder {
       var waypoints = cachedWaypoints
       if (waypoints == null) {
         waypoints = builtWaypoints.toMutableList()
-        if (waypoints.isNotEmpty()) {
-          if (!prependedExternalWaypoints) {
-            val departureWaypoint = this.departureWaypoint
-            if (departureWaypoint != null)
-              waypoints.add(0, departureWaypoint)
-          }
-          val lastState = this.lastState
-          if (lastState?.position != null && lastState.position != waypoints.last().position)
-            waypoints.add(Waypoint(lastState.time, lastState.position))
-        }
+        // Always add the departure airport, even if data from an external source
+        // was prepended, this prevents issues in the case that the external source
+        // provides incomplete data.
+        val departureWaypoint = this.departureWaypoint
+        if (departureWaypoint != null)
+          waypoints.add(0, departureWaypoint)
+        val lastState = this.lastState
+        if (lastState?.position != null && lastState.position != waypoints.last().position)
+          waypoints.add(Waypoint(lastState.time, lastState.position))
         cachedWaypoints = waypoints
       }
-      if (waypoints.isEmpty()) null else waypoints
+      // Also ignore a size of 1, you can't make
+      // a path with just one point
+      if (waypoints.size <= 1) null else waypoints
     }
   }
 

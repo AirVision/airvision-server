@@ -52,5 +52,14 @@
       4.6780289,
       67
     ]
+  },
+  {
+    "icao24": "FFFF07",
+    "model": "Test Aircraft 7 (Wesley)",
+    "position": [
+      51.23,
+      5.27,
+      75
+    ]
   }
 ]
