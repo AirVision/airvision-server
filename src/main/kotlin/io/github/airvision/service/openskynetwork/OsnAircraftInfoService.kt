@@ -134,7 +134,8 @@ class OsnAircraftInfoService(
       'S' to AircraftInfo.Type.SeaPlane,
       'A' to AircraftInfo.Type.Amphibian,
       'H' to AircraftInfo.Type.Helicopter,
-      'D' to AircraftInfo.Type.Dirigible
+      'D' to AircraftInfo.Type.Dirigible,
+      'G' to AircraftInfo.Type.Glider
   )
 
   private val codeToEngineType = mapOf(
@@ -160,7 +161,7 @@ class OsnAircraftInfoService(
             val enginesJson = it[AircraftInfoTable.engines]
 
             val description = it[AircraftInfoTable.description]
-            val type = if (description != null) codeToType[description[0]] else null
+            val type = it[AircraftInfoTable.type]
 
             var engineEntries = if (enginesJson != null) Json.parse(engineEntriesListSerializer, enginesJson) else null
             if (engineEntries == null)
@@ -309,11 +310,18 @@ class OsnAircraftInfoService(
         if (description != null && !descriptionRegex.matches(description))
           description = null
 
+        val type = if (!description.isNullOrEmpty()) {
+          codeToType[description[0]]
+        } else if (categoryDescription.contains("glider")) {
+          AircraftInfo.Type.Glider
+        } else null
+
         val manufacturer = if (manufacturerName.isBlank()) null else
           manufacturers.getOrInsert(CsvManufacturer(manufacturerCode, manufacturerName, null))
 
         val weightCategory = when {
-          categoryDescription.contains("glider") ||
+          (!description.isNullOrEmpty() && description[0] == 'G') ||
+              categoryDescription.contains("glider") ||
               categoryDescription.contains("ultralight") -> WeightCategory.Ultralight
           categoryDescription.contains("light") -> WeightCategory.Light
           categoryDescription.contains("small") -> WeightCategory.Normal
@@ -349,6 +357,7 @@ class OsnAircraftInfoService(
           AircraftInfoTable.upsert(AircraftInfoTable.aircraftId) {
             it[AircraftInfoTable.aircraftId] = aircraftId
             it[AircraftInfoTable.model] = model
+            it[AircraftInfoTable.type] = type
             it[AircraftInfoTable.description] = description
             it[AircraftInfoTable.engines] = enginesJson
             it[AircraftInfoTable.manufacturer] = manufacturer?.id

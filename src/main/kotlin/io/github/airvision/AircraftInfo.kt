@@ -32,6 +32,7 @@ data class AircraftInfo(
     /**
      * Dirigible, also known as Airship.
      */
-    Dirigible
+    Dirigible,
+    Glider,
   }
 }

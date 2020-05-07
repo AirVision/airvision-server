@@ -9,6 +9,7 @@
  */
 package io.github.airvision.service.db
 
+import io.github.airvision.AircraftInfo
 import io.github.airvision.WeightCategory
 import io.github.airvision.exposed.aircraftIcao24
 import org.jetbrains.exposed.dao.IntIdTable
@@ -16,6 +17,8 @@ import org.jetbrains.exposed.dao.IntIdTable
 object AircraftInfoTable : IntIdTable("aircraft_info") {
   val aircraftId = aircraftIcao24("icao24")
   val model = varchar("model", 500)
+  // The type, can overlap with description
+  val type = enumeration("type", AircraftInfo.Type::class).nullable()
   // L1P, L2P, ... includes engine type, engine count, aircraft type
   val description = varchar("description", 10).nullable()
   // The name of the engine
