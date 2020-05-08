@@ -180,7 +180,7 @@ class OsnAircraftInfoService(
                   engineEntries?.map { entry -> AircraftEnginesEntry(entry.name, entry.count) })
             }
 
-            AircraftInfo(aircraftId, model, description, owner, manufacturer, engines, type, weightCategory)
+            AircraftInfo(aircraftId, model, owner, manufacturer, engines, type, weightCategory)
           }
           .firstOrNull()
     }

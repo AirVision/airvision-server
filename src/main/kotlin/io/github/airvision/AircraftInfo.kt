@@ -16,7 +16,6 @@ import kotlinx.serialization.Serializable
 data class AircraftInfo(
     val icao24: AircraftIcao24,
     val model: String,
-    val description: String? = null,
     val owner: String? = null,
     val manufacturer: AircraftManufacturer? = null,
     val engines: AircraftEngines? = null,
