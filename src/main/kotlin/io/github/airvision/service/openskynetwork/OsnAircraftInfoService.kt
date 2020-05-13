@@ -13,27 +13,39 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import com.github.doyaaaaaken.kotlincsv.util.CSVParseFormatException
-import io.github.airvision.*
+import io.github.airvision.AirVision
+import io.github.airvision.AircraftEngineType
+import io.github.airvision.AircraftEngines
+import io.github.airvision.AircraftIcao24
+import io.github.airvision.AircraftInfo
+import io.github.airvision.AircraftManufacturer
+import io.github.airvision.WeightCategory
 import io.github.airvision.exposed.upsert
 import io.github.airvision.service.AircraftInfoService
-import io.github.airvision.service.db.AircraftManufacturerTable
 import io.github.airvision.service.db.AircraftInfoTable
+import io.github.airvision.service.db.AircraftManufacturerTable
 import io.github.airvision.service.db.Entity
-import io.github.airvision.util.csv.suspendedOpen
 import io.github.airvision.util.coroutines.delay
-import io.github.airvision.util.file.*
+import io.github.airvision.util.csv.suspendedOpen
+import io.github.airvision.util.file.openStream
 import io.github.airvision.util.ktor.downloadUpdateToFile
 import io.github.airvision.util.notEmptyOrNull
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.io.InputStream
 import java.nio.file.Files
@@ -144,8 +156,6 @@ class OsnAircraftInfoService(
       'J' to AircraftEngineType.Jet
   )
 
-  private val engineEntriesListSerializer = EngineEntry.serializer().list
-
   override suspend fun get(aircraftId: AircraftIcao24): AircraftInfo? =
       this.infoCache.get(aircraftId).await()
 
@@ -155,30 +165,23 @@ class OsnAircraftInfoService(
           .select { AircraftInfoTable.aircraftId eq aircraftId }
           .map {
             val manufacturerId = it[AircraftInfoTable.manufacturer]
-            val manufacturer = if (manufacturerId != null) getManufacturerById(manufacturerId) else null
+            val manufacturer =
+                if (manufacturerId != null) getManufacturerById(manufacturerId)?.copy(code = null) else null
             val model = it[AircraftInfoTable.model]
             val owner = it[AircraftInfoTable.owner]
-            val enginesJson = it[AircraftInfoTable.engines]
 
             val description = it[AircraftInfoTable.description]
             val type = it[AircraftInfoTable.type]
 
-            var engineEntries = if (enginesJson != null) Json.parse(engineEntriesListSerializer, enginesJson) else null
-            if (engineEntries == null)
-              engineEntries = null
-
             val weightCategory = it[AircraftInfoTable.weightCategory]
 
-            val engineCount = if (description != null) {
-              description[1].toString().toInt()
-            } else if (engineEntries != null && engineEntries.all { entry -> entry.count != null }) {
-              engineEntries.map { entry -> entry.count!! }.sum()
-            } else null
+            val engineCount = it[AircraftInfoTable.engineCount]?.toInt()
+            val engineName = it[AircraftInfoTable.engineName]
+
             val engineType = if (description != null) codeToEngineType[description[2]] else null
-            val engines = if (engineEntries == null && description == null) null else {
-              AircraftEngines(engineType, engineCount,
-                  engineEntries?.map { entry -> AircraftEnginesEntry(entry.name, entry.count) })
-            }
+            val engines =
+                if (engineName == null && engineCount == null && engineType == null) null
+                else AircraftEngines(engineType, engineCount, engineName)
 
             AircraftInfo(aircraftId, model, owner, manufacturer, engines, type, weightCategory)
           }
@@ -330,28 +333,33 @@ class OsnAircraftInfoService(
           else -> null
         }
 
-        var engines = it[index.engines]
-            .split("<br>")
-            .asSequence()
-            .filter { it.isNotBlank() }
-            .map { it
-                .replace("&amp;", "&")
-                .replace("&nbsp;", " ")
-                .replace("\\s+".toRegex(), " ") // Replace duplicate spaces
-            }
-            .map {
-              val result = enginesRegex.matchEntire(it) ?: error("Should never happen")
-              val count = result.groups[1]?.value?.toInt() ?: 1
-              EngineEntry(result.groups[2]!!.value, count)
-            }
-            .toList()
-        if (engines.size == 1 && description != null) {
-          val count = description[1].toString().toInt()
-          if (count != 1 && engines.first().count == 1)
-            engines = engines.map { it.copy(count = count) }
-        }
+        var engineCount: Int? =
+            if (description?.length ?: 0 > 1) description!![1].toString().toIntOrNull() else null
+        var engineName: String? = null
 
-        val enginesJson = Json.stringify(engineEntriesListSerializer, engines)
+        val enginesValue = it[index.engines]
+        if (enginesValue.isNotBlank() && !enginesValue.contains("no engines", ignoreCase = true)) {
+          val engineEntries = enginesValue
+              .split("<br>")
+              .asSequence()
+              .filter { it.isNotBlank() }
+              .map { it
+                  .replace("&amp;", "&")
+                  .replace("&nbsp;", " ")
+                  .replace("\\s+".toRegex(), " ") // Replace duplicate spaces
+              }
+              .map {
+                val result = enginesRegex.matchEntire(it) ?: error("Should never happen")
+                val count = result.groups[1]?.value?.toInt() ?: 1
+                EngineEntry(result.groups[2]!!.value, count)
+              }
+              .toList()
+          if (engineEntries.size == 1) {
+            val entry = engineEntries.first()
+            engineCount = entry.count
+            engineName = entry.name
+          }
+        }
 
         newSuspendedTransaction(updateDispatcher, db = database) {
           AircraftInfoTable.upsert(AircraftInfoTable.aircraftId) {
@@ -359,7 +367,8 @@ class OsnAircraftInfoService(
             it[AircraftInfoTable.model] = model
             it[AircraftInfoTable.type] = type
             it[AircraftInfoTable.description] = description
-            it[AircraftInfoTable.engines] = enginesJson
+            it[AircraftInfoTable.engineName] = engineName
+            it[AircraftInfoTable.engineCount] = engineCount?.toShort()
             it[AircraftInfoTable.manufacturer] = manufacturer?.id
             it[AircraftInfoTable.owner] = owner
             it[AircraftInfoTable.weightCategory] = weightCategory
@@ -369,10 +378,9 @@ class OsnAircraftInfoService(
     }
   }
 
-  @Serializable
   private data class EngineEntry(
-      @SerialName("n") val name: String,
-      @SerialName("c") val count: Int? = null
+      val name: String,
+      val count: Int
   )
 
   /**

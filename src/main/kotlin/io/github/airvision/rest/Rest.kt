@@ -62,7 +62,7 @@ class Rest(
         suspend fun PipelineContext<Unit, ApplicationCall>.handleBadRequest(cause: Exception) {
           AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
           call.respond(HttpStatusCode.BadRequest, ErrorResponse(HttpStatusCode.BadRequest,
-              "Invalid request${if (cause.message != null) ": $cause.message" else ""}"))
+              "Invalid request${if (cause.message != null) ": ${cause.message}" else ""}"))
         }
         exception<ContentTransformationException> { cause ->
           handleBadRequest(cause)

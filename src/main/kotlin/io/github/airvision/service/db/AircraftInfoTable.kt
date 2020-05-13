@@ -22,7 +22,9 @@ object AircraftInfoTable : IntIdTable("aircraft_info") {
   // L1P, L2P, ... includes engine type, engine count, aircraft type
   val description = varchar("description", 10).nullable()
   // The name of the engine
-  val engines = varchar("engine", 1000).nullable()
+  val engineName = varchar("engine_name", 1000).nullable()
+  // The amount of engines
+  val engineCount = short("engine_count").nullable()
   // The manufacturer, if known
   val manufacturer = reference("manufacturer", AircraftManufacturerTable).nullable()
   // The owner

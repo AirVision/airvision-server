@@ -11,19 +11,12 @@ package io.github.airvision
 
 import kotlinx.serialization.Serializable
 
+/**
+ * @property name The name of the engine(s), if known
+ */
 @Serializable
 data class AircraftEngines(
     val type: AircraftEngineType? = null,
     val count: Int? = null,
-    val entries: List<AircraftEnginesEntry>? = null
-)
-
-/**
- * @property name The name of the engine(s), if known
- * @property count The count of engines
- */
-@Serializable
-data class AircraftEnginesEntry(
-    val name: String,
-    val count: Int? = null
+    val name: String? = null
 )
