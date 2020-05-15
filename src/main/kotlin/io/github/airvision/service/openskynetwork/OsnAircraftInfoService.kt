@@ -175,7 +175,7 @@ class OsnAircraftInfoService(
 
             val weightCategory = it[AircraftInfoTable.weightCategory]
 
-            val engineCount = it[AircraftInfoTable.engineCount]?.toInt()
+            val engineCount = it[AircraftInfoTable.engineCount]
             val engineName = it[AircraftInfoTable.engineName]
 
             val engineType = if (description != null) codeToEngineType[description[2]] else null
@@ -368,7 +368,7 @@ class OsnAircraftInfoService(
             it[AircraftInfoTable.type] = type
             it[AircraftInfoTable.description] = description
             it[AircraftInfoTable.engineName] = engineName
-            it[AircraftInfoTable.engineCount] = engineCount?.toShort()
+            it[AircraftInfoTable.engineCount] = engineCount
             it[AircraftInfoTable.manufacturer] = manufacturer?.id
             it[AircraftInfoTable.owner] = owner
             it[AircraftInfoTable.weightCategory] = weightCategory

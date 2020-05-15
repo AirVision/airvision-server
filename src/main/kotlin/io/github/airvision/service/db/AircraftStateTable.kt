@@ -14,18 +14,18 @@ import io.github.airvision.exposed.epochSecond
 import org.jetbrains.exposed.sql.Table
 
 object AircraftStateTable : Table("aircraft_data") {
-  val aircraftId = aircraftIcao24("icao24").primaryKey(0)
+  val aircraftId = aircraftIcao24("aircraft_id").primaryKey(0)
   val callsign = varchar("callsign", 100).nullable()
   val time = epochSecond("time").primaryKey(1)
   val latitude = double("lat").nullable()
   val longitude = double("lon").nullable()
   val altitude = double("alt").nullable()
   val onGround = bool("on_ground")
-  val velocity = double("velocity").nullable()
-  val verticalRate = double("vert_rate").nullable()
+  val velocity = double("ground_speed").nullable()
+  val verticalRate = double("vertical_speed").nullable()
   val heading = double("heading").nullable()
 
-  init {
+   init {
     uniqueIndex(aircraftId, time)
   }
 }

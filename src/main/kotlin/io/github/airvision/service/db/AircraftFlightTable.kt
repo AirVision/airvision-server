@@ -15,9 +15,9 @@ import io.github.airvision.exposed.epochSecond
 import org.jetbrains.exposed.sql.Table
 
 object AircraftFlightTable : Table("aircraft_flight") {
-  val aircraftId = aircraftIcao24("aircraft").primaryKey()
+  val aircraftId = aircraftIcao24("aircraft_id").primaryKey()
   val time = epochSecond("time")
-  val number = varchar("code", 30).nullable()
+  val number = varchar("number", 30).nullable()
   val departureAirport = airportIcao("origin").nullable()
   val departureTime = epochSecond("departure_time").nullable()
   val arrivalAirport = airportIcao("destination").nullable()

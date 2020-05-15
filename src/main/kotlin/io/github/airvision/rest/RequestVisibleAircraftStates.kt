@@ -183,7 +183,7 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
       .asSequence()
       // The biggest images have priority, which means they're closer,
       // the closest are also first in the closestLimited list
-      .sortedBy { (group, _) -> group.x * group.y }
+      .sortedBy { (group, _) -> -(group.x * group.y) }
       .map { (_, entries) ->
         // In every group, the closest aircraft based on the screen position will be
         // used, when in different groups, the distance will be mainly used
