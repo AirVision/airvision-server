@@ -12,6 +12,7 @@ package io.github.airvision
 import io.github.airvision.util.math.degToRad
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.matrix.Matrix3d
+import org.spongepowered.math.vector.Vector3d
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -33,10 +34,9 @@ data class EnuTransform(
 fun EnuTransform.toEcefTransform(): Transform {
   val ecefPosition = position.toEcefPosition()
 
-  val enuToEcefRotation = Quaterniond.fromRotationMatrix(
-      position.getEnuToEcefRotationMatrix())
-  // https://answers.unity.com/questions/1353333/how-to-add-2-quaternions.html
-  val ecefRotation = rotation.mul(enuToEcefRotation)
+  val enuToEcefMatrix = position.getEnuToEcefRotationMatrix()
+  val ecefRotation = Quaterniond.fromRotationTo(
+      Vector3d.UNIT_Z, enuToEcefMatrix.transform(rotation.rotate(Vector3d.UNIT_Z)))
 
   return Transform(ecefPosition, ecefRotation)
 }

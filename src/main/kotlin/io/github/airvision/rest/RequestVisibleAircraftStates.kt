@@ -9,7 +9,6 @@
  */
 package io.github.airvision.rest
 
-import io.github.airvision.AirVision
 import io.github.airvision.AircraftState
 import io.github.airvision.Camera
 import io.github.airvision.EnuTransform
@@ -20,7 +19,6 @@ import io.github.airvision.toEcefTransform
 import io.github.airvision.toViewPosition
 import io.github.airvision.util.ToStringHelper
 import io.github.airvision.util.collections.poll
-import io.github.airvision.util.math.radToDeg
 import io.github.airvision.util.math.min
 import io.ktor.application.call
 import io.ktor.request.receive
@@ -31,7 +29,6 @@ import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector2i
 import java.time.Instant
-import kotlin.math.acos
 import kotlin.math.roundToInt
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
@@ -76,29 +73,18 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
   val maxFov = Vector2d(179.0, 179.0)
   val fov = min(maxFov, request.fov)
 
-  val camera = Camera.ofPerspective(fov)
-      .withTransform(transform)
-
+  val camera = Camera.ofPerspective(fov).withTransform(transform)
   val visibleAircraftConfig = context.config.visibleAircraft
 
   val bounds = GeodeticBounds.ofCenterAndSize(request.position,
       Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
-  AirVision.logger.debug("Bounds: $bounds")
   val possibleStates = context.aircraftService.getAllWithin(bounds, request.time)
-      .also {
-        AirVision.logger.debug("Candidates: ${it.size}")
-        it.forEach { state ->
-          if (state.icao24.address > 0xffff00) {
-            AirVision.logger.debug("   Test Candidate: $state")
-          }
-        }
-      }
 
   var states = tryMatch(camera, possibleStates, request.aircrafts)
   if (states.count { it != null } != request.aircrafts.size) {
     // Try again with slight alterations to the camera orientation,
     // rotate the camera in different directions and check for better
-    // results, e.g. 5 degrees up, down, left, right, up-left, etc.
+    // results, e.g. 10 degrees up, down, left, right, up-left, etc.
     val alteration = 5.0
     fun tryWithAlteration(xModifier: Double, yModifier: Double): Boolean {
       var alteredCamera = Camera.ofPerspective(fov)
@@ -126,7 +112,6 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
         tryWithAlteration(-1.0, +1.0) ||
         tryWithAlteration(-1.0, -1.0)
   }
-
   call.respond(VisibleAircraftResponse(states))
 }
 
@@ -135,24 +120,8 @@ fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<
       .map { state ->
         val position = state.position?.toEcefPosition()
             ?: return@map null // Position not known
-        if (state.icao24.address > 0xffff00) {
-          AirVision.logger.debug("Test Aircraft in area: $state")
-
-          val cameraDir = camera.zAxis.negate()
-          println("    Camera dir: $cameraDir")
-          val aircraftRelative = position.sub(camera.position)
-          println("    Aircraft distance: ${aircraftRelative.length()}")
-          val aircraftDir = position.sub(camera.position).normalize()
-          println("    Aircraft dir: $aircraftDir")
-          val rotation = Quaterniond.fromRotationTo(cameraDir, aircraftDir).normalize()
-          val angle = radToDeg(2 * acos(rotation.w))
-          AirVision.logger.info("  -> Angle: $angle")
-        }
         val viewPosition = position.toViewPosition(camera)
             ?: return@map null // Not within the camera view
-        if (state.icao24.address > 0xffff00) {
-          AirVision.logger.debug("Test Aircraft in view: $viewPosition")
-        }
         Triple(position, viewPosition, state)
       }
       .filterNotNull()

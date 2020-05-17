@@ -97,7 +97,7 @@ class Fr24AircraftDataProvider(
         }, { data ->
           if (data != null) {
             dataSendChannel.send(data)
-            AirVision.logger.debug("FR24: Received extended flight data for ${data.aircraftId}")
+            // AirVision.logger.debug("FR24: Received extended flight data for ${data.aircraftId}")
           }
           lastUpdateTime[id] = Instant.now()
         })

@@ -76,23 +76,19 @@ data class Camera(
   fun translate(translation: Vector3d) = withTransform(transform.translate(translation))
 
   /**
-   * Gets the y axis.
+   * Gets the x axis.
    */
-  val yAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_Y) }
+  val xAxis: Vector3d by lazy { transform.rotation.rotate(Vector3d.UNIT_X) }
 
   /**
    * Gets the y axis.
    */
-  val xAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_X) }
+  val yAxis: Vector3d by lazy { transform.rotation.rotate(Vector3d.UNIT_Y) }
 
   /**
    * Gets the z axis.
    */
-  val zAxis: Vector3d by lazy { toCamera(Vector3d.UNIT_Z) }
-
-  private fun toCamera(vector: Vector3d): Vector3d {
-    return inverseRotationMatrix.transform(vector.toVector4(1.0)).toVector3()
-  }
+  val zAxis: Vector3d by lazy { transform.rotation.rotate(Vector3d.UNIT_Z) }
 
   companion object {
 
