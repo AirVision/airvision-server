@@ -10,7 +10,11 @@
 package io.github.airvision.util.math
 
 import org.spongepowered.math.vector.Vector2d
-import java.lang.Double.min
+import kotlin.math.max
+import kotlin.math.min
 
 fun min(a: Vector2d, b: Vector2d): Vector2d =
     Vector2d(min(a.x, b.x), min(a.y, b.y))
+
+fun max(a: Vector2d, b: Vector2d): Vector2d =
+    Vector2d(max(a.x, b.x), max(a.y, b.y))

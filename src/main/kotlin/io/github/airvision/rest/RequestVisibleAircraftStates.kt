@@ -14,21 +14,26 @@ import io.github.airvision.Camera
 import io.github.airvision.EnuTransform
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
+import io.github.airvision.Transform
 import io.github.airvision.toEcefPosition
 import io.github.airvision.toEcefTransform
 import io.github.airvision.toViewPosition
 import io.github.airvision.util.ToStringHelper
 import io.github.airvision.util.collections.poll
+import io.github.airvision.util.math.max
 import io.github.airvision.util.math.min
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
 import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.vector.Vector2d
 import org.spongepowered.math.vector.Vector2i
+import org.spongepowered.math.vector.Vector3d
 import java.time.Instant
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 // https://github.com/AirVision/airvision-server/wiki/Rest-API#request-visible-aircraft
@@ -38,8 +43,9 @@ data class VisibleAircraftRequest(
     @ContextualSerialization val time: Instant,
     val position: GeodeticPosition,
     @ContextualSerialization val rotation: Quaterniond,
+    @SerialName("rotation_accuracy") val rotationAccuracy: Double?,
     @ContextualSerialization val fov: Vector2d,
-    val aircrafts: List<ImageAircraft>
+    @SerialName("aircrafts") val detections: List<Detection>
 ) {
 
   override fun toString() = ToStringHelper()
@@ -47,12 +53,12 @@ data class VisibleAircraftRequest(
       .add("position", this.position)
       .add("rotation", this.rotation)
       .add("fov", this.fov)
-      .add("aircrafts", this.aircrafts.joinToString(separator = ",", prefix = "[", postfix = "]"))
+      .add("detections", this.detections.joinToString(separator = ",", prefix = "[", postfix = "]"))
       .toString()
 }
 
 @Serializable
-data class ImageAircraft(
+data class Detection(
     @ContextualSerialization val position: Vector2d,
     @ContextualSerialization val size: Vector2d
 )
@@ -62,16 +68,73 @@ data class VisibleAircraftResponse(
     val states: List<AircraftState?>
 )
 
+class NarrowResult(
+    val fov: Vector2d,
+    val transform: Transform,
+    val detections: List<Detection>
+)
+
+private fun narrowCameraView(fov: Vector2d, transform: Transform, detections: Collection<Detection>): NarrowResult {
+  // Narrow the FOV to the aircraft that are actually visible in the image.
+  // This should prevent some edge cases where a center aircraft is detected,
+  // but there's an aircraft visible near the edge of the screen which wasn't
+  // detected, but is closer.
+
+  val margin = 0.1
+
+  // The minimum size a detection is allowed to have
+  val minDetectionSize = Vector2d(0.18, 0.18)
+
+  fun Detection.min(): Vector2d = Vector2d(position.sub(max(minDetectionSize, size.div(2.0))))
+  fun Detection.max(): Vector2d = Vector2d(position.add(max(minDetectionSize, size.div(2.0))))
+
+  val minDetectionX = (detections.map { it.min().x }.min()!! - margin).coerceIn(0.0, 1.0) - 0.5
+  val minDetectionY = (detections.map { it.min().y }.min()!! - margin).coerceIn(0.0, 1.0) - 0.5
+  val maxDetectionX = (detections.map { it.max().x }.max()!! + margin).coerceIn(0.0, 1.0) - 0.5
+  val maxDetectionY = (detections.map { it.max().y }.max()!! + margin).coerceIn(0.0, 1.0) - 0.5
+
+  val factorX = maxDetectionX - minDetectionX
+  val factorY = maxDetectionY - minDetectionY
+
+  val cameraCenterOffsetX = (minDetectionX + maxDetectionX) / 2.0
+  val cameraCenterOffsetY = (minDetectionY + maxDetectionY) / 2.0
+
+  var newFov = fov.mul(factorX, factorY)
+  // A FOV greater or equal than 180 degrees isn't supported.
+  newFov = min(Vector2d(179.0, 179.0), newFov)
+
+  // + is rotate up, - is rotate down
+  val rotateFovXAxis = (fov.y / 2.0) * cameraCenterOffsetY
+  // + is rotate left, - is rotate right
+  val rotateFovYAxis = (fov.x / 2.0) * -cameraCenterOffsetX
+
+  var rotation = transform.rotation
+
+  val xAxis = rotation.rotate(Vector3d.UNIT_X)
+  val yAxis = rotation.rotate(Vector3d.UNIT_Y)
+
+  rotation = rotation.mul(Quaterniond.fromAngleDegAxis(rotateFovYAxis, yAxis))
+  rotation = rotation.mul(Quaterniond.fromAngleDegAxis(rotateFovXAxis, xAxis))
+
+  val newDetections = detections
+      .map { detection -> detection.copy(
+          position = detection.position.sub(minDetectionX, minDetectionY),
+          size = detection.size.div(factorX, factorY)) }
+
+  return NarrowResult(newFov, transform.copy(rotation = rotation), newDetections)
+}
+
 suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
   val request = call.receive<VisibleAircraftRequest>()
 
   // https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix
 
   val enuTransform = EnuTransform(request.position, request.rotation)
-  val transform = enuTransform.toEcefTransform()
+  val narrow = narrowCameraView(request.fov, enuTransform.toEcefTransform(), request.detections)
 
-  val maxFov = Vector2d(179.0, 179.0)
-  val fov = min(maxFov, request.fov)
+  val fov = narrow.fov
+  val detections = narrow.detections
+  val transform = narrow.transform
 
   val camera = Camera.ofPerspective(fov).withTransform(transform)
   val visibleAircraftConfig = context.config.visibleAircraft
@@ -80,12 +143,12 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
       Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
   val possibleStates = context.aircraftService.getAllWithin(bounds, request.time)
 
-  var states = tryMatch(camera, possibleStates, request.aircrafts)
-  if (states.count { it != null } != request.aircrafts.size) {
+  var states = tryMatch(camera, possibleStates, detections)
+  if (states.count { it != null } != detections.size) {
     // Try again with slight alterations to the camera orientation,
     // rotate the camera in different directions and check for better
     // results, e.g. 10 degrees up, down, left, right, up-left, etc.
-    val alteration = 5.0
+    val alteration = if (request.rotationAccuracy == null) 10.0 else max(5.0, request.rotationAccuracy)
     fun tryWithAlteration(xModifier: Double, yModifier: Double): Boolean {
       var alteredCamera = Camera.ofPerspective(fov)
           .withTransform(transform)
@@ -96,8 +159,8 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
       alteredCamera = alteredCamera.rotate(
           Quaterniond.fromAngleDegAxis(alteration * yModifier, xAxis))
 
-      val statesForMargin = tryMatch(alteredCamera, possibleStates, request.aircrafts)
-      if (statesForMargin.count { it != null } != request.aircrafts.size)
+      val statesForMargin = tryMatch(alteredCamera, possibleStates, detections)
+      if (statesForMargin.count { it != null } != detections.size)
         return false
       // A better result was found
       states = statesForMargin
@@ -115,7 +178,7 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
   call.respond(VisibleAircraftResponse(states))
 }
 
-fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<ImageAircraft>): List<AircraftState?> {
+fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<Detection>): List<AircraftState?> {
   val closestInView = states
       .map { state ->
         val position = state.position?.toEcefPosition()
