@@ -47,9 +47,6 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.time.Instant
 import kotlin.time.Duration
-import kotlin.time.hours
-import kotlin.time.minutes
-import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
 /**
@@ -75,20 +72,20 @@ class AircraftDataService(
           }
         }
       }
-      .expireAfterWrite(60.seconds.toJavaDuration())
+      .expireAfterWrite(Duration.seconds(60).toJavaDuration())
       .build<AircraftIcao24, AircraftStateData>()
 
   private val lastAircraftFlightData = Caffeine.newBuilder()
-      .expireAfterWrite(30.seconds.toJavaDuration())
+      .expireAfterWrite(Duration.seconds(30).toJavaDuration())
       .build<AircraftIcao24, AircraftFlightData>()
 
   private val waypointsCache = Caffeine.newBuilder()
-      .expireAfterWrite(30.minutes.toJavaDuration())
+      .expireAfterWrite(Duration.minutes(30).toJavaDuration())
       .build<AircraftIcao24, WaypointsBuilder> { WaypointsBuilder() }
 
   private val channel = Channel<AircraftData>()
-  private val mergeTime = 3.seconds
-  private val validTime = 25.seconds
+  private val mergeTime = Duration.seconds(3)
+  private val validTime = Duration.seconds(25)
 
   private var job: Job? = null
 
@@ -213,7 +210,7 @@ class AircraftDataService(
         while (true) {
           cleanupStateData()
           cleanupFlightData()
-          delay(1.minutes)
+          delay(Duration.minutes(1))
         }
       }
       receive.join()
@@ -321,7 +318,7 @@ class AircraftDataService(
         lastData.arrivalAirport != data.arrivalAirport ||
         lastData.departureAirport != data.departureAirport ||
         // Refresh every 10 minutes, so it doesn't get cleaned up
-        (Instant.now() - lastData.time) > 10.minutes) {
+        (Instant.now() - lastData.time) > Duration.minutes(10)) {
       // Needs an update
       if (data.arrivalAirport == null && data.departureAirport == null) {
         // No flight, remove
@@ -352,7 +349,7 @@ class AircraftDataService(
 
   private suspend fun cleanupFlightData() {
     // Remove all data older than 1 hour
-    val time = Instant.now() - 1.hours
+    val time = Instant.now() - Duration.hours(1)
     newSuspendedTransaction(updateDispatcher) {
       AircraftFlightTable.deleteWhere { AircraftFlightTable.time less time }
     }
@@ -374,7 +371,7 @@ class AircraftDataService(
   }
 
   private suspend fun cleanupStateData() {
-    val time = Instant.now() - 1.hours
+    val time = Instant.now() - Duration.hours(1)
     newSuspendedTransaction(updateDispatcher, db = database) {
       // For now, keep data up to and hour ago
       AircraftStateTable.deleteWhere { AircraftStateTable.time less time }

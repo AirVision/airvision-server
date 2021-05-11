@@ -9,6 +9,8 @@
  */
 package io.github.airvision.util.math
 
+import io.github.airvision.util.math.component.x
+import io.github.airvision.util.math.component.y
 import org.spongepowered.math.vector.Vector2d
 import kotlin.math.max
 import kotlin.math.min

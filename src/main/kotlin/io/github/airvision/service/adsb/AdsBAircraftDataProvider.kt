@@ -39,10 +39,10 @@ import org.opensky.libadsb.msgs.ModeSReply
 import org.opensky.libadsb.msgs.ShortACAS
 import org.opensky.libadsb.msgs.SurfacePositionV0Msg
 import org.opensky.libadsb.msgs.VelocityOverGroundMsg
-import java.time.Duration
 import java.time.Instant
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
-import kotlin.time.seconds
+import kotlin.time.toJavaDuration
 import org.opensky.libadsb.tools as AdsBTools
 
 /**
@@ -60,7 +60,7 @@ class AdsBAircraftDataProvider(
       val positionUpdateTime: Instant? = null
   )
 
-  private val positionInvalidateDelay = 45.seconds.toLongMilliseconds()
+  private val positionInvalidateDelay = Duration.seconds(45).inWholeMilliseconds
   private val receiverPosition = receiverPosition?.run { Position(latitude, longitude, altitude) }
 
   /**
@@ -70,7 +70,7 @@ class AdsBAircraftDataProvider(
       Instant.now().toEpochMilli() - positionUpdateTime!!.toEpochMilli() <= positionInvalidateDelay
 
   private val adsBDataCache: Cache<AircraftIcao24, AdsBCacheEntry> = Caffeine.newBuilder()
-      .expireAfterWrite(Duration.ofMinutes(15))
+      .expireAfterWrite(Duration.minutes(15).toJavaDuration())
       .build()
 
   private val modeSDecoder = ModeSDecoder()
@@ -102,7 +102,7 @@ class AdsBAircraftDataProvider(
   private fun startConnectJob(): Job {
     return GlobalScope.launch(Dispatchers.IO) {
       while (true) {
-        delay(10.seconds)
+        delay(Duration.seconds(10))
         var serialPort = this@AdsBAircraftDataProvider.serialPort
         if (serialPort == null || serialPort.isOpen) {
           serialPort = startReading().fold({ null }, { it })
@@ -110,7 +110,7 @@ class AdsBAircraftDataProvider(
         }
         // Reconnect failed, so let's wait a bit longer
         if (serialPort == null)
-          delay(15.seconds)
+          delay(Duration.seconds(15))
       }
     }
   }
@@ -119,14 +119,14 @@ class AdsBAircraftDataProvider(
     val serialPort = SerialPort.getCommPorts()
         // TODO: Filter based on description? Somehow find the device.
         .firstOrNull()
-        ?: return Either.left("couldn't find serial port.")
+        ?: return Either.Left("Couldn't find serial port.")
     serialPort.addDataListener(object : SerialPortDataListener {
       override fun getListeningEvents() = SerialPort.LISTENING_EVENT_DATA_RECEIVED
       override fun serialEvent(event: SerialPortEvent) = receiveData(event.receivedData)
     })
     if (!serialPort.openPort())
-      return Either.left("couldn't open serial port.")
-    return Either.right(serialPort)
+      return Either.Left("Couldn't open serial port.")
+    return Either.Right(serialPort)
   }
 
   private fun receiveData(receivedData: ByteArray) {

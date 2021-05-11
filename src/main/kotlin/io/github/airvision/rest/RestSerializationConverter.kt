@@ -56,7 +56,8 @@ class RestSerializationConverter(
     return ArraySerializer(elementType.jvmErasure as KClass<Any>, elementSerializer as KSerializer<Any>)
   }
 
-  override suspend fun convertForReceive(context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>): Any? {
+  override suspend fun convertForReceive(
+      context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>): Any? {
     val request = context.subject
     val channel = request.value as? ByteReadChannel ?: return null
     val charset = context.call.request.contentCharset() ?: Charsets.UTF_8
@@ -66,12 +67,15 @@ class RestSerializationConverter(
     return convertForReceive(context, content)
   }
 
-  fun convertForReceive(context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>, content: String): Any {
+  fun convertForReceive(
+      context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>, content: String): Any {
     val serializer = serializerByTypeInfo(context.subject.typeInfo)
-    return json.parse(serializer, content) ?: throw UnsupportedMediaTypeException(ContentType.Application.Json)
+    return json.decodeFromString(serializer, content)
+        ?: throw UnsupportedMediaTypeException(ContentType.Application.Json)
   }
 
-  override suspend fun convertForSend(context: PipelineContext<Any, ApplicationCall>, contentType: ContentType, value: Any): Any? {
+  override suspend fun convertForSend(
+      context: PipelineContext<Any, ApplicationCall>, contentType: ContentType, value: Any): Any? {
     val content = if (value is ErrorResponse) {
       mapOf("error" to ErrorInfo(value.code.value, value.message))
     } else {

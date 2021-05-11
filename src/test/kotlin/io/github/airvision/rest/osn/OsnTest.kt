@@ -9,7 +9,6 @@
  */
 package io.github.airvision.rest.osn
 
-import arrow.core.orNull
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.GeodeticPosition
@@ -22,7 +21,7 @@ class OsnTest {
   private val osn = OsnRestService()
 
   @Test
-  fun `get all aircrafts`() = runBlocking {
+  fun `get all aircraft`() = runBlocking {
     (osn.getStates().orNull()?.data ?: listOf())
         .asSequence()
         .take(10)
@@ -42,7 +41,7 @@ class OsnTest {
         max = GeodeticPosition(-18.0, -38.0)
     )
     // https://opensky-network.org/api/states/all?lamin=-26.0&lamax=-18.0&lomin=-47.0&lomax=-38.0
-    val aircrafts = osn.getStates(bounds)
-    aircrafts.orNull()?.data?.forEach { println(it) }
+    val aircraft = osn.getStates(bounds)
+    aircraft.orNull()?.data?.forEach { println(it) }
   }
 }

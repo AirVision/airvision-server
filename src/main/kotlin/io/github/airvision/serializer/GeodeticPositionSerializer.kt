@@ -10,23 +10,24 @@
 package io.github.airvision.serializer
 
 import io.github.airvision.GeodeticPosition
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.StructureKind
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * A serializer for [GeodeticPosition]s.
  */
 object GeodeticPositionSerializer : KSerializer<GeodeticPosition> {
 
-  private val doubleListSerializer = Double.serializer().list
+  private val doubleListSerializer = ListSerializer(Double.serializer())
 
   override val descriptor: SerialDescriptor =
-      SerialDescriptor("GeodeticPosition", kind = StructureKind.LIST)
+      buildSerialDescriptor("GeodeticPosition", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): GeodeticPosition {
     val list = doubleListSerializer.deserialize(decoder)

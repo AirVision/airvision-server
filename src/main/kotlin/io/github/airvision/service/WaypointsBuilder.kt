@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import kotlin.math.abs
-import kotlin.time.minutes
+import kotlin.time.Duration
 
 class WaypointsBuilder {
 
@@ -131,7 +131,7 @@ class WaypointsBuilder {
 
     // The same rules as the OpenSky Network apply
 
-    // - The first point is set immediately after the the aircraft’s expected departure, or after
+    // - The first point is set immediately after the aircraft’s expected departure, or after
     //   the network received the first position when the aircraft entered its reception range.
     // - The last point is set right before the aircraft’s expected arrival, or the aircraft
     //   left the networks reception range.
@@ -144,7 +144,7 @@ class WaypointsBuilder {
 
     val lastAddedState = this.lastAddedState
     if (lastAddedState == null ||
-        (state.time - lastAddedState.time > 15.minutes) ||
+        (state.time - lastAddedState.time > Duration.minutes(15)) ||
         (state.heading != null && lastAddedState.heading != null &&
             abs(state.heading - lastAddedState.heading) > 2.5) ||
         (state.position != null && lastAddedState.position != null &&

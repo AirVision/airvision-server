@@ -9,11 +9,10 @@
  */
 package io.github.airvision.util.channel
 
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.ObsoleteCoroutinesApi
+import io.github.airvision.util.unsafeCast
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelIterator
-import kotlinx.coroutines.channels.ValueOrClosed
+import kotlinx.coroutines.channels.ChannelResult
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,22 +28,14 @@ fun <E> Channel<E>.distinct(): Channel<E> = DistinctChannel(this) { it }
  */
 fun <E, K> Channel<E>.distinctBy(keyProvider: (E) -> K): Channel<E> = DistinctChannel(this, keyProvider)
 
-@InternalCoroutinesApi
 private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E) -> K) : Channel<E> by channel {
 
   private val keys = Collections.newSetFromMap(ConcurrentHashMap<K, Boolean>())
 
-  override fun poll(): E? {
-    val value = this.channel.poll()
-    if (value != null)
-      keys.remove(keyProvider(value))
-    return value
-  }
-
-  override fun offer(element: E): Boolean {
+  override fun trySend(element: E): ChannelResult<Unit> {
     if (!keys.add(keyProvider(element)))
-      return false
-    return channel.offer(element)
+      return ChannelResult.failure()
+    return channel.trySend(element)
   }
 
   override suspend fun send(element: E) {
@@ -64,13 +55,12 @@ private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E
     }
   }
 
-  @ObsoleteCoroutinesApi
-  @Deprecated(
-      message = "Deprecated in favor of receiveOrClosed and receiveOrNull extension",
-      level = DeprecationLevel.WARNING,
-      replaceWith = ReplaceWith("receiveOrNull", "kotlinx.coroutines.channels.receiveOrNull")
-  )
-  override suspend fun receiveOrNull(): E? = receiveOrClosed().valueOrNull
+  override fun tryReceive(): ChannelResult<E> {
+    val value = this.channel.tryReceive()
+    if (value.isSuccess)
+      keys.remove(keyProvider(value.getOrNull().unsafeCast()))
+    return value
+  }
 
   override suspend fun receive(): E {
     val value = channel.receive()
@@ -78,11 +68,10 @@ private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E
     return value
   }
 
-  override suspend fun receiveOrClosed(): ValueOrClosed<E> {
-    val value = channel.receiveOrClosed()
-    if (value.isClosed)
-      return value
-    keys.remove(keyProvider(value.value))
+  override suspend fun receiveCatching(): ChannelResult<E> {
+    val value = channel.receiveCatching()
+    if (value.isSuccess)
+      keys.remove(keyProvider(value.getOrNull().unsafeCast()))
     return value
   }
 }

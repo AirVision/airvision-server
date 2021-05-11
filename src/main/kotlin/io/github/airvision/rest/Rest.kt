@@ -28,9 +28,8 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
-import io.ktor.util.pipeline.PipelineContext
 import io.ktor.util.pipeline.PipelineInterceptor
-import kotlinx.serialization.json.JsonDecodingException
+import kotlinx.serialization.SerializationException
 
 class Rest(
     private val aircraftService: AircraftService,
@@ -59,7 +58,7 @@ class Rest(
 
       // Install error handling
       install(StatusPages) {
-        suspend fun PipelineContext<Unit, ApplicationCall>.handleBadRequest(cause: Exception) {
+        suspend fun PipelineContext.handleBadRequest(cause: Exception) {
           AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
           call.respond(HttpStatusCode.BadRequest, ErrorResponse(HttpStatusCode.BadRequest,
               "Invalid request${if (cause.message != null) ": ${cause.message}" else ""}"))
@@ -67,7 +66,7 @@ class Rest(
         exception<ContentTransformationException> { cause ->
           handleBadRequest(cause)
         }
-        exception<JsonDecodingException> { cause ->
+        exception<SerializationException> { cause ->
           handleBadRequest(cause)
         }
         exception<ErrorResponseException> { cause ->
@@ -115,4 +114,4 @@ class RestContext(
     val config: AirVision.Config
 )
 
-typealias PipelineContext = PipelineContext<Unit, ApplicationCall>
+typealias PipelineContext = io.ktor.util.pipeline.PipelineContext<Unit, ApplicationCall>

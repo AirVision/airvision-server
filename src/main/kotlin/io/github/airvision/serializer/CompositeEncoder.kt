@@ -9,9 +9,9 @@
  */
 package io.github.airvision.serializer
 
-import kotlinx.serialization.CompositeEncoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.encoding.Encoder
 
 inline fun <R> Encoder.structure(desc: SerialDescriptor, fn: CompositeEncoder.() -> R): R {
   val encoder = beginStructure(desc)

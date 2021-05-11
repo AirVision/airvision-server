@@ -11,10 +11,10 @@ package io.github.airvision.util.ktor
 
 import io.ktor.client.features.HttpTimeout
 import kotlin.time.Duration
-import kotlin.time.milliseconds
+import kotlin.time.DurationUnit
 
 var HttpTimeout.HttpTimeoutCapabilityConfiguration.requestTimeout: Duration?
-  get() = requestTimeoutMillis?.milliseconds
+  get() = requestTimeoutMillis?.let { Duration.milliseconds(it) }
   set(value) {
-    requestTimeoutMillis = value?.inMilliseconds?.toLong()
+    requestTimeoutMillis = value?.toDouble(DurationUnit.MILLISECONDS)?.toLong()
   }

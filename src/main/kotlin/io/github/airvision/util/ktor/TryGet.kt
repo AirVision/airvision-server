@@ -40,7 +40,7 @@ suspend inline fun <reified R> HttpClient.tryToGet(
 
 suspend fun <R> tryToHandle(fn: suspend () -> R): Either<Failure, R> {
   return try {
-    Either.right(fn())
+    Either.Right(fn())
   } catch (ex: Exception) {
     val failure = when (ex) {
       is TimeoutCancellationException,
@@ -54,7 +54,7 @@ suspend fun <R> tryToHandle(fn: suspend () -> R): Either<Failure, R> {
       // Something else went wrong on our end
       else -> Failure.InternalError(ex)
     }
-    Either.left(failure)
+    Either.Left(failure)
   }
 }
 

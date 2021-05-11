@@ -20,17 +20,17 @@ import io.github.airvision.Waypoint
 import io.github.airvision.service.AircraftFlightData
 import io.github.airvision.service.AircraftStateData
 import io.github.airvision.service.AirportService
-import io.github.airvision.util.math.feetPerMinuteToMetersPerSecond
-import io.github.airvision.util.math.feetToMeters
 import io.github.airvision.util.json.getPrimitiveOrNull
 import io.github.airvision.util.json.getStringOrNull
 import io.github.airvision.util.json.instantOrNull
 import io.github.airvision.util.json.pathOf
-import io.github.airvision.util.math.knotsToMetersPerSecond
+import io.github.airvision.util.json.primitive
 import io.github.airvision.util.ktor.Failure
 import io.github.airvision.util.ktor.requestTimeout
 import io.github.airvision.util.ktor.tryToGet
-import io.github.airvision.util.arrow.suspendedMap
+import io.github.airvision.util.math.feetPerMinuteToMetersPerSecond
+import io.github.airvision.util.math.feetToMeters
+import io.github.airvision.util.math.knotsToMetersPerSecond
 import io.github.airvision.util.notEmptyOrNull
 import io.ktor.client.HttpClient
 import io.ktor.client.features.HttpTimeout
@@ -38,15 +38,17 @@ import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.content
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 import java.time.Instant
-import kotlin.time.seconds
+import kotlin.time.Duration
 
 class Fr24RestService(
     private val airportService: AirportService
@@ -56,10 +58,10 @@ class Fr24RestService(
 
   private val client = HttpClient {
     install(JsonFeature) {
-      serializer = KotlinxSerializer(Json(JsonConfiguration.Default))
+      serializer = KotlinxSerializer(Json.Default)
     }
     install(HttpTimeout) {
-      requestTimeout = 20.seconds
+      requestTimeout = Duration.seconds(20)
     }
   }
 
@@ -67,7 +69,7 @@ class Fr24RestService(
     val result = client.tryToGet<JsonObject>(
         "$baseUrl/zones/fcgi/feed.js?gnd=1")
     val time = Instant.now()
-    return result.suspendedMap { json ->
+    return result.map { json ->
       json.entries
         .filter { (_, value) -> value is JsonArray }
         .mapNotNull { (key, value) -> value.jsonArray.toFlightData(key, time) }
@@ -104,14 +106,14 @@ class Fr24RestService(
     val departureTime = (getPrimitiveOrNull(ExtendedDataPaths.realDepartureTime)
         ?: getPrimitiveOrNull(ExtendedDataPaths.scheduledDepartureTime))?.instantOrNull
 
-    val trailArray = getArrayOrNull("trail")
-    val waypoints = trailArray?.content
+    val trailArray = get("trail") as? JsonArray
+    val waypoints = trailArray
         ?.map { it.jsonObject }
         ?.map { json ->
-          val time = Instant.ofEpochSecond(json.getPrimitive("ts").long)
-          val latitude = json.getPrimitive("lat").double
-          val longitude = json.getPrimitive("lng").double
-          val altitude = json.getPrimitive("alt").double.feetToMeters()
+          val time = Instant.ofEpochSecond(json.primitive("ts").long)
+          val latitude = json.primitive("lat").double
+          val longitude = json.primitive("lng").double
+          val altitude = json.primitive("alt").double.feetToMeters()
           Waypoint(time, GeodeticPosition(latitude, longitude, altitude))
         }
 
@@ -120,30 +122,30 @@ class Fr24RestService(
   }
 
   private suspend fun JsonArray.toFlightData(id: String, receiveTime: Instant): Fr24AircraftData? {
-    val rawAircraftId = this[0].content
-    if (rawAircraftId.isEmpty())
+    val rawAircraftId = this[0].primitive.content
+    if (!AircraftIcao24.isValid(rawAircraftId))
       return null
 
     val aircraftId = AircraftIcao24.parse(rawAircraftId)
-    val callsign = this[16].contentOrNull?.notEmptyOrNull()
+    val callsign = this[16].primitive.contentOrNull?.notEmptyOrNull()
 
-    val latitude = this[1].doubleOrNull
-    val longitude = this[2].doubleOrNull
-    val altitude = this[4].doubleOrNull?.feetToMeters()
+    val latitude = this[1].primitive.doubleOrNull
+    val longitude = this[2].primitive.doubleOrNull
+    val altitude = this[4].primitive.doubleOrNull?.feetToMeters()
 
     val position = if (latitude != null && longitude != null) {
       GeodeticPosition(latitude, longitude, altitude ?: 0.0)
     } else null
 
-    val time = this[10].longOrNull?.let { Instant.ofEpochSecond(it) } ?: receiveTime
-    val heading = this[3].doubleOrNull
-    val velocity = this[5].doubleOrNull?.knotsToMetersPerSecond()
-    val verticalRate = this[15].doubleOrNull?.feetPerMinuteToMetersPerSecond()
-    val onGround = this[14].intOrNull == 1
+    val time = this[10].primitive.longOrNull?.let { Instant.ofEpochSecond(it) } ?: receiveTime
+    val heading = this[3].primitive.doubleOrNull
+    val velocity = this[5].primitive.doubleOrNull?.knotsToMetersPerSecond()
+    val verticalRate = this[15].primitive.doubleOrNull?.feetPerMinuteToMetersPerSecond()
+    val onGround = this[14].primitive.intOrNull == 1
 
-    val flightNumber = Some(this[13].contentOrNull?.notEmptyOrNull())
-    val departureAirportIata = this[11].contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
-    val arrivalAirportIata = this[12].contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
+    val flightNumber = Some(this[13].primitive.contentOrNull?.notEmptyOrNull())
+    val departureAirportIata = this[11].primitive.contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
+    val arrivalAirportIata = this[12].primitive.contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
 
     val departureAirport = departureAirportIata?.let { airportService.get(it) }
     val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }

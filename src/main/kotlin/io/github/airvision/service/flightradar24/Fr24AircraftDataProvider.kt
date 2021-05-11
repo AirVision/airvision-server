@@ -14,8 +14,6 @@ import io.github.airvision.service.AircraftData
 import io.github.airvision.util.channel.distinct
 import io.github.airvision.util.coroutines.delay
 import io.github.airvision.util.ktor.Failure
-import io.github.airvision.util.time.minus
-import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -23,15 +21,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.time.Instant
 import kotlin.time.Duration
-import kotlin.time.minutes
-import kotlin.time.seconds
 
 class Fr24AircraftDataProvider(
     private val dataSendChannel: SendChannel<AircraftData>,
     private val restService: Fr24RestService,
-    private val rateLimit: Duration = 5.seconds
+    private val rateLimit: Duration = Duration.seconds(5)
 ) {
 
   private var job: Job? = null
@@ -61,11 +56,11 @@ class Fr24AircraftDataProvider(
             is Failure.ErrorResponse -> AirVision.logger.debug("FR24: ${failure.message}")
             is Failure.InternalError -> AirVision.logger.debug("Internal server error", failure.exception)
           }
-          delay(1.seconds)
+          delay(Duration.seconds(1))
         }, { entries ->
           AirVision.logger.debug("FR24: Received ${entries.size} aircraft states and flight data.")
           for (entry in entries) {
-            extendedDataQueue.offer(entry.flightId)
+            extendedDataQueue.trySend(entry.flightId).isSuccess
           }
           for (entry in entries) {
             dataSendChannel.send(entry.state)
@@ -76,6 +71,8 @@ class Fr24AircraftDataProvider(
       }
     }
 
+    // TODO: The following not longer works, since the API is now rate limited
+    /*
     val readExtendedDataJob = launch {
       val lastUpdateTime = mutableMapOf<String, Instant>()
 
@@ -103,11 +100,12 @@ class Fr24AircraftDataProvider(
         })
 
         val now = Instant.now()
-        lastUpdateTime.values.removeIf { it - now > 5.minutes }
+        lastUpdateTime.values.removeIf { it - now > Duration.minutes(5) }
       }
     }
+    */
 
     readEntriesJob.join()
-    readExtendedDataJob.join()
+    //readExtendedDataJob.join()
   }
 }

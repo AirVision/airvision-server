@@ -50,12 +50,9 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration
-import kotlin.time.days
-import kotlin.time.minutes
-import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
 class OsnAircraftInfoService(
@@ -64,7 +61,9 @@ class OsnAircraftInfoService(
     private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AircraftInfoService {
 
-  private val infoCache = buildCache(10.minutes) { aircraftId: AircraftIcao24 -> loadById(aircraftId) }
+  private val infoCache = buildCache(Duration.minutes(10)) {
+    aircraftId: AircraftIcao24 -> loadById(aircraftId)
+  }
 
   private val client = HttpClient()
   private var job: Job? = null
@@ -131,7 +130,7 @@ class OsnAircraftInfoService(
         } else false
         // Every day, check for aircraft updates, or in case of a
         // failure, try again in half an hour
-        delay(if (success) 1.days else 30.minutes)
+        delay(if (success) Duration.days(1) else Duration.minutes(30))
       }
     }
   }
@@ -208,7 +207,7 @@ class OsnAircraftInfoService(
     return AircraftManufacturer(code, name, country)
   }
 
-  private fun <K, V> buildCache(
+  private fun <K : Any, V> buildCache(
       expireDuration: Duration, fn: suspend (key: K) -> V
   ): AsyncLoadingCache<K, V> = Caffeine.newBuilder()
       .executor(getDispatcher.asExecutor())
@@ -221,8 +220,10 @@ class OsnAircraftInfoService(
 
   private inner class ManufacturerHelper {
 
-    private val byName = buildCache<String, Entity<Int, AircraftManufacturer>?>(10.seconds) { loadByName(it) }
-    private val byCode = buildCache<String, Entity<Int, AircraftManufacturer>?>(10.seconds) { loadByCode(it) }
+    private val byName = buildCache<String, Entity<Int, AircraftManufacturer>?>(
+        Duration.seconds(10)) { loadByName(it) }
+    private val byCode = buildCache<String, Entity<Int, AircraftManufacturer>?>(
+        Duration.seconds(10)) { loadByCode(it) }
 
     suspend fun getByCode(code: String): Entity<Int, AircraftManufacturer>? = byCode[code].await()
     suspend fun getByName(name: String): Entity<Int, AircraftManufacturer>? = byName[name].await()
@@ -246,7 +247,7 @@ class OsnAircraftInfoService(
     }
 
     suspend fun getOrInsert(data: CsvManufacturer): Entity<Int, AircraftManufacturer> {
-      var entity = getByCode(data.code ?: data.name.toUpperCase())
+      var entity = getByCode(data.code ?: data.name.uppercase())
       if (entity != null)
         return entity
       if (data.code == null) {
@@ -258,7 +259,7 @@ class OsnAircraftInfoService(
       // Create a new manufacturer
       entity = newSuspendedTransaction(updateDispatcher, db = database) {
         val uniqueCode = data.code ?: run {
-          val v = data.name.toUpperCase()
+          val v = data.name.uppercase()
           if (v.length <= 20) v else {
             UUID.nameUUIDFromBytes(v.toByteArray()).toString().substring(0, 20)
           }
@@ -285,7 +286,7 @@ class OsnAircraftInfoService(
     val manufacturers = ManufacturerHelper()
     csvReader().suspendedOpen(inputStream) {
       val header = readAllAsSequence().first()
-          .map { it.toLowerCase() }
+          .map { it.lowercase() }
       val index = object {
         val aircraftId = header.indexOf("icao24")
         val manufacturerCode = header.indexOf("manufacturericao")
@@ -307,7 +308,7 @@ class OsnAircraftInfoService(
         val manufacturerCode = it[index.manufacturerCode].notEmptyOrNull()
         val manufacturerName = it[index.manufacturerName].trim()
         val owner = it[index.owner].notEmptyOrNull()
-        val categoryDescription = it[index.categoryDescription].toLowerCase()
+        val categoryDescription = it[index.categoryDescription].lowercase()
 
         var description = it[index.description].notEmptyOrNull()
         if (description != null && !descriptionRegex.matches(description))

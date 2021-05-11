@@ -15,4 +15,4 @@ suspend fun delay(millis: Long) =
     kotlinx.coroutines.delay(millis)
 
 suspend fun delay(duration: Duration) =
-    kotlinx.coroutines.delay(duration.toLongMilliseconds())
+    kotlinx.coroutines.delay(duration.inWholeMilliseconds)

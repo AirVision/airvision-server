@@ -10,25 +10,25 @@
 package io.github.airvision.service.openskynetwork.serializer
 
 import io.github.airvision.service.openskynetwork.OsnTrackResponse
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
+import io.github.airvision.util.json.boolean
+import io.github.airvision.util.json.floatOrNull
+import io.github.airvision.util.json.long
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.StructureKind
-import kotlinx.serialization.decode
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.floatOrNull
-import kotlinx.serialization.json.long
 import java.time.Instant
 
 object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
 
   override val descriptor: SerialDescriptor =
-      SerialDescriptor("OsnTrackWaypoint", kind = StructureKind.LIST)
+      buildSerialDescriptor("OsnTrackWaypoint", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): OsnTrackResponse.Waypoint {
-    val json = decoder.decode(JsonArray.serializer())
+    val json = decoder.decodeSerializableValue(JsonArray.serializer())
 
     val time = Instant.ofEpochSecond(json[0].long)
     val latitude = json[1].floatOrNull
@@ -42,5 +42,4 @@ object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
 
   override fun serialize(encoder: Encoder, value: OsnTrackResponse.Waypoint) =
       throw UnsupportedOperationException()
-
 }

@@ -19,12 +19,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.Instant
-import kotlin.time.seconds
+import kotlin.time.Duration
 
 class TestAircraftDataProvider(
     private val dataSendChannel: SendChannel<AircraftStateData>
@@ -38,7 +38,7 @@ class TestAircraftDataProvider(
       val reader = BufferedReader(InputStreamReader(it))
       reader.readText()
     }
-    entries = Json.parse(TestDataEntry.serializer().list, text)
+    entries = Json.decodeFromString(ListSerializer(TestDataEntry.serializer()), text)
     job = GlobalScope.launch {
       while (true) {
         val time = Instant.now()
@@ -46,7 +46,7 @@ class TestAircraftDataProvider(
         entries.forEach { entry ->
           dataSendChannel.send(AircraftStateData(entry.icao24, time, entry.position))
         }
-        delay(5.seconds)
+        delay(Duration.seconds(5))
       }
     }
   }

@@ -18,7 +18,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import kotlin.time.seconds
+import kotlin.time.Duration
 
 @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
 class OsnAircraftDataProvider(
@@ -47,15 +47,15 @@ class OsnAircraftDataProvider(
         when (failure) {
           Failure.Timeout -> {
             AirVision.logger.debug("OSN: Timeout while trying to receive aircraft states.")
-            delay(1.seconds)
+            delay(Duration.seconds(1))
           }
           is Failure.ErrorResponse -> {
             AirVision.logger.debug("OSN: ${failure.message}")
-            delay(1.seconds)
+            delay(Duration.seconds(1))
           }
           is Failure.InternalError -> {
             AirVision.logger.debug("Internal server error", failure.exception)
-            delay(1.seconds)
+            delay(Duration.seconds(1))
           }
         }
       }, { (_, states) ->

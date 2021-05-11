@@ -10,12 +10,12 @@
 package io.github.airvision.serializer
 
 import io.github.airvision.AirportIcao
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * A serializer for [AirportIcao]s.
@@ -23,7 +23,7 @@ import kotlinx.serialization.SerialDescriptor
 object AirportIcaoSerializer : KSerializer<AirportIcao> {
 
   override val descriptor: SerialDescriptor =
-      PrimitiveDescriptor("AirportIcao", PrimitiveKind.STRING)
+      PrimitiveSerialDescriptor("AirportIcao", PrimitiveKind.STRING)
 
   override fun deserialize(decoder: Decoder): AirportIcao =
       AirportIcao(decoder.decodeString())

@@ -11,15 +11,18 @@
 
 package io.github.airvision.util.json
 
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 fun pathOf(first: String, vararg more: String) = Path(listOf(first) + more.asList())
 
-inline class Path(val parts: List<String>) {
+@JvmInline
+value class Path(val parts: List<String>) {
 
   inline val size: Int
     get() = parts.size
@@ -36,10 +39,10 @@ inline class Path(val parts: List<String>) {
 }
 
 fun JsonObject.getStringOrNull(key: String): String? =
-    getPrimitiveOrNull(key)?.contentOrNull
+    getPrimitiveOrNull(pathOf(key))?.contentOrNull
 
 fun JsonObject.getString(key: String): String =
-    getPrimitive(key).content
+    getPrimitive(pathOf(key)).content
 
 fun JsonObject.getStringOrNull(path: Path): String? =
     getPrimitiveOrNull(path)?.contentOrNull
@@ -72,7 +75,7 @@ operator fun JsonObject.get(path: Path): JsonElement? {
 }
 
 fun JsonObject.getValue(path: Path): JsonElement =
-    get(path) ?: throw NoSuchElementException("Path $path is missing in the object.")
+    get(path) ?: missingPath(path.toString())
 
 private fun JsonObject.get(path: Path, index: Int): JsonElement? {
   val element = this[path[index]] ?: return null
@@ -85,5 +88,8 @@ private fun JsonObject.get(path: Path, index: Int): JsonElement? {
   return element.get(path, index + 1)
 }
 
+internal fun missingPath(path: String): Nothing =
+    throw NoSuchElementException("Path $path is missing in the object.")
+
 private fun unexpectedJson(path: Path, expected: String): Nothing =
-    throw JsonException("Element at path $path is not a $expected")
+    throw SerializationException("Element at path $path is not a $expected")

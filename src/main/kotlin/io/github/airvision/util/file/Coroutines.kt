@@ -11,10 +11,11 @@ package io.github.airvision.util.file
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.io.InputStream
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
+@Suppress("BlockingMethodInNonBlockingContext")
 suspend fun Path.openStream(): InputStream {
   return withContext(Dispatchers.IO) {
     Files.newInputStream(this@openStream)

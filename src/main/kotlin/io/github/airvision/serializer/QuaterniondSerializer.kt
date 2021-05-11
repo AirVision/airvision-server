@@ -9,19 +9,24 @@
  */
 package io.github.airvision.serializer
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
+import io.github.airvision.util.math.component.w
+import io.github.airvision.util.math.component.x
+import io.github.airvision.util.math.component.y
+import io.github.airvision.util.math.component.z
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.StructureKind
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.spongepowered.math.imaginary.Quaterniond
 
 @Serializer(forClass = Quaterniond::class)
 object QuaterniondSerializer : KSerializer<Quaterniond> {
 
   override val descriptor: SerialDescriptor =
-      SerialDescriptor("Quaterniond", kind = StructureKind.LIST)
+      buildSerialDescriptor("Quaterniond", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): Quaterniond {
     return decoder.collection(descriptor) {

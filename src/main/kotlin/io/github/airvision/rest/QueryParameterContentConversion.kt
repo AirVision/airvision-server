@@ -20,9 +20,10 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonLiteral
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlin.reflect.jvm.jvmErasure
 
 private sealed class JsonTreeElement
 
@@ -58,18 +59,18 @@ private class JsonTree(val map: MutableMap<String, JsonTreeElement> = mutableMap
 
 private fun JsonElement.toTreeElement(): JsonTreeElement {
   return when (this) {
-    is JsonLiteral -> JsonTreePrimitive(content)
+    is JsonPrimitive -> JsonTreePrimitive(content)
     JsonNull -> JsonTreeNull
-    is JsonObject -> JsonTree(this.content.entries.associate { it.key to it.value.toTreeElement() }.toMutableMap())
-    is JsonArray -> JsonTreeArray(this.content.map { it.toTreeElement() })
+    is JsonObject -> JsonTree(this.entries.associate { it.key to it.value.toTreeElement() }.toMutableMap())
+    is JsonArray -> JsonTreeArray(this.map { it.toTreeElement() })
   }
 }
 
 private fun parse(value: String): JsonTreeElement {
   return if (value.isNotEmpty() && value.first() == '[' && value.last() == ']') {
-    Json.parse(JsonArray.serializer(), value).toTreeElement()
+    Json.decodeFromString(JsonArray.serializer(), value).toTreeElement()
   } else if (value.isNotEmpty() && value.first() == '{' && value.last() == '}') {
-    Json.parse(JsonObject.serializer(), value).toTreeElement()
+    Json.decodeFromString(JsonObject.serializer(), value).toTreeElement()
   } else {
     JsonTreePrimitive(value)
   }
@@ -79,7 +80,7 @@ fun Application.installQueryParameterContentConversion(converter: RestSerializat
   // Install query parameter based Content Conversion
   receivePipeline.intercept(ApplicationReceivePipeline.Transform) {
     val contentType = call.request.header(HttpHeaders.ContentType)?.let { ContentType.parse(it) }
-    if (contentType != null || subject.type == ByteReadChannel::class) {
+    if (contentType != null || subject.typeInfo.jvmErasure == ByteReadChannel::class) {
       // Just proceed
       proceed()
       return@intercept

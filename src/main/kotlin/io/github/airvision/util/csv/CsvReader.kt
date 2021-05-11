@@ -14,7 +14,7 @@ import com.github.doyaaaaaken.kotlincsv.client.CsvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.io.InputStream
+import java.io.InputStream
 
 suspend fun <T> CsvReader.suspendedOpen(inputStream: InputStream, read: suspend CsvFileReader.() -> T): T {
   return withContext(Dispatchers.IO) {

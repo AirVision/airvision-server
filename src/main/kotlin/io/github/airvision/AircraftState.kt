@@ -9,7 +9,7 @@
  */
 package io.github.airvision
 
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.Instant
@@ -25,7 +25,7 @@ import java.time.Instant
  */
 @Serializable
 data class AircraftState(
-    @ContextualSerialization val time: Instant,
+    @Contextual val time: Instant,
     val icao24: AircraftIcao24,
     val position: GeodeticPosition? = null,
     val velocity: Double? = null,

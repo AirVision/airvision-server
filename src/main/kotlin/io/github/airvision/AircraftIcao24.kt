@@ -29,15 +29,23 @@ data class AircraftIcao24(val address: Int) {
   /**
    * Converts this back to a string representation.
    */
-  override fun toString() = address.toString(16).toUpperCase()
+  override fun toString() = address.toString(16).uppercase()
 
   companion object {
+
+    private val regex = "^[0-9A-Fa-f]{1,6}$".toRegex()
+
+    /**
+     * Returns whether the given value is a valid ICAO 24 identifier.
+     */
+    fun isValid(value: String): Boolean =
+        regex.matches(value)
 
     /**
      * Parses a hexadecimal string as an [AircraftIcao24].
      */
     fun parse(value: String): AircraftIcao24 {
-      check(value.length <= 6)
+      check(isValid(value)) { "Invalid ICAO24 identifier: $value" }
       return AircraftIcao24(value.toInt(16))
     }
   }

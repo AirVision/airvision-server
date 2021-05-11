@@ -9,6 +9,10 @@
  */
 package io.github.airvision
 
+import io.github.airvision.util.math.component.w
+import io.github.airvision.util.math.component.x
+import io.github.airvision.util.math.component.y
+import io.github.airvision.util.math.component.z
 import org.spongepowered.math.imaginary.Quaterniond
 import org.spongepowered.math.matrix.Matrix4d
 import org.spongepowered.math.vector.Vector2d
@@ -26,16 +30,12 @@ data class Camera(
     val transform: Transform = Transform.ORIGIN
 ) {
 
-  private val inverseRotationMatrix: Matrix4d by lazy {
-    Matrix4d.createRotation(transform.rotation.invert())
-  }
-
   /**
    * The transformation matrix to transform world coordinates to
    * the camera coordinate system.
    */
   val viewMatrix: Matrix4d by lazy {
-    val rotationMatrix = inverseRotationMatrix
+    val rotationMatrix = Matrix4d.createRotation(transform.rotation.invert())
     val positionMatrix = Matrix4d.createTranslation(transform.position.negate())
     rotationMatrix.mul(positionMatrix)
   }
@@ -133,7 +133,7 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
   // camera
   pos = camera.projectionMatrix.transform(pos)
 
-  // Convert the projection output to a image coordinate system
+  // Convert the projection output to an image coordinate system
   // so top left is (0,0), bottom right is (1,1)
 
   // -1.0..1.0 -> 0.0..1.0

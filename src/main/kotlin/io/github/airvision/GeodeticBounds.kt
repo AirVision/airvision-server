@@ -10,6 +10,8 @@
 package io.github.airvision
 
 import kotlinx.serialization.Serializable
+import io.github.airvision.util.math.component.x
+import io.github.airvision.util.math.component.y
 import org.spongepowered.math.vector.Vector2d
 
 @Serializable

@@ -9,7 +9,7 @@
  */
 package io.github.airvision
 
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.Instant
@@ -20,12 +20,12 @@ data class AircraftFlight(
     val number: String? = null,
     @SerialName("departure_airport") val departureAirport: Airport? = null,
     @SerialName("arrival_airport") val arrivalAirport: Airport? = null,
-    @ContextualSerialization @SerialName("estimated_arrival_time") val estimatedArrivalTime: Instant? = null,
+    @Contextual @SerialName("estimated_arrival_time") val estimatedArrivalTime: Instant? = null,
     val waypoints: List<Waypoint>? = null
 )
 
 @Serializable
 data class Waypoint(
-    @ContextualSerialization val time: Instant,
+    @Contextual val time: Instant,
     @SerialName("pos") val position: GeodeticPosition
 )

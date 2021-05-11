@@ -11,16 +11,16 @@ package io.github.airvision.service.openskynetwork
 
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.AirportIcao
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.time.Instant
 
 @Serializable
 data class OsnFlight(
     val icao24: AircraftIcao24,
-    @ContextualSerialization val firstSeen: Instant,
+    @Contextual val firstSeen: Instant,
     val estDepartureAirport: AirportIcao?,
-    @ContextualSerialization val lastSeen: Instant,
+    @Contextual val lastSeen: Instant,
     val estArrivalAirport: AirportIcao?,
     val callsign: String?,
     val estDepartureAirportHorizDistance: Int,

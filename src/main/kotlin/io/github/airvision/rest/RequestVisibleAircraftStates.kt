@@ -22,10 +22,12 @@ import io.github.airvision.util.ToStringHelper
 import io.github.airvision.util.collections.poll
 import io.github.airvision.util.math.max
 import io.github.airvision.util.math.min
+import io.github.airvision.util.math.component.x
+import io.github.airvision.util.math.component.y
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.spongepowered.math.imaginary.Quaterniond
@@ -40,11 +42,11 @@ import kotlin.math.roundToInt
 
 @Serializable
 data class VisibleAircraftRequest(
-    @ContextualSerialization val time: Instant,
+    @Contextual val time: Instant,
     val position: GeodeticPosition,
-    @ContextualSerialization val rotation: Quaterniond,
+    @Contextual val rotation: Quaterniond,
     @SerialName("rotation_accuracy") val rotationAccuracy: Double?,
-    @ContextualSerialization val fov: Vector2d,
+    @Contextual val fov: Vector2d,
     @SerialName("aircrafts") val detections: List<Detection>
 ) {
 
@@ -59,8 +61,8 @@ data class VisibleAircraftRequest(
 
 @Serializable
 data class Detection(
-    @ContextualSerialization val position: Vector2d,
-    @ContextualSerialization val size: Vector2d
+    @Contextual val position: Vector2d,
+    @Contextual val size: Vector2d
 )
 
 @Serializable
@@ -85,13 +87,13 @@ private fun narrowCameraView(fov: Vector2d, transform: Transform, detections: Co
   // The minimum size a detection is allowed to have
   val minDetectionSize = Vector2d(0.18, 0.18)
 
-  fun Detection.min(): Vector2d = Vector2d(position.sub(max(minDetectionSize, size.div(2.0))))
-  fun Detection.max(): Vector2d = Vector2d(position.add(max(minDetectionSize, size.div(2.0))))
+  fun Detection.min(): Vector2d = position.sub(max(minDetectionSize, size.div(2.0)))
+  fun Detection.max(): Vector2d = position.add(max(minDetectionSize, size.div(2.0)))
 
-  val minDetectionX = (detections.map { it.min().x }.min()!! - margin).coerceIn(0.0, 1.0) - 0.5
-  val minDetectionY = (detections.map { it.min().y }.min()!! - margin).coerceIn(0.0, 1.0) - 0.5
-  val maxDetectionX = (detections.map { it.max().x }.max()!! + margin).coerceIn(0.0, 1.0) - 0.5
-  val maxDetectionY = (detections.map { it.max().y }.max()!! + margin).coerceIn(0.0, 1.0) - 0.5
+  val minDetectionX = (detections.map { it.min().x }.minOrNull()!! - margin).coerceIn(0.0, 1.0) - 0.5
+  val minDetectionY = (detections.map { it.min().y }.minOrNull()!! - margin).coerceIn(0.0, 1.0) - 0.5
+  val maxDetectionX = (detections.map { it.max().x }.maxOrNull()!! + margin).coerceIn(0.0, 1.0) - 0.5
+  val maxDetectionY = (detections.map { it.max().y }.maxOrNull()!! + margin).coerceIn(0.0, 1.0) - 0.5
 
   val factorX = maxDetectionX - minDetectionX
   val factorY = maxDetectionY - minDetectionY

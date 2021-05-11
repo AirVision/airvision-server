@@ -29,7 +29,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import java.time.Instant
-import kotlin.time.seconds
+import kotlin.time.Duration
 
 @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
 class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
@@ -42,7 +42,8 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   /**
    * The rate limit that requests can be done.
    */
-  val rateLimit = (if (credentials.username.isNotEmpty()) RateLimit else RateLimitAnonymous).seconds
+  val rateLimit = Duration.seconds(
+      if (credentials.username.isNotEmpty()) RateLimit else RateLimitAnonymous)
 
   private val host = run {
     val base = "opensky-network.org"
@@ -56,17 +57,17 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   private val client = HttpClient {
     val json = Json {
       val module = SerializersModule {
-        include(AirVision.json.context)
+        include(AirVision.json.serializersModule)
         contextual(OsnAircraftStateDataSerializer)
       }
       ignoreUnknownKeys = true
-      serialModule = module
+      serializersModule = module
     }
     install(JsonFeature) {
       serializer = KotlinxSerializer(json)
     }
     install(HttpTimeout) {
-      requestTimeout = 20.seconds
+      requestTimeout = Duration.seconds(20)
     }
   }
 
@@ -134,9 +135,9 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
         "time" to 0
     )).flatMapLeft { failure ->
       if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
-        Either.right(null)
+        Either.Right(null)
       } else {
-        Either.left(failure)
+        Either.Left(failure)
       }
     }
   }
@@ -170,9 +171,9 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
       put("icao24", aircraftId)
   }).flatMapLeft { failure ->
     if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
-      Either.right(emptyList())
+      Either.Right(emptyList())
     } else {
-      Either.left(failure)
+      Either.Left(failure)
     }
   }
 }

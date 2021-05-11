@@ -32,10 +32,10 @@ import io.ktor.server.netty.Netty
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
-import kotlinx.serialization.stringify
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -63,11 +63,11 @@ fun main() {
   }
   val path = Paths.get("config.json")
   val config = if (Files.exists(path)) {
-    json.parse(AirVision.Config.serializer(), Files.readAllLines(path).joinToString("\n"))
+    json.decodeFromString(AirVision.Config.serializer(), Files.readAllLines(path).joinToString("\n"))
   } else {
     val config = AirVision.Config()
     Files.newBufferedWriter(path).use { writer ->
-      writer.write(json.stringify(config))
+      writer.write(json.encodeToString(config))
     }
     AirVision.logger.info("The configuration file was generated, please configure it now and restart.")
     return
@@ -133,7 +133,7 @@ object AirVision {
       contextual(Vector3dSerializer)
     }
     ignoreUnknownKeys = true
-    serialModule = module
+    serializersModule = module
     encodeDefaults = false
   }
 

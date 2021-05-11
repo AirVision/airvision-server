@@ -9,19 +9,22 @@
  */
 package io.github.airvision.serializer
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
+import io.github.airvision.util.math.component.x
+import io.github.airvision.util.math.component.y
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.StructureKind
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.spongepowered.math.vector.Vector2d
 
 @Serializer(forClass = Vector2d::class)
 object Vector2dSerializer : KSerializer<Vector2d> {
 
   override val descriptor: SerialDescriptor =
-      SerialDescriptor("Vector2d", kind = StructureKind.LIST)
+      buildSerialDescriptor("Vector2d", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): Vector2d {
     return decoder.collection(descriptor) {

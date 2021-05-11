@@ -20,13 +20,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.hours
-import kotlin.time.minutes
+import kotlin.time.Duration
 
 class OpenFlightsAirportService : AirportService {
 
   companion object {
-    private val AirportsReadInvalidation = 24.hours.toLongMilliseconds()
+    private val AirportsReadInvalidation = Duration.hours(24).inWholeMilliseconds
   }
 
   @Volatile private var airportCache: AirportCache? = null
@@ -59,7 +58,7 @@ class OpenFlightsAirportService : AirportService {
             if (cache == null)
               throw ex
             AirportCache(cache!!.byIcao, cache!!.byIata,
-                System.currentTimeMillis() + 1.minutes.toLongMilliseconds())
+                System.currentTimeMillis() + Duration.minutes(1).inWholeMilliseconds)
           }
           airportCache = cache
         }

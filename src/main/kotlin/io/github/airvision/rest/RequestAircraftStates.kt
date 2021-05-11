@@ -13,7 +13,7 @@ import io.github.airvision.GeodeticBounds
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
-import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.time.Instant
 
@@ -21,7 +21,7 @@ import java.time.Instant
 
 @Serializable
 class AircraftStatesRequest(
-    @ContextualSerialization val time: Instant? = null,
+    @Contextual val time: Instant? = null,
     val bounds: GeodeticBounds? = null
 )
 

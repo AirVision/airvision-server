@@ -2,10 +2,10 @@ plugins {
   java
   eclipse
   idea
-  kotlin("jvm") version "1.3.70"
-  kotlin("kapt") version "1.3.70"
-  kotlin("plugin.serialization") version "1.3.70"
-  id("net.minecrell.licenser") version "0.4.1"
+  kotlin("jvm") version "1.5.0"
+  kotlin("kapt") version "1.5.0"
+  kotlin("plugin.serialization") version "1.5.0"
+  id("org.cadixdev.licenser") version "0.6.0"
 }
 
 defaultTasks("licenseFormat", "build")
@@ -29,31 +29,30 @@ dependencies {
   implementation(kotlin("reflect"))
 
   // Coroutines
-  val coroutinesVersion = "1.3.4"
+  val coroutinesVersion = "1.5.0-RC"
   implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = coroutinesVersion)
   implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-jdk8", version = coroutinesVersion)
 
   // Serialization
-  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version = "0.20.0")
+  implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version = "1.2.0")
 
   // Arrow
-  val arrowVersion = "0.10.4"
+  val arrowVersion = "0.13.2"
   fun arrow(module: String) = "io.arrow-kt:arrow-$module:$arrowVersion"
 
   implementation(arrow("core"))
-  implementation(arrow("syntax"))
   kapt(arrow("meta"))
 
   // CSV Parser
-  implementation(group = "com.github.doyaaaaaken", name = "kotlin-csv-jvm", version = "0.7.3")
+  implementation(group = "com.github.doyaaaaaken", name = "kotlin-csv-jvm", version = "0.15.2")
 
   // General utilities
-  implementation(group = "com.google.guava", name = "guava", version = "28.0-jre")
+  implementation(group = "com.google.guava", name = "guava", version = "30.1.1-jre")
 
   // Networking
-  implementation(group = "io.netty", name = "netty-all", version = "4.1.46.Final")
+  implementation(group = "io.netty", name = "netty-all", version = "4.1.63.Final")
 
-  val ktorVersion = "1.3.2"
+  val ktorVersion = "1.5.3"
   fun ktor(module: String) = "io.ktor:ktor-$module:$ktorVersion"
 
   implementation(ktor("serialization"))
@@ -90,9 +89,9 @@ dependencies {
   implementation(group = "com.fazecast", name = "jSerialComm", version = "2.6.0")
 
   // Testing
-  testCompile(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.2.0")
-  testCompile(kotlin(module = "test"))
-  testCompile(ktor("server-test-host"))
+  testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = "5.2.0")
+  testImplementation(kotlin(module = "test"))
+  testImplementation(ktor("server-test-host"))
 }
 
 tasks {
@@ -144,7 +143,7 @@ tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().forEach {
     it.kotlinOptions.apply {
       jvmTarget = "1.8"
-      languageVersion = "1.3"
+      languageVersion = "1.5"
 
       val args = mutableListOf<String>()
       args += "-Xjvm-default=enable"
@@ -168,9 +167,11 @@ tasks {
       useExperimentalAnnotation("kotlin.experimental.ExperimentalTypeInference")
       useExperimentalAnnotation("kotlin.time.ExperimentalTime")
       useExperimentalAnnotation("kotlinx.serialization.UnstableDefault")
+      useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
       useExperimentalAnnotation("kotlinx.serialization.ImplicitReflectionSerializer")
       useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
       useExperimentalAnnotation("io.ktor.util.KtorExperimentalAPI")
+      useExperimentalAnnotation("kotlinx.coroutines.DelicateCoroutinesApi")
       useExperimentalAnnotation("kotlinx.coroutines.InternalCoroutinesApi")
 
       freeCompilerArgs = args
@@ -179,15 +180,14 @@ tasks {
 }
 
 license {
-  header = rootProject.file("HEADER.txt")
-  newLine = false
-  ignoreFailures = false
-  sourceSets = project.sourceSets
+  newLine(false)
+  ignoreFailures(false)
+  header(rootProject.file("HEADER.txt"))
 
   include("**/*.java")
   include("**/*.kt")
 
-  ext {
+  properties {
     set("name", project.name)
     set("url", "https://www.github.com/AirVision")
     set("organization", "AirVision")

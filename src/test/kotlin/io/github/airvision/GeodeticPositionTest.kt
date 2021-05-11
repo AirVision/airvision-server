@@ -9,42 +9,41 @@
  */
 package io.github.airvision
 
-import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.stringify
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.junit.jupiter.api.Test
 import org.spongepowered.math.vector.Vector3d
 import kotlin.test.assertEquals
 
-@ImplicitReflectionSerializer
 class GeodeticPositionTest {
 
   @Test
   fun `serialization with 3 values`() {
     val p = GeodeticPosition(23.654782, 94256.22563, 69.55)
-    assertEquals("[${p.latitude},${p.longitude},${p.altitude}]", Json.stringify(p))
+    assertEquals("[${p.latitude},${p.longitude},${p.altitude}]", Json.encodeToString(p))
   }
 
   @Test
   fun `serialization with 2 values`() {
     val p = GeodeticPosition(23.654782, 94256.22563, 0.0)
-    assertEquals("[${p.latitude},${p.longitude}]", Json.stringify(p))
+    assertEquals("[${p.latitude},${p.longitude}]", Json.encodeToString(p))
   }
 
   @Test
   fun `deserialization with 3 values`() {
     val v = listOf(23.654782, 94256.22563, 69.55).map { JsonPrimitive(it) }
     val p = GeodeticPosition(23.654782, 94256.22563, 69.55)
-    assertEquals(p, Json.fromJson(JsonArray(v)))
+    assertEquals(p, Json.decodeFromJsonElement(JsonArray(v)))
   }
 
   @Test
   fun `deserialization with 2 values`() {
     val v = listOf(23.654782, 94256.22563).map { JsonPrimitive(it) }
     val p = GeodeticPosition(23.654782, 94256.22563, 0.0)
-    assertEquals(p, Json.fromJson(JsonArray(v)))
+    assertEquals(p, Json.decodeFromJsonElement(JsonArray(v)))
   }
 
   @Test

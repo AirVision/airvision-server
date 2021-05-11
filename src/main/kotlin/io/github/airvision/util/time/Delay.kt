@@ -20,7 +20,7 @@ fun Instant.toDouble(unit: DurationUnit): Double =
         Duration.convert(epochSecond.toDouble(), DurationUnit.SECONDS, unit)
 
 operator fun Instant.minus(other: Instant): Duration =
-    (toEpochMilli() - other.toEpochMilli()).milliseconds
+    Duration.milliseconds((toEpochMilli() - other.toEpochMilli()))
 
 operator fun Instant.minus(duration: Duration): Instant =
     minus(duration.toJavaDuration())

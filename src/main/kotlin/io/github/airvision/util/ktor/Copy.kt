@@ -7,6 +7,8 @@
  * This work is licensed under the terms of the MIT License (MIT). For
  * a copy, see 'LICENSE.txt' or <https://opensource.org/licenses/MIT>.
  */
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package io.github.airvision.util.ktor
 
 import io.github.airvision.AirVision

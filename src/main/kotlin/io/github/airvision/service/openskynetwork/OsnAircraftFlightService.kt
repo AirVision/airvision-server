@@ -9,13 +9,13 @@
  */
 package io.github.airvision.service.openskynetwork
 
-import arrow.core.orNull
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.airvision.AircraftFlight
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.Waypoint
 import io.github.airvision.service.AirportService
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -24,6 +24,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
+import kotlin.time.Duration
 import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
@@ -33,7 +34,7 @@ class OsnAircraftFlightService(
 ) {
 
   private val cache = Caffeine.newBuilder()
-      .expireAfterWrite(20.seconds.toJavaDuration())
+      .expireAfterWrite(Duration.seconds(20).toJavaDuration())
       .executor(Dispatchers.Default.asExecutor())
       .buildAsync<AircraftIcao24, AircraftFlight> { key, executor ->
         GlobalScope.async(executor.asCoroutineDispatcher()) {
@@ -67,7 +68,7 @@ class OsnAircraftFlightService(
       val waypoints = if (track != null) {
         var latitude = track.path.firstOrNull { it.latitude != null }?.latitude
         var longitude = track.path.firstOrNull { it.longitude != null }?.longitude
-        var altitude = track.path.firstOrNull { it.baroAltitude != null }?.baroAltitude ?: 0.0
+        var altitude = track.path.firstOrNull { it.baroAltitude != null }?.baroAltitude ?: 0f
         if (latitude == null || longitude == null) {
           // No latitude or longitude is known?
           null

@@ -10,8 +10,6 @@
 package io.github.airvision.util.json
 
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.long
-import kotlinx.serialization.json.longOrNull
 import java.time.Instant
 
 val JsonElement.instant: Instant
