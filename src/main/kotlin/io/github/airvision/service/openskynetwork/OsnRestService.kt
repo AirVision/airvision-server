@@ -10,12 +10,12 @@
 package io.github.airvision.service.openskynetwork
 
 import arrow.core.Either
+import arrow.core.handleErrorWith
 import io.github.airvision.AirVision
 import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticBounds
 import io.github.airvision.service.AircraftStateData
 import io.github.airvision.service.openskynetwork.serializer.OsnAircraftStateDataSerializer
-import io.github.airvision.util.arrow.flatMapLeft
 import io.github.airvision.util.ktor.Failure
 import io.github.airvision.util.ktor.requestTimeout
 import io.github.airvision.util.ktor.tryToGet
@@ -91,7 +91,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    * Attempts to get the [AircraftStateData] object for the given
    * [AircraftIcao24] identifier and optional time.
    */
-  suspend fun getState(aircraftId: AircraftIcao24, time: Instant? = null): Either<Failure, OsnAircraftsResponse> {
+  suspend fun getState(aircraftId: AircraftIcao24, time: Instant? = null): Either<Failure, OsnAircraftResponse> {
     return request("/states/all", buildMap {
       put("icao24", aircraftId)
       if (time != null)
@@ -102,7 +102,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   /**
    * Attempts to get the [AircraftStateData] objects for the given [GeodeticBounds].
    */
-  suspend fun getStates(bounds: GeodeticBounds, time: Instant? = null): Either<Failure, OsnAircraftsResponse> {
+  suspend fun getStates(bounds: GeodeticBounds, time: Instant? = null): Either<Failure, OsnAircraftResponse> {
     val max = bounds.max
     val min = bounds.min
 
@@ -119,7 +119,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   /**
    * Attempts to get all the [AircraftStateData] objects.
    */
-  suspend fun getStates(time: Instant? = null): Either<Failure, OsnAircraftsResponse> {
+  suspend fun getStates(time: Instant? = null): Either<Failure, OsnAircraftResponse> {
     return request("/states/all", buildMap {
       if (time != null)
         put("time", time.epochSecond)
@@ -133,7 +133,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
     return request<OsnTrackResponse>("/tracks", mapOf(
         "icao24" to aircraftId,
         "time" to 0
-    )).flatMapLeft { failure ->
+    )).handleErrorWith { failure ->
       if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
         Either.Right(null)
       } else {
@@ -169,7 +169,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
     put("end", endTime.epochSecond)
     if (aircraftId != null)
       put("icao24", aircraftId)
-  }).flatMapLeft { failure ->
+  }).handleErrorWith { failure ->
     if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
       Either.Right(emptyList())
     } else {

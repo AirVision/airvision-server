@@ -11,24 +11,9 @@ package io.github.airvision.serializer
 
 import io.github.airvision.AirportIata
 import io.github.airvision.AirportIcao
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import io.github.airvision.util.serializer.ToStringSerializer
 
 /**
  * A serializer for [AirportIcao]s.
  */
-object AirportIataSerializer : KSerializer<AirportIata> {
-
-  override val descriptor: SerialDescriptor =
-      PrimitiveSerialDescriptor("AirportIata", PrimitiveKind.STRING)
-
-  override fun deserialize(decoder: Decoder): AirportIata =
-      AirportIata(decoder.decodeString())
-
-  override fun serialize(encoder: Encoder, value: AirportIata) =
-      encoder.encodeString(value.toString())
-}
+object AirportIataSerializer : ToStringSerializer<AirportIata>("AirportIata", ::AirportIata)

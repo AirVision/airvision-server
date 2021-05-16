@@ -52,7 +52,7 @@ dependencies {
   // Networking
   implementation(group = "io.netty", name = "netty-all", version = "4.1.63.Final")
 
-  val ktorVersion = "1.5.3"
+  val ktorVersion = "1.5.4"
   fun ktor(module: String) = "io.ktor:ktor-$module:$ktorVersion"
 
   implementation(ktor("serialization"))

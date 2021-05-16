@@ -13,8 +13,8 @@ import io.github.airvision.serializer.AircraftIcao24Serializer
 import kotlinx.serialization.Serializable
 
 /**
- * Represents an identifier of aircrafts. Also known as the
- * ICAO 24 bit address used by aircraft's.
+ * Represents an identifier of aircraft. Also known as the
+ * ICAO 24 bit address used by aircraft.
  *
  * @property address The 24 bit address
  */
@@ -33,20 +33,26 @@ data class AircraftIcao24(val address: Int) {
 
   companion object {
 
-    private val regex = "^[0-9A-Fa-f]{1,6}$".toRegex()
+    private const val maxLength = 6
 
     /**
      * Returns whether the given value is a valid ICAO 24 identifier.
      */
     fun isValid(value: String): Boolean =
-        regex.matches(value)
+        value.length in 1..maxLength && value.toIntOrNull(16) != null
 
     /**
      * Parses a hexadecimal string as an [AircraftIcao24].
      */
     fun parse(value: String): AircraftIcao24 {
-      check(isValid(value)) { "Invalid ICAO24 identifier: $value" }
-      return AircraftIcao24(value.toInt(16))
+      if (value.length !in 1..maxLength)
+        invalidIdentifier(value)
+      val address = value.toIntOrNull(16)
+          ?: invalidIdentifier(value)
+      return AircraftIcao24(address)
     }
+
+    private fun invalidIdentifier(value: String): Nothing =
+        throw IllegalArgumentException("Invalid ICAO 24 identifier: $value")
   }
 }

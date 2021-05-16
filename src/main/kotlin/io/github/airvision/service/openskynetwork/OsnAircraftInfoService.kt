@@ -12,7 +12,6 @@ package io.github.airvision.service.openskynetwork
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
-import com.github.doyaaaaaken.kotlincsv.util.CSVParseFormatException
 import io.github.airvision.AirVision
 import io.github.airvision.AircraftEngineType
 import io.github.airvision.AircraftEngines
@@ -40,6 +39,7 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
@@ -47,11 +47,14 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.io.BufferedReader
 import java.io.InputStream
+import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import kotlin.streams.asSequence
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
@@ -117,7 +120,7 @@ class OsnAircraftInfoService(
             }
             if (update) {
               AirVision.logger.info("Start updating the aircraft database.")
-              updateAircrafts(aircraftDbPath.openStream())
+              updateAircraft(aircraftDbPath.openStream())
               AirVision.logger.info("Finished updating the aircraft database.")
             } else {
               AirVision.logger.info("The aircraft database is already up-to-date.")
@@ -282,7 +285,7 @@ class OsnAircraftInfoService(
     }
   }
 
-  private suspend fun updateAircrafts(inputStream: InputStream) {
+  private suspend fun updateAircraft(inputStream: InputStream) {
     val manufacturers = ManufacturerHelper()
     csvReader().suspendedOpen(inputStream) {
       val header = readAllAsSequence().first()
@@ -389,11 +392,16 @@ class OsnAircraftInfoService(
    */
   private suspend fun updateManufacturers(inputStream: InputStream) {
     val nameAndCountryRegex = "\\((.+)\\)\$".toRegex()
-    csvReader().suspendedOpen(inputStream) {
-      try {
-        for (it in readAllAsSequence().drop(2).filter { it.isNotEmpty() }) {
-          val code = it[0]
-          val nameAndCountry = it[1].replace("\"", "")
+    withContext(Dispatchers.IO) {
+      BufferedReader(InputStreamReader(inputStream)).use { reader ->
+        val lines = reader.lines().asSequence()
+            .drop(2)
+            .filter { it.isNotEmpty() }
+        for (line in lines) {
+          val separator = "\",\""
+          val index = line.indexOf(separator)
+          val code = line.substring(1, index)
+          val nameAndCountry = line.substring(index + separator.length, line.length - 1)
 
           val match = nameAndCountryRegex.find(nameAndCountry)
           val (name, country) = if (match != null) {
@@ -409,13 +417,6 @@ class OsnAircraftInfoService(
               it[AircraftManufacturerTable.country] = country
             }
           }
-        }
-      } catch (e: CSVParseFormatException) {
-        // The following error is thrown for the last empty line, currently a bug in the library
-        // See: https://github.com/doyaaaaaken/kotlin-csv/issues/18
-        // TODO
-        if (e.message?.contains("must appear delimiter or line terminator after quote end") != true) {
-          throw e
         }
       }
     }
