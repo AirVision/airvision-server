@@ -14,13 +14,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftInfo(
-    val icao24: AircraftIcao24,
-    val model: String,
-    val owner: String? = null,
-    val manufacturer: AircraftManufacturer? = null,
-    val engines: AircraftEngines? = null,
-    val type: Type? = null,
-    @SerialName("weight_category") val weightCategory: WeightCategory? = null
+  val icao24: AircraftIcao24,
+  val model: String,
+  val owner: String? = null,
+  val manufacturer: AircraftManufacturer? = null,
+  val engines: AircraftEngines? = null,
+  val type: Type? = null,
+  @SerialName("weight_category") val weightCategory: WeightCategory? = null
 ) {
 
   enum class Type {
@@ -28,6 +28,7 @@ data class AircraftInfo(
     SeaPlane,
     Amphibian,
     Helicopter,
+
     /**
      * Dirigible, also known as Airship.
      */

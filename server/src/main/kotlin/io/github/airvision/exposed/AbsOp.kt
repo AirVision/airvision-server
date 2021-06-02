@@ -15,11 +15,12 @@ import org.jetbrains.exposed.sql.IColumnType
 import org.jetbrains.exposed.sql.QueryBuilder
 
 private class AbsOp<T>(
-    private val expression: Expression<T>,
-    override val columnType: IColumnType
-): ExpressionWithColumnType<T>() {
+  private val expression: Expression<T>,
+  override val columnType: IColumnType
+) : ExpressionWithColumnType<T>() {
 
-  override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder { append("ABS(", expression, ')') }
+  override fun toQueryBuilder(queryBuilder: QueryBuilder) =
+    queryBuilder { append("ABS(", expression, ')') }
 }
 
 val <T> ExpressionWithColumnType<T>.abs: ExpressionWithColumnType<T>

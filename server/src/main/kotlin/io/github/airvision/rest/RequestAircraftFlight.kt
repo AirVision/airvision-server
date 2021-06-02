@@ -19,7 +19,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftFlightRequest(
-    val icao24: AircraftIcao24
+  val icao24: AircraftIcao24
 )
 
 suspend fun PipelineContext.handleAircraftFlightRequest(context: RestContext) {
@@ -27,6 +27,6 @@ suspend fun PipelineContext.handleAircraftFlightRequest(context: RestContext) {
   val icao24 = request.icao24
 
   val response = context.aircraftService.getFlight(icao24)
-      ?: error.notFound("Couldn't find a flight for $icao24")
+    ?: error.notFound("Couldn't find a flight for $icao24")
   call.respond(response)
 }

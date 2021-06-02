@@ -25,6 +25,6 @@ data class AirportIcao(val icao: String) {
   override fun toString() = this.icao
 
   companion object {
-     const val MaxLength = 4
+    const val MaxLength = 4
   }
 }

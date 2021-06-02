@@ -25,7 +25,7 @@ object AircraftStateTable : Table("aircraft_data") {
   val verticalRate = double("vertical_speed").nullable()
   val heading = double("heading").nullable()
 
-   init {
+  init {
     uniqueIndex(aircraftId, time)
   }
 }

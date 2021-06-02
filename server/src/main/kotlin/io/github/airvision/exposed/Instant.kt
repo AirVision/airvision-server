@@ -18,8 +18,8 @@ import java.time.Instant
  */
 fun Table.epochSecond(name: String): Column<Instant> {
   return long(name).transform(
-      to = { value -> Instant.ofEpochSecond(value) },
-      from = { value -> value.epochSecond })
+    to = { value -> Instant.ofEpochSecond(value) },
+    from = { value -> value.epochSecond })
 }
 
 /**
@@ -27,6 +27,6 @@ fun Table.epochSecond(name: String): Column<Instant> {
  */
 fun Table.epochMilli(name: String): Column<Instant> {
   return long(name).transform(
-      to = { value -> Instant.ofEpochMilli(value) },
-      from = { value -> value.toEpochMilli() })
+    to = { value -> Instant.ofEpochMilli(value) },
+    from = { value -> value.toEpochMilli() })
 }

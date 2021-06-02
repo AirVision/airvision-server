@@ -28,17 +28,18 @@ class OpenFlightsAirportService : AirportService {
     private val AirportsReadInvalidation = Duration.hours(24).inWholeMilliseconds
   }
 
-  @Volatile private var airportCache: AirportCache? = null
+  @Volatile
+  private var airportCache: AirportCache? = null
   private val mutex = Mutex()
 
   override suspend fun getAll(): Collection<Airport> =
-      getAirportsCache().byIcao.values
+    getAirportsCache().byIcao.values
 
   override suspend fun get(icao: AirportIcao): Airport? =
-      getAirportsCache().byIcao[icao]
+    getAirportsCache().byIcao[icao]
 
   override suspend fun get(iata: AirportIata): Airport? =
-      getAirportsCache().byIata[iata]
+    getAirportsCache().byIata[iata]
 
   // TODO: Update periodically to reduce delay when updating
 
@@ -58,7 +59,7 @@ class OpenFlightsAirportService : AirportService {
             if (cache == null)
               throw ex
             AirportCache(cache!!.byIcao, cache!!.byIata,
-                System.currentTimeMillis() + Duration.minutes(1).inWholeMilliseconds)
+              System.currentTimeMillis() + Duration.minutes(1).inWholeMilliseconds)
           }
           airportCache = cache
         }
@@ -75,9 +76,9 @@ class OpenFlightsAirportService : AirportService {
   }
 
   private class AirportCache(
-      val byIcao: Map<AirportIcao, Airport>,
-      val byIata: Map<AirportIata, Airport>,
-      val invalidationTime: Long
+    val byIcao: Map<AirportIcao, Airport>,
+    val byIata: Map<AirportIata, Airport>,
+    val invalidationTime: Long
   )
 
   private fun AirportCache.needsUpdate() = System.currentTimeMillis() > invalidationTime
@@ -85,13 +86,13 @@ class OpenFlightsAirportService : AirportService {
   private suspend fun requestAirports(): List<Airport> {
     val client = HttpClient()
     val content = client.get<String>(
-        "https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat")
+      "https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat")
     return csvReader()
-        .readAll(content)
-        .asSequence()
-        .map { row -> decodeAirport(row) }
-        .filterNotNull()
-        .toList()
+      .readAll(content)
+      .asSequence()
+      .map { row -> decodeAirport(row) }
+      .filterNotNull()
+      .toList()
   }
 
   private fun decodeAirport(list: List<String>): Airport? {

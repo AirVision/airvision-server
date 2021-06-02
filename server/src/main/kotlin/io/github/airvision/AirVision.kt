@@ -57,7 +57,10 @@ fun main() {
   }
   val path = Paths.get("config.json")
   val config = if (Files.exists(path)) {
-    json.decodeFromString(AirVision.Config.serializer(), Files.readAllLines(path).joinToString("\n"))
+    json.decodeFromString(
+      AirVision.Config.serializer(),
+      Files.readAllLines(path).joinToString("\n")
+    )
   } else {
     val config = AirVision.Config()
     Files.newBufferedWriter(path).use { writer ->
@@ -76,10 +79,11 @@ fun main() {
   val database = Database.connect(dataSource)
   transaction(db = database) {
     SchemaUtils.createMissingTablesAndColumns(
-        AircraftFlightTable,
-        AircraftManufacturerTable,
-        AircraftInfoTable,
-        AircraftStateTable)
+      AircraftFlightTable,
+      AircraftManufacturerTable,
+      AircraftInfoTable,
+      AircraftStateTable
+    )
   }
   AirVision.logger.info("Successfully connected to the database.")
   val databaseUpdateDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
@@ -98,8 +102,10 @@ fun main() {
   aircraftInfoService.init()
 
   // Initialize the aircraft service
-  val aircraftService = AircraftService(database, databaseUpdateDispatcher,
-      osn, fr24, airportService, aircraftInfoService)
+  val aircraftService = AircraftService(
+    database, databaseUpdateDispatcher,
+    osn, fr24, airportService, aircraftInfoService
+  )
   aircraftService.init()
 
   // Initialize the aircraft flight info service
@@ -111,7 +117,12 @@ fun main() {
   val restConfig = config.rest
 
   AirVision.logger.info("Starting the REST Server, bound to ${restConfig.host}:${restConfig.port}")
-  embeddedServer(Netty, port = restConfig.port, host = restConfig.host, module = rest::setup).start()
+  embeddedServer(
+    Netty,
+    port = restConfig.port,
+    host = restConfig.host,
+    module = rest::setup
+  ).start()
 }
 
 object AirVision {
@@ -120,19 +131,19 @@ object AirVision {
 
   @Serializable
   class Config(
-      @SerialName("rest-server") val rest: Rest = Rest(),
-      @SerialName("open-sky-network") val osn: OsnSettings =
-          OsnSettings("", ""),
-      @SerialName("database") val database: DatabaseSettings =
-          DatabaseSettings("jdbc:postgresql://localhost/airvision", "airvision", "password"),
-      @SerialName("visible-aircraft") val visibleAircraft: VisibleAircraft =
-          VisibleAircraft()
+    @SerialName("rest-server") val rest: Rest = Rest(),
+    @SerialName("open-sky-network") val osn: OsnSettings =
+      OsnSettings("", ""),
+    @SerialName("database") val database: DatabaseSettings =
+      DatabaseSettings("jdbc:postgresql://localhost/airvision", "airvision", "password"),
+    @SerialName("visible-aircraft") val visibleAircraft: VisibleAircraft =
+      VisibleAircraft()
   ) {
 
     @Serializable
     class Rest(
-        val host: String = "0.0.0.0",
-        val port: Int = 80
+      val host: String = "0.0.0.0",
+      val port: Int = 80
     )
 
     /**
@@ -140,8 +151,8 @@ object AirVision {
      */
     @Serializable
     class VisibleAircraft(
-        // https://physics.stackexchange.com/questions/129317/how-much-of-the-sky-is-visible-from-a-particular-location
-        val range: Double = 0.185
+      // https://physics.stackexchange.com/questions/129317/how-much-of-the-sky-is-visible-from-a-particular-location
+      val range: Double = 0.185
     )
   }
 }

@@ -16,4 +16,4 @@ import io.github.airvision.util.serializer.ToStringSerializer
  * A serializer for [AircraftIcao24]s.
  */
 object AircraftIcao24Serializer :
-    ToStringSerializer<AircraftIcao24>("AircraftIcao24", AircraftIcao24::parse)
+  ToStringSerializer<AircraftIcao24>("AircraftIcao24", AircraftIcao24::parse)

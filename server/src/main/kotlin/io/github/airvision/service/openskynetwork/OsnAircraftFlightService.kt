@@ -15,7 +15,6 @@ import io.github.airvision.AircraftIcao24
 import io.github.airvision.GeodeticPosition
 import io.github.airvision.Waypoint
 import io.github.airvision.service.AirportService
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -25,22 +24,21 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlin.time.Duration
-import kotlin.time.seconds
 import kotlin.time.toJavaDuration
 
 class OsnAircraftFlightService(
-    private val osnRestService: OsnRestService,
-    private val airportService: AirportService
+  private val osnRestService: OsnRestService,
+  private val airportService: AirportService
 ) {
 
   private val cache = Caffeine.newBuilder()
-      .expireAfterWrite(Duration.seconds(20).toJavaDuration())
-      .executor(Dispatchers.Default.asExecutor())
-      .buildAsync<AircraftIcao24, AircraftFlight> { key, executor ->
-        GlobalScope.async(executor.asCoroutineDispatcher()) {
-          loadFlight(key)
-        }.asCompletableFuture()
-      }
+    .expireAfterWrite(Duration.seconds(20).toJavaDuration())
+    .executor(Dispatchers.Default.asExecutor())
+    .buildAsync<AircraftIcao24, AircraftFlight> { key, executor ->
+      GlobalScope.async(executor.asCoroutineDispatcher()) {
+        loadFlight(key)
+      }.asCompletableFuture()
+    }
 
   fun init() {
   }
@@ -83,15 +81,24 @@ class OsnAircraftFlightService(
               longitude = waypoint.longitude
             if (waypoint.baroAltitude != null)
               altitude = waypoint.baroAltitude
-            val position = GeodeticPosition(latitude!!.toDouble(), longitude!!.toDouble(), altitude.toDouble())
+            val position = GeodeticPosition(
+              latitude = latitude!!.toDouble(),
+              longitude = longitude!!.toDouble(),
+              altitude = altitude.toDouble()
+            )
             waypoints += Waypoint(waypoint.time, position)
           }
           waypoints
         }
       } else null
 
-      AircraftFlight(icao24 = icao24, arrivalAirport = arrivalAirport, departureAirport = departureAirport,
-          estimatedArrivalTime = estimatedArrivalTime, waypoints = waypoints)
+      AircraftFlight(
+        icao24 = icao24,
+        arrivalAirport = arrivalAirport,
+        departureAirport = departureAirport,
+        estimatedArrivalTime = estimatedArrivalTime,
+        waypoints = waypoints
+      )
     }
   }
 

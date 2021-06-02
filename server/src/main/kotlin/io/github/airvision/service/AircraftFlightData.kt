@@ -17,12 +17,12 @@ import io.github.airvision.Waypoint
 import java.time.Instant
 
 data class AircraftFlightData(
-    override val aircraftId: AircraftIcao24,
-    override val time: Instant,
-    val departureAirport: AirportIcao? = null,
-    val departureTime: Option<Instant?> = None,
-    val arrivalAirport: AirportIcao? = null,
-    val estimatedArrivalTime: Option<Instant?> = None,
-    val flightNumber: Option<String?> = None,
-    val waypoints: Option<List<Waypoint>?> = None
+  override val aircraftId: AircraftIcao24,
+  override val time: Instant,
+  val departureAirport: AirportIcao? = null,
+  val departureTime: Option<Instant?> = None,
+  val arrivalAirport: AirportIcao? = null,
+  val estimatedArrivalTime: Option<Instant?> = None,
+  val flightNumber: Option<String?> = None,
+  val waypoints: Option<List<Waypoint>?> = None
 ) : AircraftData

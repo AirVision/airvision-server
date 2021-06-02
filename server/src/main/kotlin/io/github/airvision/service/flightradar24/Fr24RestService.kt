@@ -51,7 +51,7 @@ import java.time.Instant
 import kotlin.time.Duration
 
 class Fr24RestService(
-    private val airportService: AirportService
+  private val airportService: AirportService
 ) {
 
   private val baseUrl = "https://data-live.flightradar24.com"
@@ -67,7 +67,7 @@ class Fr24RestService(
 
   suspend fun getData(): Either<Failure, List<Fr24AircraftData>> {
     val result = client.tryToGet<JsonObject>(
-        "$baseUrl/zones/fcgi/feed.js?gnd=1")
+      "$baseUrl/zones/fcgi/feed.js?gnd=1")
     val time = Instant.now()
     return result.map { json ->
       json.entries
@@ -78,7 +78,7 @@ class Fr24RestService(
 
   suspend fun getExtendedFlightData(id: String): Either<Failure, AircraftFlightData?> {
     val result = client.tryToGet<JsonObject>(
-        "$baseUrl/clickhandler?flight=$id&version=1.5")
+      "$baseUrl/clickhandler?flight=$id&version=1.5")
     return result.map { json -> json.toExtendedFlightData() }
   }
 
@@ -100,25 +100,28 @@ class Fr24RestService(
     val flightNumber = getStringOrNull(ExtendedDataPaths.flightNumber)
 
     val estimatedArrivalTime = (getPrimitiveOrNull(ExtendedDataPaths.estimatedArrivalTime)
-        ?: getPrimitiveOrNull(ExtendedDataPaths.realArrivalTime))?.instantOrNull
-    val departureAirport = getStringOrNull(ExtendedDataPaths.departureAirport)?.let { AirportIcao(it) }
+      ?: getPrimitiveOrNull(ExtendedDataPaths.realArrivalTime))?.instantOrNull
+    val departureAirport =
+      getStringOrNull(ExtendedDataPaths.departureAirport)?.let { AirportIcao(it) }
     val arrivalAirport = getStringOrNull(ExtendedDataPaths.arrivalAirport)?.let { AirportIcao(it) }
     val departureTime = (getPrimitiveOrNull(ExtendedDataPaths.realDepartureTime)
-        ?: getPrimitiveOrNull(ExtendedDataPaths.scheduledDepartureTime))?.instantOrNull
+      ?: getPrimitiveOrNull(ExtendedDataPaths.scheduledDepartureTime))?.instantOrNull
 
     val trailArray = get("trail") as? JsonArray
     val waypoints = trailArray
-        ?.map { it.jsonObject }
-        ?.map { json ->
-          val time = Instant.ofEpochSecond(json.primitive("ts").long)
-          val latitude = json.primitive("lat").double
-          val longitude = json.primitive("lng").double
-          val altitude = json.primitive("alt").double.feetToMeters()
-          Waypoint(time, GeodeticPosition(latitude, longitude, altitude))
-        }
+      ?.map { it.jsonObject }
+      ?.map { json ->
+        val time = Instant.ofEpochSecond(json.primitive("ts").long)
+        val latitude = json.primitive("lat").double
+        val longitude = json.primitive("lng").double
+        val altitude = json.primitive("alt").double.feetToMeters()
+        Waypoint(time, GeodeticPosition(latitude, longitude, altitude))
+      }
 
-    return AircraftFlightData(aircraftId, Instant.now(), departureAirport, Some(departureTime),
-        arrivalAirport, Some(estimatedArrivalTime), Some(flightNumber), Some(waypoints))
+    return AircraftFlightData(
+      aircraftId, Instant.now(), departureAirport, Some(departureTime),
+      arrivalAirport, Some(estimatedArrivalTime), Some(flightNumber), Some(waypoints)
+    )
   }
 
   private suspend fun JsonArray.toFlightData(id: String, receiveTime: Instant): Fr24AircraftData? {
@@ -144,16 +147,22 @@ class Fr24RestService(
     val onGround = this[14].primitive.intOrNull == 1
 
     val flightNumber = Some(this[13].primitive.contentOrNull?.notEmptyOrNull())
-    val departureAirportIata = this[11].primitive.contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
-    val arrivalAirportIata = this[12].primitive.contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
+    val departureAirportIata =
+      this[11].primitive.contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
+    val arrivalAirportIata =
+      this[12].primitive.contentOrNull?.notEmptyOrNull()?.let { AirportIata(it) }
 
     val departureAirport = departureAirportIata?.let { airportService.get(it) }
     val arrivalAirport = arrivalAirportIata?.let { airportService.get(it) }
 
-    val flightData = AircraftFlightData(aircraftId, time,
-        departureAirport?.icao, None, arrivalAirport?.icao, None, flightNumber, None)
-    val stateData = AircraftStateData(aircraftId, time,
-        position, velocity, onGround, verticalRate, heading, callsign)
+    val flightData = AircraftFlightData(
+      aircraftId, time,
+      departureAirport?.icao, None, arrivalAirport?.icao, None, flightNumber, None
+    )
+    val stateData = AircraftStateData(
+      aircraftId, time,
+      position, velocity, onGround, verticalRate, heading, callsign
+    )
 
     return Fr24AircraftData(aircraftId, stateData, id, flightData)
   }

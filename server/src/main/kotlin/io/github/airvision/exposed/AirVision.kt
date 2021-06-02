@@ -16,12 +16,12 @@ import org.jetbrains.exposed.sql.Table
 
 fun Table.airportIcao(name: String): Column<AirportIcao> {
   return varchar(name, AirportIcao.MaxLength).transform(
-      to = { value -> AirportIcao(value) },
-      from = { value -> value.icao })
+    to = { value -> AirportIcao(value) },
+    from = { value -> value.icao })
 }
 
 fun Table.aircraftIcao24(name: String): Column<AircraftIcao24> {
   return integer(name).transform(
-      to = { value -> AircraftIcao24(value) },
-      from = { value -> value.address })
+    to = { value -> AircraftIcao24(value) },
+    from = { value -> value.address })
 }

@@ -24,9 +24,13 @@ class RequestAircraftStateTest {
     val icao24 = AircraftIcao24.parse("A808C4")
     handleRequest(HttpMethod.Get, "/v1/aircraft") {
       addHeader(HttpHeaders.ContentType, "application/json")
-      setBody("""{
-        "icao24": "$icao24"
-      }""".trimIndent())
+      setBody(
+        """
+        {
+          "icao24": "$icao24"
+        }
+        """.trimIndent()
+      )
     }.apply {
       val info = response.parse<AircraftState>()
       assert(info.isRight())

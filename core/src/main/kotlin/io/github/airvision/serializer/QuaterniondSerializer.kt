@@ -26,7 +26,7 @@ import org.spongepowered.math.imaginary.Quaterniond
 object QuaterniondSerializer : KSerializer<Quaterniond> {
 
   override val descriptor: SerialDescriptor =
-      buildSerialDescriptor("Quaterniond", kind = StructureKind.LIST)
+    buildSerialDescriptor("Quaterniond", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): Quaterniond {
     return decoder.collection(descriptor) {

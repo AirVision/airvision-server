@@ -21,4 +21,4 @@ inline fun <R> Decoder.structure(desc: SerialDescriptor, fn: CompositeDecoder.()
 }
 
 inline fun <R> Decoder.collection(desc: SerialDescriptor, fn: CompositeDecoder.() -> R): R =
-    structure(desc, fn)
+  structure(desc, fn)

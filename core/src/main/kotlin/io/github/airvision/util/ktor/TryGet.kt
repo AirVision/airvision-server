@@ -23,17 +23,17 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 suspend inline fun <reified R> HttpClient.tryToGet(
-    urlString: String,
-    crossinline block: HttpRequestBuilder.() -> Unit = {}
+  urlString: String,
+  crossinline block: HttpRequestBuilder.() -> Unit = {}
 ): Either<Failure, R> = tryToHandle {
   get(urlString, block)
 }
 
 suspend inline fun <reified R> HttpClient.tryToGet(
-    scheme: String = "http", host: String = "localhost", port: Int = DEFAULT_PORT,
-    path: String = "/",
-    body: Any = EmptyContent,
-    crossinline block: HttpRequestBuilder.() -> Unit = {}
+  scheme: String = "http", host: String = "localhost", port: Int = DEFAULT_PORT,
+  path: String = "/",
+  body: Any = EmptyContent,
+  crossinline block: HttpRequestBuilder.() -> Unit = {}
 ): Either<Failure, R> = tryToHandle {
   get(scheme, host, port, path, body, block)
 }
@@ -45,9 +45,9 @@ suspend fun <R> tryToHandle(fn: suspend () -> R): Either<Failure, R> {
     val failure = when (ex) {
       is TimeoutCancellationException,
       is SocketTimeoutException,
-      // Is thrown by the HttpTimeout feature
+        // Is thrown by the HttpTimeout feature
       is HttpRequestTimeoutException,
-      // Lets assume that this is also a timeout exception, since the host couldn't be found
+        // Lets assume that this is also a timeout exception, since the host couldn't be found
       is UnknownHostException -> Failure.Timeout
       // Something just went wrong with getting a valid response
       is ResponseException -> Failure.ErrorResponse(ex.response)

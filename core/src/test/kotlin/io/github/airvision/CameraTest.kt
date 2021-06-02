@@ -19,14 +19,14 @@ private const val Epsilon = 0.0001
 class CameraTest {
 
   private fun assertSamePoint(expected: Vector2d, actual: Vector2d?) {
-    check(actual != null) { "Expected $expected, but got $actual"}
-    assert(actual.distanceSquared(expected) < Epsilon) { "Expected $expected, but got $actual"}
+    check(actual != null) { "Expected $expected, but got $actual" }
+    assert(actual.distanceSquared(expected) < Epsilon) { "Expected $expected, but got $actual" }
   }
 
   @Test
   fun `check within camera view 1`() {
     val camera = Camera.ofPerspective(Vector2d(90.0, 90.0))
-        .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(45.0, Vector3d.UNIT_Y)))
+      .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(45.0, Vector3d.UNIT_Y)))
 
     // Left
     assertSamePoint(Vector2d(0.0, 0.5), Vector3d(-1.0, 0.0, 0.0).toViewPosition(camera))
@@ -39,7 +39,7 @@ class CameraTest {
   @Test
   fun `check within camera view 2`() {
     val camera = Camera.ofPerspective(Vector2d(90.0, 90.0))
-        .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(-45.0, Vector3d.UNIT_Y)))
+      .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(-45.0, Vector3d.UNIT_Y)))
 
     // Left
     assertSamePoint(Vector2d(0.0, 0.5), Vector3d(0.0, 0.0, -1.0).toViewPosition(camera))
@@ -52,7 +52,7 @@ class CameraTest {
   @Test
   fun `check within camera view 3`() {
     val camera = Camera.ofPerspective(Vector2d(90.0, 90.0))
-        .withTransform(Transform(Vector3d.ZERO, Quaterniond.IDENTITY))
+      .withTransform(Transform(Vector3d.ZERO, Quaterniond.IDENTITY))
 
     // Left
     assertSamePoint(Vector2d(0.0, 0.5), Vector3d(-1.0, 0.0, -1.0).toViewPosition(camera))
@@ -65,7 +65,7 @@ class CameraTest {
   @Test
   fun `check within camera view 4`() {
     val camera = Camera.ofPerspective(Vector2d(90.0, 90.0))
-        .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(45.0, Vector3d.UNIT_X)))
+      .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(45.0, Vector3d.UNIT_X)))
 
     // Bottom
     assertSamePoint(Vector2d(0.5, 1.0), Vector3d(0.0, 0.0, -1.0).toViewPosition(camera))
@@ -78,7 +78,7 @@ class CameraTest {
   @Test
   fun `check within camera view 5`() {
     val camera = Camera.ofPerspective(Vector2d(90.0, 90.0))
-        .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(135.0, Vector3d.UNIT_Y)))
+      .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(135.0, Vector3d.UNIT_Y)))
 
     // Left
     assertSamePoint(Vector2d(0.0, 0.5), Vector3d(0.0, 0.0, 1.0).toViewPosition(camera))
@@ -91,7 +91,7 @@ class CameraTest {
   @Test
   fun `check outside camera view 1`() {
     val camera = Camera.ofPerspective(Vector2d(90.0, 90.0))
-        .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(45.0, Vector3d.UNIT_Y)))
+      .withTransform(Transform(Vector3d.ZERO, Quaterniond.fromAngleDegAxis(45.0, Vector3d.UNIT_Y)))
 
     check(Vector3d(1.0, 0.0, 1.0).toViewPosition(camera) == null)
     check(Vector3d(0.5, 0.0, -0.5).toViewPosition(camera) == null)

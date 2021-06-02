@@ -21,8 +21,8 @@ import java.time.Instant
 
 @Serializable
 class AircraftStatesRequest(
-    @Contextual val time: Instant? = null,
-    val bounds: GeodeticBounds? = null
+  @Contextual val time: Instant? = null,
+  val bounds: GeodeticBounds? = null
 )
 
 suspend fun PipelineContext.handleAircraftStatesRequest(context: RestContext) {

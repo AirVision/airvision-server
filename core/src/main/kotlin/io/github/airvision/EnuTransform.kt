@@ -23,8 +23,8 @@ import kotlin.math.sin
  * @property rotation The rotation
  */
 data class EnuTransform(
-    val position: GeodeticPosition,
-    val rotation: Quaterniond
+  val position: GeodeticPosition,
+  val rotation: Quaterniond
 )
 
 /**
@@ -36,7 +36,7 @@ fun EnuTransform.toEcefTransform(): Transform {
 
   val enuToEcefMatrix = position.getEnuToEcefRotationMatrix()
   val ecefRotation = Quaterniond.fromRotationTo(
-      Vector3d.UNIT_Z, enuToEcefMatrix.transform(rotation.rotate(Vector3d.UNIT_Z)))
+    Vector3d.UNIT_Z, enuToEcefMatrix.transform(rotation.rotate(Vector3d.UNIT_Z)))
 
   return Transform(ecefPosition, ecefRotation)
 }
@@ -57,8 +57,8 @@ private fun GeodeticPosition.getEnuToEcefRotationMatrix(): Matrix3d {
   // https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_ENU_to_ECEF
 
   return Matrix3d.from(
-      -sinLon, -sinLat * cosLon, cosLat * cosLon,
-      cosLon, -sinLat * sinLon, cosLat * sinLon,
-      0.0, cosLat, sinLat
+    -sinLon, -sinLat * cosLon, cosLat * cosLon,
+    cosLon, -sinLat * sinLon, cosLat * sinLon,
+    0.0, cosLat, sinLat
   )
 }

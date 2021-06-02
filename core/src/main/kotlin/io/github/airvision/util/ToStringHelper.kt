@@ -19,9 +19,9 @@ import kotlin.reflect.KClass
  * Creates a new string.
  */
 inline fun Any.toString(
-    brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
-    omitNullValues: Boolean = false,
-    fn: ToStringHelper.() -> Unit
+  brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
+  omitNullValues: Boolean = false,
+  fn: ToStringHelper.() -> Unit
 ): String {
   contract {
     callsInPlace(fn, InvocationKind.EXACTLY_ONCE)
@@ -33,18 +33,18 @@ inline fun Any.toString(
  * Creates a new [ToStringHelper] for the target object.
  */
 fun Any.toStringHelper(
-    brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
-    omitNullValues: Boolean = false
+  brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
+  omitNullValues: Boolean = false
 ) = ToStringHelper(this::class.getDefaultName(), brackets, omitNullValues)
 
 /**
  * Creates a new string.
  */
 fun toString(
-    name: String,
-    brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
-    omitNullValues: Boolean = false,
-    fn: ToStringHelper.() -> Unit
+  name: String,
+  brackets: ToStringHelper.Brackets = ToStringHelper.Brackets.ROUND,
+  omitNullValues: Boolean = false,
+  fn: ToStringHelper.() -> Unit
 ): String {
   contract {
     callsInPlace(fn, InvocationKind.EXACTLY_ONCE)
@@ -75,11 +75,11 @@ private fun KClass<*>.getDefaultName(): String {
  * @param entrySeparator The separator that is used to join multiple key-value pairs
  */
 class ToStringHelper(
-    private val className: String = "",
-    private var brackets: Brackets = Brackets.ROUND,
-    private var omitNullValues: Boolean = false,
-    private var nameValueSeparator: String = "=",
-    private var entrySeparator: String = ", "
+  private val className: String = "",
+  private var brackets: Brackets = Brackets.ROUND,
+  private var omitNullValues: Boolean = false,
+  private var nameValueSeparator: String = "=",
+  private var entrySeparator: String = ", "
 ) {
 
   private var first: Entry? = null
@@ -89,19 +89,19 @@ class ToStringHelper(
    * Constructs a new [ToStringHelper] with the
    * simple name of the given [Class].
    */
-  constructor(javaClass: Class<*>): this(javaClass.kotlin)
+  constructor(javaClass: Class<*>) : this(javaClass.kotlin)
 
   /**
    * Constructs a new [ToStringHelper] with the
    * simple name of the given [KClass].
    */
-  constructor(kClass: KClass<*>): this(kClass.getDefaultName())
+  constructor(kClass: KClass<*>) : this(kClass.getDefaultName())
 
   /**
    * Constructs a new [ToStringHelper] with the
    * simple name of the given object.
    */
-  constructor(self: Any): this(self::class)
+  constructor(self: Any) : this(self::class)
 
   /**
    * Applies changes to this [ToStringHelper].
@@ -185,7 +185,8 @@ class ToStringHelper(
    * @param nameValueSeparator The name-value separator
    * @return This helper, for chaining
    */
-  fun nameValueSeparator(nameValueSeparator: String) = apply { this.nameValueSeparator = nameValueSeparator }
+  fun nameValueSeparator(nameValueSeparator: String) =
+    apply { this.nameValueSeparator = nameValueSeparator }
 
   private fun addFirstEntry(key: String?, value: Any?) = apply {
     val entry = createEntry(key, value)
@@ -241,18 +242,19 @@ class ToStringHelper(
     return builder.append(this.brackets.close).toString()
   }
 
-  private fun hasValue(entry: Entry?): Boolean = entry != null && (!this.omitNullValues || entry.value != null)
+  private fun hasValue(entry: Entry?): Boolean =
+    entry != null && (!this.omitNullValues || entry.value != null)
 
   /**
    * The different kind of brackets.
    */
   enum class Brackets(
-      internal val open: Char,
-      internal val close: Char
+    internal val open: Char,
+    internal val close: Char
   ) {
-    ROUND   ('(', ')'),
-    CURLY   ('{', '}'),
-    SQUARE  ('[', ']'),
+    ROUND('(', ')'),
+    CURLY('{', '}'),
+    SQUARE('[', ']'),
   }
 
   private data class Entry(val key: String?, val value: Any?, var next: Entry? = null)

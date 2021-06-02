@@ -59,13 +59,13 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 class OsnAircraftInfoService(
-    private val database: Database,
-    private val updateDispatcher: CoroutineDispatcher,
-    private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
+  private val database: Database,
+  private val updateDispatcher: CoroutineDispatcher,
+  private val getDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AircraftInfoService {
 
-  private val infoCache = buildCache(Duration.minutes(10)) {
-    aircraftId: AircraftIcao24 -> loadById(aircraftId)
+  private val infoCache = buildCache(Duration.minutes(10)) { aircraftId: AircraftIcao24 ->
+    loadById(aircraftId)
   }
 
   private val client = HttpClient()
@@ -144,50 +144,51 @@ class OsnAircraftInfoService(
   }
 
   private val codeToType = mapOf(
-      'L' to AircraftInfo.Type.LandPlane,
-      'S' to AircraftInfo.Type.SeaPlane,
-      'A' to AircraftInfo.Type.Amphibian,
-      'H' to AircraftInfo.Type.Helicopter,
-      'D' to AircraftInfo.Type.Dirigible,
-      'G' to AircraftInfo.Type.Glider
+    'L' to AircraftInfo.Type.LandPlane,
+    'S' to AircraftInfo.Type.SeaPlane,
+    'A' to AircraftInfo.Type.Amphibian,
+    'H' to AircraftInfo.Type.Helicopter,
+    'D' to AircraftInfo.Type.Dirigible,
+    'G' to AircraftInfo.Type.Glider
   )
 
   private val codeToEngineType = mapOf(
-      'P' to AircraftEngineType.Piston,
-      'T' to AircraftEngineType.Turboprop,
-      'J' to AircraftEngineType.Jet
+    'P' to AircraftEngineType.Piston,
+    'T' to AircraftEngineType.Turboprop,
+    'J' to AircraftEngineType.Jet
   )
 
   override suspend fun get(aircraftId: AircraftIcao24): AircraftInfo? =
-      this.infoCache.get(aircraftId).await()
+    this.infoCache.get(aircraftId).await()
 
   private suspend fun loadById(aircraftId: AircraftIcao24): AircraftInfo? {
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftInfoTable
-          .select { AircraftInfoTable.aircraftId eq aircraftId }
-          .map {
-            val manufacturerId = it[AircraftInfoTable.manufacturer]
-            val manufacturer =
-                if (manufacturerId != null) getManufacturerById(manufacturerId)?.copy(code = null) else null
-            val model = it[AircraftInfoTable.model]
-            val owner = it[AircraftInfoTable.owner]
+        .select { AircraftInfoTable.aircraftId eq aircraftId }
+        .map {
+          val manufacturerId = it[AircraftInfoTable.manufacturer]
+          val manufacturer =
+            if (manufacturerId != null) getManufacturerById(manufacturerId)?.copy(code = null)
+            else null
+          val model = it[AircraftInfoTable.model]
+          val owner = it[AircraftInfoTable.owner]
 
-            val description = it[AircraftInfoTable.description]
-            val type = it[AircraftInfoTable.type]
+          val description = it[AircraftInfoTable.description]
+          val type = it[AircraftInfoTable.type]
 
-            val weightCategory = it[AircraftInfoTable.weightCategory]
+          val weightCategory = it[AircraftInfoTable.weightCategory]
 
-            val engineCount = it[AircraftInfoTable.engineCount]
-            val engineName = it[AircraftInfoTable.engineName]
+          val engineCount = it[AircraftInfoTable.engineCount]
+          val engineName = it[AircraftInfoTable.engineName]
 
-            val engineType = if (description != null) codeToEngineType[description[2]] else null
-            val engines =
-                if (engineName == null && engineCount == null && engineType == null) null
-                else AircraftEngines(engineType, engineCount, engineName)
+          val engineType = if (description != null) codeToEngineType[description[2]] else null
+          val engines =
+            if (engineName == null && engineCount == null && engineType == null) null
+            else AircraftEngines(engineType, engineCount, engineName)
 
-            AircraftInfo(aircraftId, model, owner, manufacturer, engines, type, weightCategory)
-          }
-          .firstOrNull()
+          AircraftInfo(aircraftId, model, owner, manufacturer, engines, type, weightCategory)
+        }
+        .firstOrNull()
     }
   }
 
@@ -197,9 +198,9 @@ class OsnAircraftInfoService(
   private suspend fun getManufacturerById(id: EntityID<Int>): AircraftManufacturer? {
     return newSuspendedTransaction(getDispatcher, db = database) {
       AircraftManufacturerTable
-          .select { AircraftManufacturerTable.id eq id }
-          .map { AircraftManufacturerTable.rowToManufacturer(it) }
-          .firstOrNull()
+        .select { AircraftManufacturerTable.id eq id }
+        .map { AircraftManufacturerTable.rowToManufacturer(it) }
+        .firstOrNull()
     }
   }
 
@@ -211,22 +212,23 @@ class OsnAircraftInfoService(
   }
 
   private fun <K : Any, V> buildCache(
-      expireDuration: Duration, fn: suspend (key: K) -> V
+    expireDuration: Duration, fn: suspend (key: K) -> V
   ): AsyncLoadingCache<K, V> = Caffeine.newBuilder()
-      .executor(getDispatcher.asExecutor())
-      .expireAfterAccess(expireDuration.toJavaDuration())
-      .buildAsync { key, executor ->
-        GlobalScope.future(executor.asCoroutineDispatcher()) {
-          fn(key)
-        }
+    .executor(getDispatcher.asExecutor())
+    .expireAfterAccess(expireDuration.toJavaDuration())
+    .buildAsync { key, executor ->
+      GlobalScope.future(executor.asCoroutineDispatcher()) {
+        fn(key)
       }
+    }
 
   private inner class ManufacturerHelper {
 
     private val byName = buildCache<String, Entity<Int, AircraftManufacturer>?>(
-        Duration.seconds(10)) { loadByName(it) }
+      Duration.seconds(10)) { loadByName(it) }
+
     private val byCode = buildCache<String, Entity<Int, AircraftManufacturer>?>(
-        Duration.seconds(10)) { loadByCode(it) }
+      Duration.seconds(10)) { loadByCode(it) }
 
     suspend fun getByCode(code: String): Entity<Int, AircraftManufacturer>? = byCode[code].await()
     suspend fun getByName(name: String): Entity<Int, AircraftManufacturer>? = byName[name].await()
@@ -234,18 +236,28 @@ class OsnAircraftInfoService(
     private suspend fun loadByCode(code: String): Entity<Int, AircraftManufacturer>? {
       return newSuspendedTransaction(getDispatcher, db = database) {
         AircraftManufacturerTable
-            .select { AircraftManufacturerTable.code eq code }
-            .map { Entity(it[AircraftManufacturerTable.id], AircraftManufacturerTable.rowToManufacturer(it)) }
-            .firstOrNull()
+          .select { AircraftManufacturerTable.code eq code }
+          .map {
+            Entity(
+              it[AircraftManufacturerTable.id],
+              AircraftManufacturerTable.rowToManufacturer(it)
+            )
+          }
+          .firstOrNull()
       }
     }
 
     private suspend fun loadByName(name: String): Entity<Int, AircraftManufacturer>? {
       return newSuspendedTransaction(getDispatcher, db = database) {
         AircraftManufacturerTable
-            .select { AircraftManufacturerTable.name eq name }
-            .map { Entity(it[AircraftManufacturerTable.id], AircraftManufacturerTable.rowToManufacturer(it)) }
-            .firstOrNull()
+          .select { AircraftManufacturerTable.name eq name }
+          .map {
+            Entity(
+              it[AircraftManufacturerTable.id],
+              AircraftManufacturerTable.rowToManufacturer(it)
+            )
+          }
+          .firstOrNull()
       }
     }
 
@@ -268,11 +280,11 @@ class OsnAircraftInfoService(
           }
         }
         val id = AircraftManufacturerTable
-            .insertAndGetId {
-              it[code] = uniqueCode
-              it[name] = data.name
-              it[country] = data.country
-            }
+          .insertAndGetId {
+            it[code] = uniqueCode
+            it[name] = data.name
+            it[country] = data.country
+          }
         Entity(id, AircraftManufacturer(data.code, data.name, data.country))
       }
       val completed = CompletableFuture.completedFuture(entity)
@@ -289,7 +301,7 @@ class OsnAircraftInfoService(
     val manufacturers = ManufacturerHelper()
     csvReader().suspendedOpen(inputStream) {
       val header = readAllAsSequence().first()
-          .map { it.lowercase() }
+        .map { it.lowercase() }
       val index = object {
         val aircraftId = header.indexOf("icao24")
         val manufacturerCode = header.indexOf("manufacturericao")
@@ -323,8 +335,9 @@ class OsnAircraftInfoService(
           AircraftInfo.Type.Glider
         } else null
 
-        val manufacturer = if (manufacturerName.isBlank()) null else
+        val manufacturer = if (manufacturerName.isNotBlank()) {
           manufacturers.getOrInsert(CsvManufacturer(manufacturerCode, manufacturerName, null))
+        } else null
 
         val weightCategory = when {
           (!description.isNullOrEmpty() && description[0] == 'G') ||
@@ -338,26 +351,28 @@ class OsnAircraftInfoService(
         }
 
         var engineCount: Int? =
-            if (description?.length ?: 0 > 1) description!![1].toString().toIntOrNull() else null
+          if (description?.length ?: 0 > 1) description!![1].toString().toIntOrNull()
+          else null
         var engineName: String? = null
 
         val enginesValue = it[index.engines]
         if (enginesValue.isNotBlank() && !enginesValue.contains("no engines", ignoreCase = true)) {
           val engineEntries = enginesValue
-              .split("<br>")
-              .asSequence()
-              .filter { it.isNotBlank() }
-              .map { it
-                  .replace("&amp;", "&")
-                  .replace("&nbsp;", " ")
-                  .replace("\\s+".toRegex(), " ") // Replace duplicate spaces
-              }
-              .map {
-                val result = enginesRegex.matchEntire(it) ?: error("Should never happen")
-                val count = result.groups[1]?.value?.toInt() ?: 1
-                EngineEntry(result.groups[2]!!.value, count)
-              }
-              .toList()
+            .split("<br>")
+            .asSequence()
+            .filter { it.isNotBlank() }
+            .map {
+              it
+                .replace("&amp;", "&")
+                .replace("&nbsp;", " ")
+                .replace("\\s+".toRegex(), " ") // Replace duplicate spaces
+            }
+            .map {
+              val result = enginesRegex.matchEntire(it) ?: error("Should never happen")
+              val count = result.groups[1]?.value?.toInt() ?: 1
+              EngineEntry(result.groups[2]!!.value, count)
+            }
+            .toList()
           if (engineEntries.size == 1) {
             val entry = engineEntries.first()
             engineCount = entry.count
@@ -383,8 +398,8 @@ class OsnAircraftInfoService(
   }
 
   private data class EngineEntry(
-      val name: String,
-      val count: Int
+    val name: String,
+    val count: Int
   )
 
   /**
@@ -395,8 +410,8 @@ class OsnAircraftInfoService(
     withContext(Dispatchers.IO) {
       BufferedReader(InputStreamReader(inputStream)).use { reader ->
         val lines = reader.lines().asSequence()
-            .drop(2)
-            .filter { it.isNotEmpty() }
+          .drop(2)
+          .filter { it.isNotEmpty() }
         for (line in lines) {
           val separator = "\",\""
           val index = line.indexOf(separator)
@@ -423,8 +438,8 @@ class OsnAircraftInfoService(
   }
 
   private data class CsvManufacturer(
-      val code: String?,
-      val name: String,
-      val country: String?
+    val code: String?,
+    val name: String,
+    val country: String?
   )
 }

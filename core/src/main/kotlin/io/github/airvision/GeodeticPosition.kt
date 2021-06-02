@@ -28,9 +28,9 @@ import kotlin.math.sqrt
  */
 @Serializable(with = GeodeticPositionSerializer::class)
 data class GeodeticPosition(
-    val latitude: Double,
-    val longitude: Double,
-    val altitude: Double = 0.0
+  val latitude: Double,
+  val longitude: Double,
+  val altitude: Double = 0.0
 ) {
 
   override fun toString() = toString {

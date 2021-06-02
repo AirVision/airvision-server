@@ -23,9 +23,9 @@ class OsnTest {
   @Test
   fun `get all aircraft`() = runBlocking {
     (osn.getStates().orNull()?.data ?: listOf())
-        .asSequence()
-        .take(10)
-        .forEach { println(it) }
+      .asSequence()
+      .take(10)
+      .forEach { println(it) }
   }
 
   @Test
@@ -37,8 +37,8 @@ class OsnTest {
   @Test
   fun `get aircraft's in bounds`(): Unit = runBlocking {
     val bounds = GeodeticBounds(
-        min = GeodeticPosition(-26.0, -47.0),
-        max = GeodeticPosition(-18.0, -38.0)
+      min = GeodeticPosition(-26.0, -47.0),
+      max = GeodeticPosition(-18.0, -38.0)
     )
     // https://opensky-network.org/api/states/all?lamin=-26.0&lamax=-18.0&lomin=-47.0&lomax=-38.0
     val aircraft = osn.getStates(bounds)

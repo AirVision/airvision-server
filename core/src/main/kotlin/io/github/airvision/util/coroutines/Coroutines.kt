@@ -12,7 +12,7 @@ package io.github.airvision.util.coroutines
 import kotlin.time.Duration
 
 suspend fun delay(millis: Long) =
-    kotlinx.coroutines.delay(millis)
+  kotlinx.coroutines.delay(millis)
 
 suspend fun delay(duration: Duration) =
-    kotlinx.coroutines.delay(duration.inWholeMilliseconds)
+  kotlinx.coroutines.delay(duration.inWholeMilliseconds)

@@ -42,41 +42,45 @@ import kotlin.math.roundToInt
 
 @Serializable
 data class VisibleAircraftRequest(
-    @Contextual val time: Instant,
-    val position: GeodeticPosition,
-    @Contextual val rotation: Quaterniond,
-    @SerialName("rotation_accuracy") val rotationAccuracy: Double?,
-    @Contextual val fov: Vector2d,
-    @SerialName("aircrafts") val detections: List<Detection>
+  @Contextual val time: Instant,
+  val position: GeodeticPosition,
+  @Contextual val rotation: Quaterniond,
+  @SerialName("rotation_accuracy") val rotationAccuracy: Double?,
+  @Contextual val fov: Vector2d,
+  @SerialName("aircrafts") val detections: List<Detection>
 ) {
 
   override fun toString() = ToStringHelper()
-      .add("time", this.time.epochSecond)
-      .add("position", this.position)
-      .add("rotation", this.rotation)
-      .add("fov", this.fov)
-      .add("detections", this.detections.joinToString(separator = ",", prefix = "[", postfix = "]"))
-      .toString()
+    .add("time", this.time.epochSecond)
+    .add("position", this.position)
+    .add("rotation", this.rotation)
+    .add("fov", this.fov)
+    .add("detections", this.detections.joinToString(separator = ",", prefix = "[", postfix = "]"))
+    .toString()
 }
 
 @Serializable
 data class Detection(
-    @Contextual val position: Vector2d,
-    @Contextual val size: Vector2d
+  @Contextual val position: Vector2d,
+  @Contextual val size: Vector2d
 )
 
 @Serializable
 data class VisibleAircraftResponse(
-    val states: List<AircraftState?>
+  val states: List<AircraftState?>
 )
 
 class NarrowResult(
-    val fov: Vector2d,
-    val transform: Transform,
-    val detections: List<Detection>
+  val fov: Vector2d,
+  val transform: Transform,
+  val detections: List<Detection>
 )
 
-private fun narrowCameraView(fov: Vector2d, transform: Transform, detections: Collection<Detection>): NarrowResult {
+private fun narrowCameraView(
+  fov: Vector2d,
+  transform: Transform,
+  detections: Collection<Detection>
+): NarrowResult {
   // Narrow the FOV to the aircraft that are actually visible in the image.
   // This should prevent some edge cases where a center aircraft is detected,
   // but there's an aircraft visible near the edge of the screen which wasn't
@@ -90,10 +94,10 @@ private fun narrowCameraView(fov: Vector2d, transform: Transform, detections: Co
   fun Detection.min(): Vector2d = position.sub(max(minDetectionSize, size.div(2.0)))
   fun Detection.max(): Vector2d = position.add(max(minDetectionSize, size.div(2.0)))
 
-  val minDetectionX = (detections.map { it.min().x }.minOrNull()!! - margin).coerceIn(0.0, 1.0) - 0.5
-  val minDetectionY = (detections.map { it.min().y }.minOrNull()!! - margin).coerceIn(0.0, 1.0) - 0.5
-  val maxDetectionX = (detections.map { it.max().x }.maxOrNull()!! + margin).coerceIn(0.0, 1.0) - 0.5
-  val maxDetectionY = (detections.map { it.max().y }.maxOrNull()!! + margin).coerceIn(0.0, 1.0) - 0.5
+  val minDetectionX = (detections.minOf { it.min().x } - margin).coerceIn(0.0, 1.0) - 0.5
+  val minDetectionY = (detections.minOf { it.min().y } - margin).coerceIn(0.0, 1.0) - 0.5
+  val maxDetectionX = (detections.maxOf { it.max().x } + margin).coerceIn(0.0, 1.0) - 0.5
+  val maxDetectionY = (detections.maxOf { it.max().y } + margin).coerceIn(0.0, 1.0) - 0.5
 
   val factorX = maxDetectionX - minDetectionX
   val factorY = maxDetectionY - minDetectionY
@@ -119,9 +123,12 @@ private fun narrowCameraView(fov: Vector2d, transform: Transform, detections: Co
   rotation = rotation.mul(Quaterniond.fromAngleDegAxis(rotateFovXAxis, xAxis))
 
   val newDetections = detections
-      .map { detection -> detection.copy(
-          position = detection.position.sub(minDetectionX, minDetectionY),
-          size = detection.size.div(factorX, factorY)) }
+    .map { detection ->
+      detection.copy(
+        position = detection.position.sub(minDetectionX, minDetectionY),
+        size = detection.size.div(factorX, factorY)
+      )
+    }
 
   return NarrowResult(newFov, transform.copy(rotation = rotation), newDetections)
 }
@@ -141,8 +148,8 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
   val camera = Camera.ofPerspective(fov).withTransform(transform)
   val visibleAircraftConfig = context.config.visibleAircraft
 
-  val bounds = GeodeticBounds.ofCenterAndSize(request.position,
-      Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
+  val bounds = GeodeticBounds.ofCenterAndSize(
+    request.position, Vector2d(visibleAircraftConfig.range, visibleAircraftConfig.range))
   val possibleStates = context.aircraftService.getAllWithin(bounds, request.time)
 
   var states = tryMatch(camera, possibleStates, detections)
@@ -150,16 +157,20 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
     // Try again with slight alterations to the camera orientation,
     // rotate the camera in different directions and check for better
     // results, e.g. 10 degrees up, down, left, right, up-left, etc.
-    val alteration = if (request.rotationAccuracy == null) 10.0 else max(5.0, request.rotationAccuracy)
+    val alteration =
+      if (request.rotationAccuracy == null) 10.0 else max(5.0, request.rotationAccuracy)
+
     fun tryWithAlteration(xModifier: Double, yModifier: Double): Boolean {
       var alteredCamera = Camera.ofPerspective(fov)
-          .withTransform(transform)
+        .withTransform(transform)
       val xAxis = alteredCamera.xAxis
       val yAxis = alteredCamera.yAxis
       alteredCamera = alteredCamera.rotate(
-          Quaterniond.fromAngleDegAxis(alteration * xModifier, yAxis))
+        Quaterniond.fromAngleDegAxis(alteration * xModifier, yAxis)
+      )
       alteredCamera = alteredCamera.rotate(
-          Quaterniond.fromAngleDegAxis(alteration * yModifier, xAxis))
+        Quaterniond.fromAngleDegAxis(alteration * yModifier, xAxis)
+      )
 
       val statesForMargin = tryMatch(alteredCamera, possibleStates, detections)
       if (statesForMargin.count { it != null } != detections.size)
@@ -180,63 +191,67 @@ suspend fun PipelineContext.handleVisibleAircraftRequest(context: RestContext) {
   call.respond(VisibleAircraftResponse(states))
 }
 
-fun tryMatch(camera: Camera, states: Collection<AircraftState>, aircrafts: List<Detection>): List<AircraftState?> {
+fun tryMatch(
+  camera: Camera,
+  states: Collection<AircraftState>,
+  aircrafts: List<Detection>
+): List<AircraftState?> {
   val closestInView = states
-      .map { state ->
-        val position = state.position?.toEcefPosition()
-            ?: return@map null // Position not known
-        val viewPosition = position.toViewPosition(camera)
-            ?: return@map null // Not within the camera view
-        Triple(position, viewPosition, state)
-      }
-      .filterNotNull()
-      // Sort by the aircraft closest to the camera first
-      .sortedBy { (position, _, _) -> camera.position.distanceSquared(position) }
+    .map { state ->
+      val position = state.position?.toEcefPosition()
+        ?: return@map null // Position not known
+      val viewPosition = position.toViewPosition(camera)
+        ?: return@map null // Not within the camera view
+      Triple(position, viewPosition, state)
+    }
+    .filterNotNull()
+    // Sort by the aircraft closest to the camera first
+    .sortedBy { (position, _, _) -> camera.position.distanceSquared(position) }
 
   val closestMutable = closestInView.toMutableList()
   val used = mutableSetOf<AircraftState>()
   return aircrafts
-      .withIndex()
-      // We need to make groups for image sizes, sometimes, most most likely when
-      // aircraft's are far away, the sizes will be almost the same, so we can no
-      // longer depend on the distance, in this case we need to depend on the screen
-      // positions. The groups make sure that the images are in the groups where the
-      // size is more or less the same.
-      .groupBy { entry ->
-        val (_, aircraft) = entry
+    .withIndex()
+    // We need to make groups for image sizes, sometimes, most most likely when
+    // aircraft's are far away, the sizes will be almost the same, so we can no
+    // longer depend on the distance, in this case we need to depend on the screen
+    // positions. The groups make sure that the images are in the groups where the
+    // size is more or less the same.
+    .groupBy { entry ->
+      val (_, aircraft) = entry
 
-        // 0.0 to 1.0 range
-        // group everything by difference sections in x and y
-        val maxDifference = 0.1 // TODO: Adjust this value, if needed
-        val position = aircraft.position
+      // 0.0 to 1.0 range
+      // group everything by difference sections in x and y
+      val maxDifference = 0.1 // TODO: Adjust this value, if needed
+      val position = aircraft.position
 
-        val xGroup = (position.x / maxDifference).roundToInt()
-        val yGroup = (position.y / maxDifference).roundToInt()
-        Vector2i(xGroup, yGroup)
+      val xGroup = (position.x / maxDifference).roundToInt()
+      val yGroup = (position.y / maxDifference).roundToInt()
+      Vector2i(xGroup, yGroup)
+    }
+    .asSequence()
+    // The biggest images have priority, which means they're closer,
+    // the closest are also first in the closestLimited list
+    .sortedBy { (group, _) -> -(group.x * group.y) }
+    .map { (_, entries) ->
+      // In every group, the closest aircraft based on the screen position will be
+      // used, when in different groups, the distance will be mainly used
+      val closest = closestMutable.poll(entries.size)
+      entries.map { entry ->
+        val (index, aircraft) = entry
+        val result = closest
+          .asSequence()
+          .sortedBy { (_, viewPosition, _) -> viewPosition.distanceSquared(aircraft.position) }
+          // Only returns true the first time it was matched
+          .filter { (_, _, state) -> used.add(state) }
+          .firstOrNull()
+        index to result?.third
       }
-      .asSequence()
-      // The biggest images have priority, which means they're closer,
-      // the closest are also first in the closestLimited list
-      .sortedBy { (group, _) -> -(group.x * group.y) }
-      .map { (_, entries) ->
-        // In every group, the closest aircraft based on the screen position will be
-        // used, when in different groups, the distance will be mainly used
-        val closest = closestMutable.poll(entries.size)
-        entries.map { entry ->
-          val (index, aircraft) = entry
-          val result = closest
-              .asSequence()
-              .sortedBy { (_, viewPosition, _) -> viewPosition.distanceSquared(aircraft.position) }
-              // Only returns true the first time it was matched
-              .filter { (_, _, state) -> used.add(state) }
-              .firstOrNull()
-          index to result?.third
-        }
-      }
-      .flatten()
-      // Bring back the original ordering
-      .sortedBy { (index, _) -> index }
-      // Extract only the state
-      .map { (_, state) -> state }
-      .toList()
+    }
+    .flatten()
+    // Bring back the original ordering
+    .sortedBy { (index, _) -> index }
+    // Extract only the state
+    .map { (_, state) -> state }
+    .toList()
 }

@@ -18,18 +18,22 @@ enum class WeightCategory {
    * Ultralight, like gliders, etc.
    */
   Ultralight,
+
   /**
    * < 15500 lbs
    */
   Light,
+
   /**
    * 15500 to 75000 lbs
    */
   Normal,
+
   /**
    * 75000 to 300000 lbs
    */
   Heavy,
+
   /**
    * > 300000 lbs
    */

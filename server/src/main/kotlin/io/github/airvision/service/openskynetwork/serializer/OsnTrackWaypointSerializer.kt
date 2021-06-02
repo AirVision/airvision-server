@@ -25,7 +25,7 @@ import java.time.Instant
 object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
 
   override val descriptor: SerialDescriptor =
-      buildSerialDescriptor("OsnTrackWaypoint", kind = StructureKind.LIST)
+    buildSerialDescriptor("OsnTrackWaypoint", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): OsnTrackResponse.Waypoint {
     val json = decoder.decodeSerializableValue(JsonArray.serializer())
@@ -41,5 +41,5 @@ object OsnTrackWaypointSerializer : KSerializer<OsnTrackResponse.Waypoint> {
   }
 
   override fun serialize(encoder: Encoder, value: OsnTrackResponse.Waypoint) =
-      throw UnsupportedOperationException()
+    throw UnsupportedOperationException()
 }

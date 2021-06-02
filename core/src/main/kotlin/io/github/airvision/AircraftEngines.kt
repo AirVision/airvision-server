@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class AircraftEngines(
-    val type: AircraftEngineType? = null,
-    val count: Int? = null,
-    val name: String? = null
+  val type: AircraftEngineType? = null,
+  val count: Int? = null,
+  val name: String? = null
 )

@@ -26,8 +26,8 @@ import org.spongepowered.math.vector.Vector3d
  * @property transform The transform of the camera
  */
 data class Camera(
-    val projectionMatrix: Matrix4d,
-    val transform: Transform = Transform.ORIGIN
+  val projectionMatrix: Matrix4d,
+  val transform: Transform = Transform.ORIGIN
 ) {
 
   /**
@@ -149,8 +149,9 @@ fun Vector3d.toViewPosition(camera: Camera): Vector2d? {
     return null
 
   return Vector2d(
-      x.coerceIn(0.0, 1.0),
-      y.coerceIn(0.0, 1.0))
+    x.coerceIn(0.0, 1.0),
+    y.coerceIn(0.0, 1.0)
+  )
 }
 
 private fun Matrix4d.transform(vector: Vector3d): Vector3d {

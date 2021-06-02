@@ -10,4 +10,4 @@
 package io.github.airvision.util
 
 fun String.notEmptyOrNull(): String? =
-    if (this.isEmpty()) null else this
+  if (this.isEmpty()) null else this

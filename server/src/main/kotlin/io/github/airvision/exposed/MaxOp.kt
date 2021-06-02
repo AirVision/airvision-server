@@ -15,9 +15,9 @@ import org.jetbrains.exposed.sql.IColumnType
 import org.jetbrains.exposed.sql.QueryBuilder
 
 private class MaxOp<T>(
-    private val expressions: List<Expression<T>>,
-    override val columnType: IColumnType
-): ExpressionWithColumnType<T>() {
+  private val expressions: List<Expression<T>>,
+  override val columnType: IColumnType
+) : ExpressionWithColumnType<T>() {
 
   override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
     append("GREATEST(")
@@ -27,7 +27,7 @@ private class MaxOp<T>(
 }
 
 fun <T> max(
-    first: ExpressionWithColumnType<T>,
-    second: ExpressionWithColumnType<T>,
-    vararg more: ExpressionWithColumnType<T>
+  first: ExpressionWithColumnType<T>,
+  second: ExpressionWithColumnType<T>,
+  vararg more: ExpressionWithColumnType<T>
 ): ExpressionWithColumnType<T> = MaxOp(listOf(first, second) + more.toList(), first.columnType)

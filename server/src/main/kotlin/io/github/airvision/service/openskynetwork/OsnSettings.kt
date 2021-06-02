@@ -13,6 +13,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class OsnSettings(
-    val username: String,
-    val password: String
+  val username: String,
+  val password: String
 )

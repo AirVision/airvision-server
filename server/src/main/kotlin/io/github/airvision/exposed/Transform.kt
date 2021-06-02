@@ -23,10 +23,10 @@ fun <O, T> Column<O>.transform(to: (O) -> T, from: (T) -> O): Column<T> {
 
 @Suppress("UNCHECKED_CAST")
 private class TransformedColumnType<O, T>(
-    private val original: IColumnType,
-    private val toOriginal: (T) -> O,
-    private val toTransformed: (O) -> T
-): ColumnType() {
+  private val original: IColumnType,
+  private val toOriginal: (T) -> O,
+  private val toTransformed: (O) -> T
+) : ColumnType() {
 
   override fun sqlType(): String = original.sqlType()
 

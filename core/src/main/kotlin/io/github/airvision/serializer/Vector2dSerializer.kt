@@ -24,7 +24,7 @@ import org.spongepowered.math.vector.Vector2d
 object Vector2dSerializer : KSerializer<Vector2d> {
 
   override val descriptor: SerialDescriptor =
-      buildSerialDescriptor("Vector2d", kind = StructureKind.LIST)
+    buildSerialDescriptor("Vector2d", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): Vector2d {
     return decoder.collection(descriptor) {

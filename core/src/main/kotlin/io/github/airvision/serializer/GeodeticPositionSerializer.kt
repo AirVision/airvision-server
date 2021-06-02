@@ -27,7 +27,7 @@ object GeodeticPositionSerializer : KSerializer<GeodeticPosition> {
   private val doubleListSerializer = ListSerializer(Double.serializer())
 
   override val descriptor: SerialDescriptor =
-      buildSerialDescriptor("GeodeticPosition", kind = StructureKind.LIST)
+    buildSerialDescriptor("GeodeticPosition", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): GeodeticPosition {
     val list = doubleListSerializer.deserialize(decoder)

@@ -13,7 +13,7 @@ import io.github.airvision.util.unsafeCast
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelIterator
 import kotlinx.coroutines.channels.ChannelResult
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -26,9 +26,11 @@ fun <E> Channel<E>.distinct(): Channel<E> = DistinctChannel(this) { it }
  * A channel that only allows the same key produced by
  * [keyProvider] to be queued once at the same time.
  */
-fun <E, K> Channel<E>.distinctBy(keyProvider: (E) -> K): Channel<E> = DistinctChannel(this, keyProvider)
+fun <E, K> Channel<E>.distinctBy(keyProvider: (E) -> K): Channel<E> =
+  DistinctChannel(this, keyProvider)
 
-private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E) -> K) : Channel<E> by channel {
+private class DistinctChannel<E, K>(val channel: Channel<E>, val keyProvider: (E) -> K) :
+  Channel<E> by channel {
 
   private val keys = Collections.newSetFromMap(ConcurrentHashMap<K, Boolean>())
 

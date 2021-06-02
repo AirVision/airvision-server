@@ -17,16 +17,16 @@ import java.time.Instant
 
 @Serializable
 data class OsnFlight(
-    val icao24: AircraftIcao24,
-    @Contextual val firstSeen: Instant,
-    val estDepartureAirport: AirportIcao?,
-    @Contextual val lastSeen: Instant,
-    val estArrivalAirport: AirportIcao?,
-    val callsign: String?,
-    val estDepartureAirportHorizDistance: Int,
-    val estDepartureAirportVertDistance: Int,
-    val estArrivalAirportHorizDistance: Int,
-    val estArrivalAirportVertDistance: Int,
-    val departureAirportCandidatesCount: Int,
-    val arrivalAirportCandidatesCount: Int
+  val icao24: AircraftIcao24,
+  @Contextual val firstSeen: Instant,
+  val estDepartureAirport: AirportIcao?,
+  @Contextual val lastSeen: Instant,
+  val estArrivalAirport: AirportIcao?,
+  val callsign: String?,
+  val estDepartureAirportHorizDistance: Int,
+  val estDepartureAirportVertDistance: Int,
+  val estArrivalAirportHorizDistance: Int,
+  val estArrivalAirportVertDistance: Int,
+  val departureAirportCandidatesCount: Int,
+  val arrivalAirportCandidatesCount: Int
 )

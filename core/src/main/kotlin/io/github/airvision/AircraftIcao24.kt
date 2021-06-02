@@ -23,7 +23,8 @@ data class AircraftIcao24(val address: Int) {
 
   init {
     check(this.address <= 0xffffff) {
-      "Given address ${this.address.toString(16)} is more than 24 bits." }
+      "Given address ${this.address.toString(16)} is more than 24 bits."
+    }
   }
 
   /**
@@ -39,7 +40,7 @@ data class AircraftIcao24(val address: Int) {
      * Returns whether the given value is a valid ICAO 24 identifier.
      */
     fun isValid(value: String): Boolean =
-        value.length in 1..maxLength && value.toIntOrNull(16) != null
+      value.length in 1..maxLength && value.toIntOrNull(16) != null
 
     /**
      * Parses a hexadecimal string as an [AircraftIcao24].
@@ -48,11 +49,11 @@ data class AircraftIcao24(val address: Int) {
       if (value.length !in 1..maxLength)
         invalidIdentifier(value)
       val address = value.toIntOrNull(16)
-          ?: invalidIdentifier(value)
+        ?: invalidIdentifier(value)
       return AircraftIcao24(address)
     }
 
     private fun invalidIdentifier(value: String): Nothing =
-        throw IllegalArgumentException("Invalid ICAO 24 identifier: $value")
+      throw IllegalArgumentException("Invalid ICAO 24 identifier: $value")
   }
 }

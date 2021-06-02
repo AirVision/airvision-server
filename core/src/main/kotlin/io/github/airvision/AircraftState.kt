@@ -25,11 +25,11 @@ import java.time.Instant
  */
 @Serializable
 data class AircraftState(
-    @Contextual val time: Instant,
-    val icao24: AircraftIcao24,
-    val position: GeodeticPosition? = null,
-    val velocity: Double? = null,
-    @SerialName("vertical_rate") val verticalRate: Double? = null,
-    val heading: Double? = null,
-    @SerialName("weight_category") val weightCategory: WeightCategory? = null
+  @Contextual val time: Instant,
+  val icao24: AircraftIcao24,
+  val position: GeodeticPosition? = null,
+  val velocity: Double? = null,
+  @SerialName("vertical_rate") val verticalRate: Double? = null,
+  val heading: Double? = null,
+  @SerialName("weight_category") val weightCategory: WeightCategory? = null
 )

@@ -20,7 +20,11 @@ inline fun <R> Encoder.structure(desc: SerialDescriptor, fn: CompositeEncoder.()
   return result
 }
 
-inline fun <R> Encoder.collection(desc: SerialDescriptor, size: Int, fn: CompositeEncoder.() -> R): R {
+inline fun <R> Encoder.collection(
+  desc: SerialDescriptor,
+  size: Int,
+  fn: CompositeEncoder.() -> R
+): R {
   val encoder = beginCollection(desc, size)
   val result = encoder.fn()
   encoder.endStructure(desc)

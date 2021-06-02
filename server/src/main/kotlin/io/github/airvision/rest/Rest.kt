@@ -33,10 +33,10 @@ import io.ktor.util.pipeline.PipelineInterceptor
 import kotlinx.serialization.SerializationException
 
 class Rest(
-    private val aircraftService: AircraftService,
-    private val aircraftInfoService: AircraftInfoService,
-    private val airportService: AirportService,
-    private val config: AirVision.Config
+  private val aircraftService: AircraftService,
+  private val aircraftInfoService: AircraftInfoService,
+  private val airportService: AirportService,
+  private val config: AirVision.Config
 ) {
 
   /**
@@ -61,8 +61,12 @@ class Rest(
       install(StatusPages) {
         suspend fun PipelineContext.handleBadRequest(cause: Exception) {
           AirVision.logger.debug("Invalid request while handling ${call.request.local.uri}", cause)
-          call.respond(HttpStatusCode.BadRequest, ErrorResponse(HttpStatusCode.BadRequest,
-              "Invalid request${if (cause.message != null) ": ${cause.message}" else ""}"))
+          call.respond(
+            HttpStatusCode.BadRequest, ErrorResponse(
+              HttpStatusCode.BadRequest,
+              "Invalid request${if (cause.message != null) ": ${cause.message}" else ""}"
+            )
+          )
         }
         exception<ContentTransformationException> { cause ->
           handleBadRequest(cause)
@@ -76,11 +80,18 @@ class Rest(
         }
         exception<Throwable> { cause ->
           AirVision.logger.error("Error while handling ${call.request.local.uri}", cause)
-          call.respond(HttpStatusCode.InternalServerError, ErrorResponse(HttpStatusCode.InternalServerError))
+          call.respond(
+            HttpStatusCode.InternalServerError,
+            ErrorResponse(HttpStatusCode.InternalServerError)
+          )
         }
         status(HttpStatusCode.NotFound) {
-          call.respond(HttpStatusCode.NotFound, ErrorResponse(HttpStatusCode.NotFound,
-              "Path not found: ${call.request.local.uri}"))
+          call.respond(
+            HttpStatusCode.NotFound, ErrorResponse(
+              HttpStatusCode.NotFound,
+              "Path not found: ${call.request.local.uri}"
+            )
+          )
         }
       }
 
@@ -109,10 +120,10 @@ private fun Route.postOrGet(path: String, body: PipelineInterceptor<Unit, Applic
 }
 
 class RestContext(
-    val aircraftService: AircraftService,
-    val aircraftInfoService: AircraftInfoService,
-    val airportService: AirportService,
-    val config: AirVision.Config
+  val aircraftService: AircraftService,
+  val aircraftInfoService: AircraftInfoService,
+  val airportService: AirportService,
+  val config: AirVision.Config
 )
 
 typealias PipelineContext = io.ktor.util.pipeline.PipelineContext<Unit, ApplicationCall>

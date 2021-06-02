@@ -19,13 +19,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftRequest(
-    val icao24: AircraftIcao24
+  val icao24: AircraftIcao24
 )
 
 suspend fun PipelineContext.handleRtAircraftRequest(context: RestContext) {
   val request = call.receive<AircraftRequest>()
   val aircraft = context.aircraftService.get(request.icao24)
-      ?: error.notFound("Aircraft with icao24 ${request.icao24} isn't found")
+    ?: error.notFound("Aircraft with icao24 ${request.icao24} isn't found")
 
   if (aircraft.position == null)
     error.notFound("Aircraft with icao24 ${request.icao24} has incomplete data")

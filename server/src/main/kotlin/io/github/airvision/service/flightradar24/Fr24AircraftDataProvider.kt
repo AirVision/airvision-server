@@ -24,9 +24,9 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 class Fr24AircraftDataProvider(
-    private val dataSendChannel: SendChannel<AircraftData>,
-    private val restService: Fr24RestService,
-    private val rateLimit: Duration = Duration.seconds(5)
+  private val dataSendChannel: SendChannel<AircraftData>,
+  private val restService: Fr24RestService,
+  private val rateLimit: Duration = Duration.seconds(5)
 ) {
 
   private var job: Job? = null
@@ -52,9 +52,12 @@ class Fr24AircraftDataProvider(
         val result = restService.getData()
         result.fold({ failure ->
           when (failure) {
-            Failure.Timeout -> AirVision.logger.debug("FR24: Timeout while trying to receive aircraft states.")
-            is Failure.ErrorResponse -> AirVision.logger.debug("FR24: ${failure.message}")
-            is Failure.InternalError -> AirVision.logger.debug("Internal server error", failure.exception)
+            Failure.Timeout ->
+              AirVision.logger.debug("FR24: Timeout while trying to receive aircraft states.")
+            is Failure.ErrorResponse ->
+              AirVision.logger.debug("FR24: ${failure.message}")
+            is Failure.InternalError ->
+              AirVision.logger.debug("Internal server error", failure.exception)
           }
           delay(Duration.seconds(1))
         }, { entries ->

@@ -39,7 +39,8 @@ private object JsonTreeNull : JsonTreeElement() {
   override fun toString(): String = "null"
 }
 
-private class JsonTree(val map: MutableMap<String, JsonTreeElement> = mutableMapOf()) : JsonTreeElement() {
+private class JsonTree(val map: MutableMap<String, JsonTreeElement> = mutableMapOf()) :
+  JsonTreeElement() {
 
   fun put(key: String, value: JsonTreeElement) {
     val index = key.indexOf('.')
@@ -54,14 +55,16 @@ private class JsonTree(val map: MutableMap<String, JsonTreeElement> = mutableMap
   }
 
   override fun toString() = this.map.entries.joinToString(
-      separator = ",", prefix = "{", postfix = "}") { entry -> "\"${entry.key}\":${entry.value}" }
+    separator = ",", prefix = "{", postfix = "}") { entry -> "\"${entry.key}\":${entry.value}" }
 }
 
 private fun JsonElement.toTreeElement(): JsonTreeElement {
   return when (this) {
     is JsonPrimitive -> JsonTreePrimitive(content)
     JsonNull -> JsonTreeNull
-    is JsonObject -> JsonTree(this.entries.associate { it.key to it.value.toTreeElement() }.toMutableMap())
+    is JsonObject -> JsonTree(this.entries
+      .associate { it.key to it.value.toTreeElement() }
+      .toMutableMap())
     is JsonArray -> JsonTreeArray(this.map { it.toTreeElement() })
   }
 }
@@ -90,14 +93,14 @@ fun Application.installQueryParameterContentConversion(converter: RestSerializat
     val tree = JsonTree()
 
     parameters.entries()
-        .forEach { (key, value) ->
-          val element = if (value.size == 1) {
-            parse(value[0])
-          } else {
-            JsonTreeArray(value.map { entry -> parse(entry) })
-          }
-          tree.put(key, element)
+      .forEach { (key, value) ->
+        val element = if (value.size == 1) {
+          parse(value[0])
+        } else {
+          JsonTreeArray(value.map { entry -> parse(entry) })
         }
+        tree.put(key, element)
+      }
 
     val content = tree.toString()
     val converted = converter.convertForReceive(this, content)

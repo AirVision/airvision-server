@@ -31,7 +31,8 @@ fun testApp(callback: TestApplicationEngine.() -> Unit) {
   // TODO
 }
 
-inline fun <reified T : Any> TestApplicationResponse.parse(): Either<ErrorResponse, T> = parse(T::class)
+inline fun <reified T : Any> TestApplicationResponse.parse(): Either<ErrorResponse, T> =
+  parse(T::class)
 
 fun <T : Any> TestApplicationResponse.parse(type: KClass<T>): Either<ErrorResponse, T> {
   val content = content ?: return Either.Left(ErrorResponse(HttpStatusCode.NoContent))

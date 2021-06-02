@@ -14,8 +14,8 @@ import io.github.airvision.service.AircraftFlightData
 import io.github.airvision.service.AircraftStateData
 
 class Fr24AircraftData(
-    val aircraftId: AircraftIcao24,
-    val state: AircraftStateData,
-    val flightId: String,
-    val flight: AircraftFlightData
+  val aircraftId: AircraftIcao24,
+  val state: AircraftStateData,
+  val flightId: String,
+  val flight: AircraftFlightData
 )

@@ -22,8 +22,8 @@ import kotlin.time.Duration
 
 @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
 class OsnAircraftDataProvider(
-    private val dataSendChannel: SendChannel<AircraftStateData>,
-    private val restService: OsnRestService
+  private val dataSendChannel: SendChannel<AircraftStateData>,
+  private val restService: OsnRestService
 ) {
 
   private var job: Job? = null

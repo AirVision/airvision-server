@@ -26,12 +26,12 @@ import org.jetbrains.exposed.sql.Database
 import java.time.Instant
 
 class AircraftService(
-    private val database: Database,
-    private val databaseUpdateDispatcher: CoroutineDispatcher,
-    private val osnRestService: OsnRestService,
-    private val fr24RestService: Fr24RestService,
-    private val airportService: AirportService,
-    private val aircraftInfoService: AircraftInfoService
+  private val database: Database,
+  private val databaseUpdateDispatcher: CoroutineDispatcher,
+  private val osnRestService: OsnRestService,
+  private val fr24RestService: Fr24RestService,
+  private val airportService: AirportService,
+  private val aircraftInfoService: AircraftInfoService
 ) {
 
   private lateinit var dataService: AircraftDataService
@@ -43,27 +43,27 @@ class AircraftService(
 
   fun init() {
     val dataService = AircraftDataService(database, airportService, databaseUpdateDispatcher)
-        .also { dataService = it }
+      .also { dataService = it }
     dataService.init()
 
     val adsBService = AdsBAircraftDataProvider(dataService.sendChannel)
-        .also { adsBService = it }
+      .also { adsBService = it }
     adsBService.init()
 
     val osnAircraftDataService = OsnAircraftDataProvider(dataService.sendChannel, osnRestService)
-        .also { osnAircraftDataProvider = it }
+      .also { osnAircraftDataProvider = it }
     osnAircraftDataService.init()
 
     val fr24RestService = Fr24AircraftDataProvider(dataService.sendChannel, fr24RestService)
-        .also { fr24AircraftDataProvider = it }
+      .also { fr24AircraftDataProvider = it }
     fr24RestService.init()
 
     val testAircraftDataProvider = TestAircraftDataProvider(dataService.sendChannel)
-        .also { testAircraftDataProvider = it }
+      .also { testAircraftDataProvider = it }
     testAircraftDataProvider.init()
 
     val osnAircraftFlightService = OsnAircraftFlightService(osnRestService, airportService)
-        .also { osnAircraftFlightService = it }
+      .also { osnAircraftFlightService = it }
     osnAircraftFlightService.init()
   }
 
@@ -77,14 +77,17 @@ class AircraftService(
 
   suspend fun getAll(time: Instant? = null): Collection<AircraftState> {
     return dataService.getStates(time = time).asSequence()
-        .filterNot { state -> state.onGround }
-        .toStates()
+      .filterNot { state -> state.onGround }
+      .toStates()
   }
 
-  suspend fun getAllWithin(bounds: GeodeticBounds, time: Instant? = null): Collection<AircraftState> {
+  suspend fun getAllWithin(
+    bounds: GeodeticBounds,
+    time: Instant? = null
+  ): Collection<AircraftState> {
     return dataService.getStates(bounds = bounds, time = time).asSequence()
-        .filterNot { state -> state.onGround }
-        .toStates()
+      .filterNot { state -> state.onGround }
+      .toStates()
   }
 
   private suspend fun Sequence<AircraftStateData>.toStates(): Collection<AircraftState> {
@@ -106,7 +109,7 @@ class AircraftService(
 
   private fun toAircraftState(data: AircraftStateData, info: AircraftInfo?): AircraftState {
     return AircraftState(data.time, data.aircraftId, data.position, data.velocity,
-        data.verticalRate, data.heading, info?.weightCategory)
+      data.verticalRate, data.heading, info?.weightCategory)
   }
 
   suspend fun getFlight(aircraftId: AircraftIcao24): AircraftFlight? {
@@ -114,7 +117,7 @@ class AircraftService(
       val departureAirport = data.departureAirport?.let { airportService.get(it) }
       val arrivalAirport = data.arrivalAirport?.let { airportService.get(it) }
       AircraftFlight(data.aircraftId, data.flightNumber.orNull(), departureAirport,
-          arrivalAirport, data.estimatedArrivalTime.orNull(), data.waypoints.orNull())
+        arrivalAirport, data.estimatedArrivalTime.orNull(), data.waypoints.orNull())
     }
   }
 }

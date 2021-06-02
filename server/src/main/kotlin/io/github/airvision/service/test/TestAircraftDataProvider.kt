@@ -27,7 +27,7 @@ import java.time.Instant
 import kotlin.time.Duration
 
 class TestAircraftDataProvider(
-    private val dataSendChannel: SendChannel<AircraftStateData>
+  private val dataSendChannel: SendChannel<AircraftStateData>
 ) {
 
   private lateinit var entries: List<TestDataEntry>
@@ -59,7 +59,7 @@ class TestAircraftDataProvider(
 
 @Serializable
 data class TestDataEntry(
-    val icao24: AircraftIcao24,
-    val model: String,
-    val position: GeodeticPosition
+  val icao24: AircraftIcao24,
+  val model: String,
+  val position: GeodeticPosition
 )

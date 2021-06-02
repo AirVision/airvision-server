@@ -19,8 +19,8 @@ import org.spongepowered.math.vector.Vector3d
  * @property rotation The rotation
  */
 data class Transform(
-    val position: Vector3d,
-    val rotation: Quaterniond
+  val position: Vector3d,
+  val rotation: Quaterniond
 ) {
 
   fun withPosition(position: Vector3d) = copy(position = position)

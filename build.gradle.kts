@@ -1,18 +1,30 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath("com.android.tools.build:gradle:7.1.0-alpha01")
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.10")
+  }
+}
+
 plugins {
-  kotlin("jvm") version "1.5.0"
-  kotlin("kapt") version "1.5.0"
-  kotlin("plugin.serialization") version "1.5.0"
-  id("org.cadixdev.licenser") version "0.6.0"
+  kotlin("jvm")
+  kotlin("kapt")
+  kotlin("plugin.serialization")
+  id("org.cadixdev.licenser")
 }
 
 allprojects {
-  defaultTasks("licenseFormat", "build")
-
   group = "io.github.airvision"
   version = "1.0-SNAPSHOT"
 
   repositories {
+    mavenLocal()
     mavenCentral()
+    google()
+    maven("https://maven.google.com/")
     maven("https://repo.spongepowered.org/maven/")
     maven("https://kotlin.bintray.com/kotlinx/")
     maven("https://kotlin.bintray.com/ktor/")
@@ -29,6 +41,8 @@ subprojects {
   apply(plugin = "org.cadixdev.licenser")
 
   ext.set(::ktor.name, ktor)
+
+  defaultTasks("licenseFormat", "build")
 
   afterEvaluate {
     dependencies {
@@ -61,7 +75,7 @@ subprojects {
       fun arrow(module: String) = "io.arrow-kt:arrow-$module:$arrowVersion"
 
       implementation(arrow("core"))
-      kapt(arrow("meta"))
+      // kapt(arrow("meta"))
 
       // Networking
       implementation(group = "io.netty", name = "netty-all", version = "4.1.63.Final")
@@ -96,48 +110,7 @@ subprojects {
     }
 
     tasks {
-      val baseName = "airvision-server"
-
-      jar {
-        archiveBaseName.set(baseName)
-
-        exclude("log4j2.xml")
-        rename("log4j2_prod.xml", "log4j2.xml")
-        // Only enable async logging outside dev mode, using async in combination
-        // with code location logging is disabled by default to avoid performance
-        // issues, but in dev we want to see the locations, so no async here
-        // See https://logging.apache.org/log4j/2.x/manual/async.html @ Location, location, location...
-        rename("log4j2_prod.component.properties", "log4j2.component.properties")
-      }
-
-      val javadocJar = create<Jar>("javadocJar") {
-        archiveBaseName.set(baseName)
-        archiveClassifier.set("javadoc")
-        from(javadoc)
-      }
-
-      val sourceJar = create<Jar>("sourceJar") {
-        archiveBaseName.set(baseName)
-        archiveClassifier.set("sources")
-        from(sourceSets.main.get().allSource)
-      }
-
-      assemble {
-        dependsOn(sourceJar)
-        dependsOn(javadocJar)
-      }
-
-      artifacts {
-        archives(jar.get())
-        archives(sourceJar)
-        archives(javadocJar)
-      }
-
-      listOf(jar.get(), sourceJar, javadocJar).forEach {
-        it.from(project.file("LICENSE.txt"))
-      }
-
-      test {
+      withType<Test> {
         useJUnitPlatform()
       }
 

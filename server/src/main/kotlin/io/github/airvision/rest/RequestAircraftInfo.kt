@@ -19,12 +19,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AircraftModelRequest(
-    val icao24: AircraftIcao24
+  val icao24: AircraftIcao24
 )
 
 suspend fun PipelineContext.handleAircraftModelRequest(context: RestContext) {
   val request = call.receive<AircraftModelRequest>()
   val info = context.aircraftInfoService.get(request.icao24)
-      ?: error.notFound("Couldn't find information for ${request.icao24}")
+    ?: error.notFound("Couldn't find information for ${request.icao24}")
   call.respond(info)
 }

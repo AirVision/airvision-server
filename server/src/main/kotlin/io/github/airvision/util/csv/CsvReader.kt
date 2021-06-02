@@ -15,7 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 
-suspend fun <T> CsvReader.suspendedOpen(inputStream: InputStream, read: suspend CsvFileReader.() -> T): T {
+suspend fun <T> CsvReader.suspendedOpen(
+  inputStream: InputStream,
+  read: suspend CsvFileReader.() -> T
+): T {
   return withContext(Dispatchers.IO) {
     openAsync(inputStream) {
       read()

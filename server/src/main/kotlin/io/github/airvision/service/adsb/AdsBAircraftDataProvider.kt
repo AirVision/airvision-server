@@ -50,14 +50,14 @@ import org.opensky.libadsb.tools as AdsBTools
  * @param receiverPosition The coordinates of the receiver, if known
  */
 class AdsBAircraftDataProvider(
-    private val dataSendChannel: SendChannel<AircraftStateData>,
-    receiverPosition: GeodeticPosition? = null
+  private val dataSendChannel: SendChannel<AircraftStateData>,
+  receiverPosition: GeodeticPosition? = null
 ) {
 
   private data class AdsBCacheEntry(
-      val data: AircraftStateData,
-      val positionDecoder: PositionDecoder = PositionDecoder(),
-      val positionUpdateTime: Instant? = null
+    val data: AircraftStateData,
+    val positionDecoder: PositionDecoder = PositionDecoder(),
+    val positionUpdateTime: Instant? = null
   )
 
   private val positionInvalidateDelay = Duration.seconds(45).inWholeMilliseconds
@@ -66,12 +66,13 @@ class AdsBAircraftDataProvider(
   /**
    * Checks whether the position is still valid.
    */
-  private val AdsBCacheEntry.isPositionValid get() = data.position != null &&
-      Instant.now().toEpochMilli() - positionUpdateTime!!.toEpochMilli() <= positionInvalidateDelay
+  private val AdsBCacheEntry.isPositionValid
+    get() = data.position != null &&
+        Instant.now().toEpochMilli() - positionUpdateTime!!.toEpochMilli() <= positionInvalidateDelay
 
   private val adsBDataCache: Cache<AircraftIcao24, AdsBCacheEntry> = Caffeine.newBuilder()
-      .expireAfterWrite(Duration.minutes(15).toJavaDuration())
-      .build()
+    .expireAfterWrite(Duration.minutes(15).toJavaDuration())
+    .build()
 
   private val modeSDecoder = ModeSDecoder()
   private var serialPort: SerialPort? = null
@@ -117,9 +118,9 @@ class AdsBAircraftDataProvider(
 
   private fun startReading(): Either<String, SerialPort> {
     val serialPort = SerialPort.getCommPorts()
-        // TODO: Filter based on description? Somehow find the device.
-        .firstOrNull()
-        ?: return Either.Left("Couldn't find serial port.")
+      // TODO: Filter based on description? Somehow find the device.
+      .firstOrNull()
+      ?: return Either.Left("Couldn't find serial port.")
     serialPort.addDataListener(object : SerialPortDataListener {
       override fun getListeningEvents() = SerialPort.LISTENING_EVENT_DATA_RECEIVED
       override fun serialEvent(event: SerialPortEvent) = receiveData(event.receivedData)
@@ -142,7 +143,8 @@ class AdsBAircraftDataProvider(
 
   private fun receiveMessage(time: Instant, message: ModeSReply): AircraftStateData {
     val aircraftId = AircraftIcao24(message.transponderAddress)
-    val entry = adsBDataCache.get(aircraftId) { AdsBCacheEntry(AircraftStateData(aircraftId, time)) }!!
+    val entry = adsBDataCache.get(aircraftId) {
+      AdsBCacheEntry(AircraftStateData(aircraftId, time)) }!!
 
     val (data, positionDecoder, positionUpdateTime) = entry
 
@@ -221,9 +223,17 @@ class AdsBAircraftDataProvider(
         position = position?.copy(altitude = AdsBTools.feet2Meters(altitude.toDouble()))
     }
 
-    val newData = data.copy(time = time, onGround = onGround, position = position,
-        callsign = callsign, velocity = velocity, verticalRate = verticalRate, heading = heading)
-    adsBDataCache.put(data.aircraftId, entry.copy(data = newData, positionUpdateTime = newPositionUpdateTime))
+    val newData = data.copy(
+      time = time,
+      onGround = onGround,
+      position = position,
+      callsign = callsign,
+      velocity = velocity,
+      verticalRate = verticalRate,
+      heading = heading
+    )
+    adsBDataCache.put(data.aircraftId, entry.copy(
+      data = newData, positionUpdateTime = newPositionUpdateTime))
     return newData
   }
 

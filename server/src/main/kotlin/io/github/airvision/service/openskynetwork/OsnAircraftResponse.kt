@@ -17,6 +17,6 @@ import java.time.Instant
 
 @Serializable
 data class OsnAircraftResponse(
-    @Contextual val time: Instant,
-    @SerialName("states") val data: List<@Contextual AircraftStateData>?
+  @Contextual val time: Instant,
+  @SerialName("states") val data: List<@Contextual AircraftStateData>?
 )

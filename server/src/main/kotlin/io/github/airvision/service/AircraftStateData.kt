@@ -14,12 +14,12 @@ import io.github.airvision.GeodeticPosition
 import java.time.Instant
 
 data class AircraftStateData(
-    override val aircraftId: AircraftIcao24,
-    override val time: Instant,
-    val position: GeodeticPosition? = null,
-    val velocity: Double? = null,
-    val onGround: Boolean = false,
-    val verticalRate: Double? = null,
-    val heading: Double? = null,
-    val callsign: String? = null
+  override val aircraftId: AircraftIcao24,
+  override val time: Instant,
+  val position: GeodeticPosition? = null,
+  val velocity: Double? = null,
+  val onGround: Boolean = false,
+  val verticalRate: Double? = null,
+  val heading: Double? = null,
+  val callsign: String? = null
 ) : AircraftData

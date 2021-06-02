@@ -17,7 +17,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 
 fun pathOf(first: String, vararg more: String) = Path(listOf(first) + more.asList())
 
@@ -39,34 +38,34 @@ value class Path(val parts: List<String>) {
 }
 
 fun JsonObject.getStringOrNull(key: String): String? =
-    getPrimitiveOrNull(pathOf(key))?.contentOrNull
+  getPrimitiveOrNull(pathOf(key))?.contentOrNull
 
 fun JsonObject.getString(key: String): String =
-    getPrimitive(pathOf(key)).content
+  getPrimitive(pathOf(key)).content
 
 fun JsonObject.getStringOrNull(path: Path): String? =
-    getPrimitiveOrNull(path)?.contentOrNull
+  getPrimitiveOrNull(path)?.contentOrNull
 
 fun JsonObject.getString(path: Path): String =
-    getPrimitive(path).content
+  getPrimitive(path).content
 
 fun JsonObject.getObject(path: Path): JsonObject =
-    getValue(path) as? JsonObject ?: unexpectedJson(path, "JsonObject")
+  getValue(path) as? JsonObject ?: unexpectedJson(path, "JsonObject")
 
 fun JsonObject.getArray(path: Path): JsonArray =
-    getValue(path) as? JsonArray ?: unexpectedJson(path, "JsonArray")
+  getValue(path) as? JsonArray ?: unexpectedJson(path, "JsonArray")
 
 fun JsonObject.getPrimitive(path: Path): JsonPrimitive =
-    getValue(path) as? JsonPrimitive ?: unexpectedJson(path, "JsonPrimitive")
+  getValue(path) as? JsonPrimitive ?: unexpectedJson(path, "JsonPrimitive")
 
 fun JsonObject.getObjectOrNull(path: Path): JsonObject? =
-    get(path) as? JsonObject
+  get(path) as? JsonObject
 
 fun JsonObject.getArrayOrNull(path: Path): JsonArray? =
-    get(path) as? JsonArray
+  get(path) as? JsonArray
 
 fun JsonObject.getPrimitiveOrNull(path: Path): JsonPrimitive? =
-    get(path) as? JsonPrimitive
+  get(path) as? JsonPrimitive
 
 operator fun JsonObject.get(path: Path): JsonElement? {
   if (path.isEmpty())
@@ -75,7 +74,7 @@ operator fun JsonObject.get(path: Path): JsonElement? {
 }
 
 fun JsonObject.getValue(path: Path): JsonElement =
-    get(path) ?: missingPath(path.toString())
+  get(path) ?: missingPath(path.toString())
 
 private fun JsonObject.get(path: Path, index: Int): JsonElement? {
   val element = this[path[index]] ?: return null
@@ -89,7 +88,7 @@ private fun JsonObject.get(path: Path, index: Int): JsonElement? {
 }
 
 internal fun missingPath(path: String): Nothing =
-    throw NoSuchElementException("Path $path is missing in the object.")
+  throw NoSuchElementException("Path $path is missing in the object.")
 
 private fun unexpectedJson(path: Path, expected: String): Nothing =
-    throw SerializationException("Element at path $path is not a $expected")
+  throw SerializationException("Element at path $path is not a $expected")

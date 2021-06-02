@@ -23,16 +23,22 @@ import org.jetbrains.exposed.sql.SortOrder
  *
  * Only supported by a postgres database.
  */
-fun Query.distinctBy(first: ExpressionWithColumnType<*>, vararg more: ExpressionWithColumnType<*>): Query =
-    distinctBy(listOf(first to SortOrder.ASC) + more.asList().map { it to SortOrder.ASC })
+fun Query.distinctBy(
+  first: ExpressionWithColumnType<*>,
+  vararg more: ExpressionWithColumnType<*>
+): Query =
+  distinctBy(listOf(first to SortOrder.ASC) + more.asList().map { it to SortOrder.ASC })
 
 /**
  * Creates a [FieldSet] where entries will be unique based on the columns.
  *
  * Only supported by a postgres database.
  */
-fun Query.distinctBy(first: Pair<ExpressionWithColumnType<*>, SortOrder>, vararg more: Pair<ExpressionWithColumnType<*>, SortOrder>): Query =
-    distinctBy(listOf(first) + more.asList())
+fun Query.distinctBy(
+  first: Pair<ExpressionWithColumnType<*>, SortOrder>,
+  vararg more: Pair<ExpressionWithColumnType<*>, SortOrder>
+): Query =
+  distinctBy(listOf(first) + more.asList())
 
 /**
  * Creates a [Query] where entries will be unique based on the [columns].
@@ -55,7 +61,7 @@ fun Query.distinctBy(columns: Collection<Pair<ExpressionWithColumnType<*>, SortO
 }
 
 private class DistinctBy(
-    val expressions: Collection<ExpressionWithColumnType<*>>
+  val expressions: Collection<ExpressionWithColumnType<*>>
 ) : ExpressionWithColumnType<Int>() {
 
   override val columnType: IColumnType = IntegerColumnType()

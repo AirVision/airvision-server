@@ -43,7 +43,8 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    * The rate limit that requests can be done.
    */
   val rateLimit = Duration.seconds(
-      if (credentials.username.isNotEmpty()) RateLimit else RateLimitAnonymous)
+    if (credentials.username.isNotEmpty()) RateLimit else RateLimitAnonymous
+  )
 
   private val host = run {
     val base = "opensky-network.org"
@@ -75,7 +76,8 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    * Makes a http request to the OpenSky Network API.
    */
   private suspend inline fun <reified T> request(
-      path: String, parameters: Map<String, Any> = mapOf()): Either<Failure, T> {
+    path: String, parameters: Map<String, Any> = mapOf()
+  ): Either<Failure, T> {
     return this.client.tryToGet {
       url(scheme = "https", host = host, path = "/api$path") {
         this.parameters.apply {
@@ -91,7 +93,10 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    * Attempts to get the [AircraftStateData] object for the given
    * [AircraftIcao24] identifier and optional time.
    */
-  suspend fun getState(aircraftId: AircraftIcao24, time: Instant? = null): Either<Failure, OsnAircraftResponse> {
+  suspend fun getState(
+    aircraftId: AircraftIcao24,
+    time: Instant? = null
+  ): Either<Failure, OsnAircraftResponse> {
     return request("/states/all", buildMap {
       put("icao24", aircraftId)
       if (time != null)
@@ -102,7 +107,10 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   /**
    * Attempts to get the [AircraftStateData] objects for the given [GeodeticBounds].
    */
-  suspend fun getStates(bounds: GeodeticBounds, time: Instant? = null): Either<Failure, OsnAircraftResponse> {
+  suspend fun getStates(
+    bounds: GeodeticBounds,
+    time: Instant? = null
+  ): Either<Failure, OsnAircraftResponse> {
     val max = bounds.max
     val min = bounds.min
 
@@ -131,8 +139,8 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
    */
   suspend fun getTrack(aircraftId: AircraftIcao24): Either<Failure, OsnTrackResponse?> {
     return request<OsnTrackResponse>("/tracks", mapOf(
-        "icao24" to aircraftId,
-        "time" to 0
+      "icao24" to aircraftId,
+      "time" to 0
     )).handleErrorWith { failure ->
       if (failure is Failure.ErrorResponse && failure.response.status == HttpStatusCode.NotFound) {
         Either.Right(null)
@@ -163,7 +171,7 @@ class OsnRestService(credentials: OsnSettings = OsnSettings("", "")) {
   }
 
   private suspend fun requestAircraftFlights(
-      aircraftId: AircraftIcao24?, beginTime: Instant, endTime: Instant
+    aircraftId: AircraftIcao24?, beginTime: Instant, endTime: Instant
   ) = request<List<OsnFlight>>("/flights/aircraft", buildMap {
     put("begin", beginTime.epochSecond)
     put("end", endTime.epochSecond)

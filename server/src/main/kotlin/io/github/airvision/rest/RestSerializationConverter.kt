@@ -36,7 +36,7 @@ import kotlin.reflect.jvm.jvmErasure
  * property, while an error will be nested in a "error" property.
  */
 class RestSerializationConverter(
-    private val json: Json
+  private val json: Json
 ) : ContentConverter {
 
   private val jsonContentConverter = SerializationConverter(json)
@@ -53,11 +53,15 @@ class RestSerializationConverter(
   private fun arraySerializer(type: KType): KSerializer<*> {
     val elementType = type.arguments[0].type ?: error("Array<*> is not supported")
     val elementSerializer = serializerByTypeInfo(elementType)
-    return ArraySerializer(elementType.jvmErasure as KClass<Any>, elementSerializer as KSerializer<Any>)
+    return ArraySerializer(
+      elementType.jvmErasure as KClass<Any>,
+      elementSerializer as KSerializer<Any>
+    )
   }
 
   override suspend fun convertForReceive(
-      context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>): Any? {
+    context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>
+  ): Any? {
     val request = context.subject
     val channel = request.value as? ByteReadChannel ?: return null
     val charset = context.call.request.contentCharset() ?: Charsets.UTF_8
@@ -68,14 +72,16 @@ class RestSerializationConverter(
   }
 
   fun convertForReceive(
-      context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>, content: String): Any {
+    context: PipelineContext<ApplicationReceiveRequest, ApplicationCall>, content: String
+  ): Any {
     val serializer = serializerByTypeInfo(context.subject.typeInfo)
     return json.decodeFromString(serializer, content)
-        ?: throw UnsupportedMediaTypeException(ContentType.Application.Json)
+      ?: throw UnsupportedMediaTypeException(ContentType.Application.Json)
   }
 
   override suspend fun convertForSend(
-      context: PipelineContext<Any, ApplicationCall>, contentType: ContentType, value: Any): Any? {
+    context: PipelineContext<Any, ApplicationCall>, contentType: ContentType, value: Any
+  ): Any? {
     val content = if (value is ErrorResponse) {
       mapOf("error" to ErrorInfo(value.code.value, value.message))
     } else {
@@ -86,7 +92,7 @@ class RestSerializationConverter(
 
   @Serializable
   data class ErrorInfo(
-      val code: Int,
-      val message: String? = null
+    val code: Int,
+    val message: String? = null
   )
 }

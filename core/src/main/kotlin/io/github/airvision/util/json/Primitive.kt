@@ -29,7 +29,7 @@ val JsonElement.primitive: JsonPrimitive get() = jsonPrimitive
 val JsonElement.primitiveOrNull: JsonPrimitive? get() = this as? JsonPrimitive
 
 fun JsonObject.primitive(key: String): JsonPrimitive =
-    (get(key) ?: missingPath(key)).jsonPrimitive
+  (get(key) ?: missingPath(key)).jsonPrimitive
 
 val JsonElement.int: Int get() = primitive.int
 val JsonElement.intOrNull: Int? get() = primitiveOrNull?.intOrNull

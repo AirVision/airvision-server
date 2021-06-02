@@ -9,15 +9,15 @@
  */
 package io.github.airvision
 
-import kotlinx.serialization.Serializable
 import io.github.airvision.util.math.component.x
 import io.github.airvision.util.math.component.y
+import kotlinx.serialization.Serializable
 import org.spongepowered.math.vector.Vector2d
 
 @Serializable
 data class GeodeticBounds(
-    val min: GeodeticPosition,
-    val max: GeodeticPosition
+  val min: GeodeticPosition,
+  val max: GeodeticPosition
 ) {
 
   operator fun contains(position: GeodeticPosition): Boolean {
@@ -61,8 +61,9 @@ data class GeodeticBounds(
         maxLongitude -= longitudeRange
 
       return GeodeticBounds(
-          GeodeticPosition(minLatitude, minLongitude),
-          GeodeticPosition(maxLatitude, maxLongitude))
+        GeodeticPosition(minLatitude, minLongitude),
+        GeodeticPosition(maxLatitude, maxLongitude)
+      )
     }
   }
 }

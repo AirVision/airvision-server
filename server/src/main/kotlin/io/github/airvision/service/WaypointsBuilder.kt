@@ -92,7 +92,7 @@ class WaypointsBuilder {
       return
     val time = this.builtWaypoints.firstOrNull()?.time ?: Instant.now()
     val waypointsToAdd = waypoints
-        .takeWhile { waypoint -> waypoint.time < time }
+      .takeWhile { waypoint -> waypoint.time < time }
     builtWaypoints.addAll(0, waypointsToAdd)
     prependedExternalWaypoints = true
     cachedWaypoints = null
@@ -101,7 +101,10 @@ class WaypointsBuilder {
   /**
    * Adds the start airport position, if needed.
    */
-  private suspend fun doAppendStartAirport(flight: AircraftFlightData, airportService: AirportService) {
+  private suspend fun doAppendStartAirport(
+    flight: AircraftFlightData,
+    airportService: AirportService
+  ) {
     if (departureWaypoint != null && departureTime != null)
       return
     val airport = flight.departureAirport?.let { airportService.get(it) } ?: return
@@ -144,11 +147,12 @@ class WaypointsBuilder {
 
     val lastAddedState = this.lastAddedState
     if (lastAddedState == null ||
-        (state.time - lastAddedState.time > Duration.minutes(15)) ||
-        (state.heading != null && lastAddedState.heading != null &&
-            abs(state.heading - lastAddedState.heading) > 2.5) ||
-        (state.position != null && lastAddedState.position != null &&
-            abs(state.position.altitude - lastAddedState.position.altitude) > 100)) {
+      (state.time - lastAddedState.time > Duration.minutes(15)) ||
+      (state.heading != null && lastAddedState.heading != null &&
+          abs(state.heading - lastAddedState.heading) > 2.5) ||
+      (state.position != null && lastAddedState.position != null &&
+          abs(state.position.altitude - lastAddedState.position.altitude) > 100)
+    ) {
       val position = state.position ?: lastAddedState?.position
       if (position != null) {
         // If one of the conditions is met, a new point will be added to the waypoints

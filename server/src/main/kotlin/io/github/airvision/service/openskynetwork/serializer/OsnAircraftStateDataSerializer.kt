@@ -31,7 +31,7 @@ import java.time.Instant
 object OsnAircraftStateDataSerializer : KSerializer<AircraftStateData> {
 
   override val descriptor: SerialDescriptor =
-      buildSerialDescriptor("OsnAircraft", kind = StructureKind.LIST)
+    buildSerialDescriptor("OsnAircraft", kind = StructureKind.LIST)
 
   override fun deserialize(decoder: Decoder): AircraftStateData {
     val json = decoder.decodeSerializableValue(JsonArray.serializer())
@@ -52,9 +52,18 @@ object OsnAircraftStateDataSerializer : KSerializer<AircraftStateData> {
       GeodeticPosition(latitude, longitude, altitude)
     } else null
 
-    return AircraftStateData(aircraftId, time, position, velocity, onGround, verticalRate, heading, callsign)
+    return AircraftStateData(
+      aircraftId,
+      time,
+      position,
+      velocity,
+      onGround,
+      verticalRate,
+      heading,
+      callsign
+    )
   }
 
   override fun serialize(encoder: Encoder, value: AircraftStateData) =
-      throw UnsupportedOperationException()
+    throw UnsupportedOperationException()
 }

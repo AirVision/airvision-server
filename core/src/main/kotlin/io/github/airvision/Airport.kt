@@ -16,10 +16,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Airport(
-    val icao: AirportIcao,
-    val iata: AirportIata,
-    val name: String,
-    val city: String,
-    val country: String,
-    val position: GeodeticPosition
+  val icao: AirportIcao,
+  val iata: AirportIata,
+  val name: String,
+  val city: String,
+  val country: String,
+  val position: GeodeticPosition
 )

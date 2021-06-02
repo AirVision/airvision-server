@@ -45,7 +45,13 @@ suspend fun HttpClient.downloadToFile(url: String, path: Path) {
       null
     }
     withContext(Dispatchers.IO) {
-      response.content.copyTo(Files.newByteChannel(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE))
+      response.content.copyTo(
+        Files.newByteChannel(
+          path,
+          StandardOpenOption.CREATE,
+          StandardOpenOption.WRITE
+        )
+      )
       if (lastModified != null)
         Files.setLastModifiedTime(path, FileTime.from(lastModified))
     }
@@ -54,7 +60,8 @@ suspend fun HttpClient.downloadToFile(url: String, path: Path) {
 
 suspend fun HttpClient.downloadUpdateToFile(url: String, path: Path): Boolean {
   return withContext(Dispatchers.IO) {
-    val fileLastModified = if (Files.exists(path)) Files.getLastModifiedTime(path).toInstant() else null
+    val fileLastModified =
+      if (Files.exists(path)) Files.getLastModifiedTime(path).toInstant() else null
     val remoteLastModified = getLastModified(url)
 
     // File is already up-to-date
